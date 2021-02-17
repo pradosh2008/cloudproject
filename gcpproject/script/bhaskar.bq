@@ -1,0 +1,6 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci105_chain_cust*.txt.gz"

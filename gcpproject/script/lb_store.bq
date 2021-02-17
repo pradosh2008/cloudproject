@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quotes=""\
+        --schema=${schema_path}/edl_landing/lbca_store.json \
+        edl_landing.lb_store  \
+        "gs://${default_bucket}/edw/lb_store*.txt.gz"
+rc_check $? "Load edl_landing"
+
+

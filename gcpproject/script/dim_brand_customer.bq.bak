@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --replace=true --allow_large_results --destination_table analytic_mart.dim_brand_customer_new --use_legacy_sql=false <<!
+SELECT 
+TO_HEX(MD5(concat(case when cc.id_chain =4 then 'CA'
+           when cc.id_chain =7 then 'LB'
+    end,'|',cc.ID_CUST)))  as brand_customer_key,
+cast(cust.ID_CUST                as string)       as brand_customer_id ,
+cust.ID_CUST                        as individual_id,
+cast(NULL as string) as nam_prefix,
+cast(NULL as string) as first_nam,
+cast(NULL as string) as middle_nam,
+cast(NULL as string) as last_nam,
+cast(NULL as string) as nam_generational_suffix,
+cast(NULL as string) as nam_professional_suffix,
+cast(NULL as string) as full_nam,
+cast(NULL as string) as nam_source_type_cd,
+cast(NULL as string) as business_nam,
+cast(NULL as string) as gender_cd,
+cast(NULL as date) as birth_dt,
+cast(NULL as string) as crm_nam_prefix,
+cast(NULL as string) as crm_first_nam,
+cast(NULL as string) as crm_middle_nam,
+cast(NULL as string) as crm_last_nam,
+cast(NULL as string) as crm_nam_generational_suffix,
+cast(NULL as string) as crm_nam_professional_suffix,
+cast(NULL as string) as crm_gender_cd,
+cast(NULL as string) as crm_business_nam,
+cast(NULL as INT64) as crm_deceased_ind,
+cast(NULL as DATE) as crm_deceased_dt,
+cast(NULL as string) as marital_status_cd,
+cast(NULL as date) as first_interaction_dt,
+cast(NULL as date) as first_store_transaction_dt,
+cast(NULL as date) as first_ecomm_transaction_dt,
+cd.CD_ETHNIC                      as ethinicity_cd,
+cd.CD_RELIGION                    as religion_cd,
+cd.CD_LANGUAGE_PREF               as preferred_language_cd,
+cast(NULL as string)  as origin_country_cd,
+cast(NULL as int64) as profanity_ind,
+cast(NULL as string) as customer_store_key,
+cast(NULL as int64) as possible_business_ind,
+case when cc.ID_EMP is null then 0 else 1 end  as employee_ind, -- Employee Ind is counted as 1 if a valid employee id is tagged
+case WHEN cc.FL_HLDR_HOUSCARD ='Y' then 1 when cc.FL_HLDR_HOUSCARD ='N' then 0 else NULL end  as plcc_card_holder_ind,
+cust.DA_CUST_ADDED                  as brand_customer_creation_dt,
+CURRENT_TIMESTAMP as edl_create_tms,
+'BCUST' as edl_create_job_nam,
+CURRENT_TIMESTAMP as edl_last_update_tms,
+'BCUST' as edl_last_update_job_nam,
+case when cc.id_chain =4 then 'CA'
+               when cc.id_chain =7 then 'LB'
+               end as brand_cd
+from edl_stage.plus_vmci019_customer CUST
+INNER JOIN ( SELECT * FROM edl_stage.plus_vmci105_chain_cust  WHERE ID_CHAIN IN (4,7))  CC
+  ON CC.ID_CUST= CUST.ID_CUST 
+LEFT JOIN
+   edl_stage.plus_vmci180_cust_demog  CD 
+   ON cc.id_cust=cd.id_cust 
+!
+rc_check $? "load stage tables"
+
+#Merge old records into temp table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.dim_brand_customer_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.dim_brand_customer c
+left join analytic_mart.dim_brand_customer_new w
+    on  w.brand_customer_key = c.brand_customer_key
+where w.brand_customer_key is null
+!
+rc_check $? "append legacy records into the temp table"
+
+
+#cleansing and archival
+bq cp --force analytic_mart.dim_brand_customer edl_archive.dim_brand_customer
+rc_check $? "archive copy"
+bq cp --force analytic_mart.dim_brand_customer_new analytic_mart.dim_brand_customer
+rc_check $? "replace the temp table as the analytic_mart table"
+bq rm --force analytic_mart.dim_brand_customer_new
+rc_check $? "drop the temp table"
+
+
+   
+   

@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --field_delimiter="\t"  --skip_leading_rows=1 --quote='' --schema=${schema_path}/edl_landing/ann_atg_returns.json edl_landing.ann_atg_returns  "gs://${default_bucket}/pre/atg/ANN_ATG_RETURNS*.txt"
+rc_check $? "Load edl_landing"
+
+echo "pre_atg_order_return.bq" >/${env_data_root}/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_return_commerceitem.bq" >/${env_data_root}/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_return_method.bq" >/${env_data_root}/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl
+
+
+archive_bucket_files "gs://${default_bucket}/pre/atg/ANN_ATG_RETURNS*.txt"
+

@@ -1,0 +1,30 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select id_cust
+    from edl_stage.plus_vmci019_custonly
+    group by id_cust
+    having count(*)>1
+)'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT count(*) cnt
+from edl_landing.lbca_vmci019_custonly l
+left join edl_stage.plus_vmci019_custonly p
+    on cast(trim(l.id_cust) as int64) = p.id_cust
+    where p.id_cust is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

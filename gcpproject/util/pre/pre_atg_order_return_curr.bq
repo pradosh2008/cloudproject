@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_return_curr
+as
+  SELECT returnid
+  ,orderid
+  ,replacementorderid
+  ,createddate
+  ,actualtaxrefund
+  ,actualshiprefund
+  ,otherrefund
+  ,processimmediately
+  ,processed
+  ,originofreturns
+  ,returnfee
+  ,shipping_label_fee
+  ,batch_id
+  FROM(select *, dense_rank() over (PARTITION BY returnid order by batch_id desc) rn
+  from  \`${project}.edl_stage.pre_atg_order_return\`
+  ) where rn = 1
+!

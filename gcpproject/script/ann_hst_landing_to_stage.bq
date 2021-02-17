@@ -1,0 +1,5 @@
+bq cp --force edl_landing.ann_hst_f_txn_header edl_stage.pre_hst_transaction_header
+bq cp --force edl_landing.ann_hst_f_txn_item edl_stage.pre_hst_transaction_item
+bq cp --force edl_landing.ann_hst_f_txn_item_discount edl_stage.pre_hst_transaction_item_discount
+bq cp --force edl_landing.ann_hst_f_txn_tender edl_stage.pre_hst_transaction_tender
+

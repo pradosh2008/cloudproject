@@ -1,0 +1,86 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+create table edl_stage.plus_on_order_sku_dc_day
+(
+  chain_nbr                   int64
+, sku_nbr                     string
+, dc_nbr                      numeric
+, purchase_order_nbr          int64
+, transaction_dt              date
+, sales_channel_type_cd       string
+, purchase_order_dt           date
+, not_before_dt               date
+, not_after_dt                date
+, otb_eop_dt                  date
+, supplier_nbr                int64    
+, unit_cst                    numeric
+, unit_rtl                    numeric
+, on_order_received_qty       int64
+, on_order_received_rtl       numeric
+, on_order_received_cst       numeric
+, on_order_ordered_qty        int64
+, on_order_ordered_rtl        numeric
+, on_order_ordered_cst        numeric
+, on_order_open_balance_qty   int64
+, on_order_open_balance_rtl   numeric
+, on_order_open_balance_cst   numeric
+, on_order_closed_balance_qty int64
+, on_order_closed_balance_rtl numeric
+, on_order_closed_balance_cst numeric
+, on_order_cancelled_qty      int64
+, on_order_cancelled_rtl      numeric
+, on_order_cancelled_cst      numeric
+, price_type_cd               string
+, last_update_ts              date
+);
+!
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+create table analytic_mart.plus_fact_on_order_sku_dc_day
+(
+  item_key                           string
+, dc_id                              numeric
+, purchase_order_num                 int64
+, transaction_dt                     date
+, sku_id                             string
+, brand_cd                           string
+, sales_channel_type_cd              string
+, purchase_order_dt                  date
+, not_before_dt                      date
+, not_after_dt                       date
+, otb_eop_dt                         date
+, supplier_num                       int64    
+, unit_cst_amt                       numeric
+, unit_rtl_amt                       numeric
+, on_order_received_qty              int64
+, on_order_received_rtl_amt          numeric
+, on_order_received_cst_amt          numeric
+, on_order_ordered_qty               int64
+, on_order_ordered_rtl_amt           numeric
+, on_order_ordered_cst_amt           numeric
+, on_order_open_balance_qty          int64
+, on_order_open_balance_rtl_amt      numeric
+, on_order_open_balance_cst_amt      numeric
+, on_order_closed_balance_qty        int64
+, on_order_closed_balance_rtl_amt    numeric
+, on_order_closed_balance_cst_amt    numeric
+, on_order_cancelled_qty             int64
+, on_order_cancelled_rtl_amt         numeric
+, on_order_cancelled_cst_amt         numeric
+, price_type_cd                      string
+, last_update_dt                     date
+, edl_create_tms                     timestamp
+, edl_create_job_nam                 string
+, edl_last_update_tms                timestamp
+, edl_last_update_job_nam            string
+);
+!
+
+

@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+SELECT COUNT(*) cnt
+FROM (
+      SELECT item_key, COUNT(*)
+      FROM analytic_mart.pre_item
+      GROUP BY item_key
+      HAVING COUNT(*)>1
+)
+'
+
+run_validation "$sql" "Unique Key Check"
+
+
+#Completeness CHECK
+
+sql='
+SELECT count(*) cnt FROM 
+(SELECT sku FROM edl_stage.pre_sap_product
+UNION DISTINCT
+SELECT sku FROM edl_stage.pre_lu_product_vw
+) as s 
+LEFT OUTER JOIN analytic_mart.pre_item a
+ON (a.sku_id = s.sku)
+WHERE a.sku_id is NULL
+'
+
+run_validation "$sql" "Completeness Check"
+
+#FK Item_key CHECK
+
+sql='
+SELECT count(*) cnt 
+FROM (SELECT distinct item_key FROM analytic_mart.pre_transaction_item WHERE item_key IS NOT NULL) a
+LEFT OUTER JOIN analytic_mart.pre_item i
+ON (a.item_key = i.item_key)
+WHERE a.item_key is NULL
+'
+run_validation "$sql" "FK Item_Key Check"
+
+exit ${ERROR_CD:-0}

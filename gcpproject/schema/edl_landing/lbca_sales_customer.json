@@ -1,0 +1,72 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "SELLING_CHAIN_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "SELLING_STORE_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "REGISTER_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "TRANSACTION_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "TRANSACTION_DT", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CUSTOMER_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CUSTOMER_SEQ_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "APPLY_MATCHING_LOGIC_CD", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CLUB_MEMBER_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CUSTOMER_EXTERNAL_TYPE_CD", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CUSTOMER_EXTERNAL_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "LAST_UPDATE_TS", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ECOMMERCE_CUSTOMER_NBR", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE",
+    "name": "extract_ts",
+    "type": "STRING"
+  }
+]

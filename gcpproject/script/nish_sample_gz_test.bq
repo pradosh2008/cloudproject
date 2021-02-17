@@ -1,0 +1,11 @@
+ME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/nish_sample_gz_test.json \
+        edl_landing.nish_sample_gz_test  \
+        "gs://${default_bucket}/edw/test_nish_gz.txt.gz"
+rc_check $? "Load edl_landing"
+
+

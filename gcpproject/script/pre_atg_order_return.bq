@@ -1,0 +1,57 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load ATG Retruns in Landing
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_return_new --use_legacy_sql=false <<!
+select distinct
+returnid
+,orderid
+,replacementorderid
+,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",createddate) as createddate
+,actualtaxrefund
+,actualshiprefund
+,otherrefund
+,processimmediately
+,processed
+,originofreturns
+,returnfee
+,shipping_label_fee
+,batch_id
+from edl_landing.ann_atg_returns atg
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_return_new --use_legacy_sql=false <<!
+select c.returnid
+,c.orderid
+,c.replacementorderid
+,c.createddate
+,CAST(c.actualtaxrefund as numeric) actualtaxrefund
+,CAST(c.actualshiprefund as numeric) actualshiprefund
+,CAST(c.otherrefund as numeric) otherrefund
+,c.processimmediately
+,c.processed
+,c.originofreturns
+,CAST(c.returnfee as numeric) returnfee
+,CAST(c.shipping_label_fee as numeric)shipping_label_fee
+,c.batch_id
+from edl_stage.pre_atg_order_return c
+left join edl_stage.pre_atg_order_return_new w
+    on  w.returnid = c.returnid
+    and w.orderid=c.orderid
+    and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_atg_order_return edl_archive.pre_atg_order_return
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_return_new edl_stage.pre_atg_order_return
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_return_new
+rc_check $? "drop the temp table"
+

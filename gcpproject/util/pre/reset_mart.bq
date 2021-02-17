@@ -1,0 +1,15 @@
+bq cp --force analytic_mart_0321.pre_brand     analytic_mart.pre_brand &
+bq cp --force analytic_mart_0321.pre_calendar     analytic_mart.pre_calendar &
+bq cp --force analytic_mart_0321.pre_calendar_fiscal_week analytic_mart.pre_calendar_fiscal_week &
+bq cp --force analytic_mart_0321.pre_class     analytic_mart.pre_class &
+bq cp --force analytic_mart_0321.pre_distribution_channel analytic_mart.pre_distribution_channel &
+bq cp --force analytic_mart_0321.pre_item     analytic_mart.pre_item &
+bq cp --force analytic_mart_0321.pre_plan     analytic_mart.pre_plan &
+bq cp --force analytic_mart_0321.pre_product_hier     analytic_mart.pre_product_hier &
+bq cp --force analytic_mart_0321.pre_store     analytic_mart.pre_store &
+bq cp --force analytic_mart_0321.pre_store_inventory     analytic_mart.pre_store_inventory &
+bq cp --force analytic_mart_0321.pre_style     analytic_mart.pre_style &
+bq cp --force analytic_mart_0321.pre_transaction_header     analytic_mart.pre_transaction_header &
+bq cp --force analytic_mart_0321.pre_transaction_item     analytic_mart.pre_transaction_item &
+bq cp --force analytic_mart_0321.pre_transaction_item_discount analytic_mart.pre_transaction_item_discount &
+wait

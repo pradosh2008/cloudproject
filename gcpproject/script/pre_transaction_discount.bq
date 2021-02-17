@@ -1,0 +1,128 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#One time load
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_transaction_discount --use_legacy_sql=false <<!
+#SELECT 
+#transaction_disc_key
+#, transaction_key
+#, transaction_num
+#, line_num
+#, discount_line_num
+#, store_key
+#, sku_id
+#, transaction_dt
+#, transaction_channel_cd
+#, discount_type_cd
+#, discount_serial_num
+#, discount_amt
+#, batch_id
+#FROM (
+#        SELECT
+#        FARM_FINGERPRINT(concat(replace(i.txn_nbr,':', '|')
+#        ,'|',cast(i.txn_item_nbr as string)
+#        ,'|',cast(d.disc_seq_nbr as string)))                                                                                   as transaction_disc_key
+#        , FARM_FINGERPRINT(replace(i.txn_nbr,':', '|'))                                                                         as transaction_key
+#        , i.txn_nbr                                                                                                             as transaction_num
+#        , i.txn_item_nbr                                                                                                        as line_num
+#        , d.disc_seq_nbr                                                                                                        as discount_line_num
+#        , FARM_FINGERPRINT(cast(d.store_nbr as string))                                                                         as store_key
+#        , CAST(p.sku AS STRING)                                                                                                 as sku_id
+#        , EXTRACT(DATE FROM d.txn_dt)                                                                                           as transaction_dt
+#        , d.txn_channel_cd                                                                                                      as transaction_channel_cd
+#        , d.disc_type_cd                                                                                                        as discount_type_cd
+#        , d.disc_serial_nbr                                                                                                     as discount_serial_num
+#        , ROUND(d.disc_amt,2)                                                                                                   as discount_amt
+#        , 20160101                                                                                                              as batch_id
+#        FROM edl_stage.pre_hst_transaction_item_discount d
+#        INNER JOIN edl_stage.pre_hst_transaction_item i 
+#            ON (d.txn_item_id = i.txn_item_id)
+#        LEFT OUTER JOIN edl_stage.pre_lu_product_vw p 
+#            ON (p.product_id = d.product_id)    
+#        where   EXTRACT(DATE FROM d.TXN_DT) between '2016-01-01' and '2019-05-04'
+#)
+#!
+#rc_check $? "One time history load epsilon header data to mart"
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_transaction_discount_new --use_legacy_sql=false <<! 
+SELECT 
+transaction_disc_key
+, transaction_key
+, transaction_num
+, line_num
+, discount_line_num
+, store_key
+, sku_id
+, transaction_dt
+, transaction_channel_cd
+, discount_type_cd
+, discount_serial_num
+, discount_amt
+, batch_id
+FROM (
+        SELECT 
+        FARM_FINGERPRINT(concat(CONCAT(CAST(h.store_no AS string)
+        ,'|',CAST (h.register_no AS string)
+        ,'|',CAST(FORMAT_TIMESTAMP("%Y%m%d", h.entry_date_time) AS STRING)
+        ,'|',cast(h.transaction_no AS string))
+        , '|',cast(d.line_id as string)
+        ,'|',cast(d.applied_by_line_id as string)))                                                                             as transaction_disc_key
+        , FARM_FINGERPRINT(CONCAT(CAST(h.store_no AS string)
+        ,'|',CAST (h.register_no AS string)
+        ,'|',CAST(FORMAT_TIMESTAMP("%Y%m%d", h.entry_date_time) AS STRING)
+        ,'|',cast(h.transaction_no AS string)))                                                                                 as transaction_key
+        , CONCAT(CAST(h.store_no AS string)
+        ,':',CAST (h.register_no AS string)
+        ,':',CAST(FORMAT_TIMESTAMP("%Y%m%d", h.entry_date_time) AS STRING)
+        ,':',cast(h.transaction_no AS string))                                                                                  as transaction_num
+        , d.line_id                                                                                                             as line_num
+        , d.applied_by_line_id                                                                                                  as discount_line_num
+        , FARM_FINGERPRINT(cast(h.store_no as string))                                                                          as store_key
+        , CASE WHEN m.sku_id = l.reference_no OR m.sku_id IS NULL THEN l.reference_no 
+               ELSE m.sku_id END                                                                                                as sku_id
+        ,EXTRACT(DATE FROM h.entry_date_time)                                                                                   as transaction_dt
+        , 'RET'                                                                                                                 as transaction_channel_cd
+        , CASE WHEN pos_discount_type = 450 THEN 'PROMO'
+               WHEN pos_discount_type = 451 THEN 'SVSGC'
+               WHEN pos_discount_type = 452 THEN 'EVENT'
+               WHEN pos_discount_type = 497 THEN 'EMPGC'
+               WHEN pos_discount_type = 498 THEN 'OVRD'
+               WHEN pos_discount_type = 499 THEN 'EMPMD'
+               ELSE 'UNK' END                                                                                                   as discount_type_cd
+        , d.pos_discount_serial_no                                                                                              as discount_serial_num
+        , d.pos_discount_amount                                                                                                 as discount_amt
+        , d.batch_id                                                                                                            as batch_id
+        FROM edl_stage.pre_aw_transaction_discount_detail d
+        LEFT OUTER JOIN edl_stage.pre_aw_transaction_header h 
+            ON (h.if_entry_no = d.if_entry_no)
+        LEFT OUTER JOIN edl_stage.pre_aw_transaction_line l 
+            ON (l.if_entry_no = d.if_entry_no AND l.line_id = d.line_id)
+        LEFT OUTER JOIN edl_stage.pre_aw_transaction_merch_detail m 
+            ON (d.if_entry_no = m.if_entry_no AND d.line_id = m.line_id)
+        WHERE PARSE_DATE('%Y%m%d',cast(h.batch_id as string)) > PARSE_DATE('%Y-%m-%d','2019-05-01')
+            AND h.store_no NOT IN (611,612,613,616,617,618,619,626,627)
+            AND l.line_action = 1
+)
+#rc_check $? "Load incremental POS(aw) discount data from edl_stage table into temp table"
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.pre_transaction_discount_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.pre_transaction_discount c
+left join analytic_mart.pre_transaction_discount_new w
+    on  w.transaction_key = c.transaction_key
+    AND w.transaction_disc_key = c.transaction_disc_key
+    where w.transaction_disc_key is null
+!
+#rc_check $? "append legacy records into the temp table"
+
+bq cp --force analytic_mart.pre_transaction_discount edl_archive.pre_transaction_discount
+#rc_check $? "archive copy"
+bq cp --force analytic_mart.pre_transaction_discount_new analytic_mart.pre_transaction_discount
+#rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.pre_transaction_discount_new
+#rc_check $? "drop the temp table"

@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_offer_treatment_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_offer_treatment c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_offer_treatmen_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_offer_treatment c
+left join jus_stage.work_dim_offer_treatment w
+    on  w.treatment_key = c.treatment_key
+where w.treatment_key is null
+!
+bq cp --force jus_stage.dim_offer_treatment edl_archive.dim_offer_treatment
+bq cp --force jus_stage.dim_offer_treatment_new jus_stage.dim_offer_treatment
+bq rm --force jus_stage.dim_offer_treatment_new

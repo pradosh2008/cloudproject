@@ -1,0 +1,59 @@
+#Foreign key check style
+
+bq query --use_legacy_sql=false <<!
+SELECT sum(case when b.style_key is null then 0 else 1 end)    as match_count
+,sum(case when b.style_key is null then 1 else 0 end)     as orphan_count
+FROM analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_style b
+on a.style_key = b.style_key
+!
+
+#Foreign key check item
+
+bq query --use_legacy_sql=false <<!
+SELECT sum(case when b.item_key is null then 0 else 1 end)    as match_count
+,sum(case when b.item_key is null then 1 else 0 end)     as orphan_count
+FROM analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_item b
+on a.item_key = b.item_key
+!
+
+#Foreign key check store
+
+bq query --use_legacy_sql=false <<!
+SELECT sum(case when b.store_key is null then 0 else 1 end)    as match_count
+,sum(case when b.store_key is null then 1 else 0 end)     as orphan_count
+FROM analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_store b
+on a.store_key = b.store_key
+!
+
+
+#distinct orphan style_key
+bq query --use_legacy_sql=false <<!
+select count(distinct a.style_key) from 
+analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_style b
+on a.style_key = b.style_key
+where b.style_key is null
+!
+
+
+#distinct orphan item_key
+bq query --use_legacy_sql=false <<!
+select count(distinct a.item_key) from 
+analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_item b
+on a.item_key = b.item_key
+where b.item_key is null
+!
+
+
+#distinct orphan store_key
+bq query --use_legacy_sql=false <<!
+SELECT count(distinct a.store_key)
+FROM analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_store b
+on a.store_key = b.store_key
+where b.store_key is null
+!

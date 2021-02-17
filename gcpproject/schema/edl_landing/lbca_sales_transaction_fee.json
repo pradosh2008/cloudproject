@@ -1,0 +1,183 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "fee_seq_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "fee_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "fee_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "non_merch_tax_type", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "non_merch_prorated_tax_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "non_merch_tax_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "selling_chain_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "selling_store_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "chain_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "store_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "register_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_dt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "sku_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "perks_card_associate_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "record_seq_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_object_type_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_object_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_action_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "selection_chain_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "selection_store_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "create_dt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_update_ts", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "original_store_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "original_chain_nbr", 
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_transaction_dt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_register_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_transaction_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_return_reason_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_reason_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_disposition_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ret_primary_sales_person_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ret_secondary_sales_person_nbr",
+    "type": "STRING"
+  },
+{
+    "mode": "NULLABLE",
+    "name": "renewal_perks_cnt",
+    "type": "STRING"
+  },
+{
+    "mode": "NULLABLE",
+    "name": "new_perks_cnt",
+    "type": "STRING"
+  },
+
+  {
+    "mode": "NULLABLE",
+    "name": "extract_ts",
+    "type": "STRING"
+  }
+]

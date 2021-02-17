@@ -1,0 +1,192 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "date_time", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "promo_num", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "promo_desc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "salesorg", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "distribution_channel", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "valid_from", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "valid_to", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "base_tack", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "offer", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "benefit", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "maxcount", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "disc_price", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "req_min_value", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "coupon", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "detail", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "active_loc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "loc_desc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "site_count", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "deal_categ", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "artc_grpnr_pre", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "artc_grpnr_pre_desc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "mat_quan", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "matnr_bene", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "matnr_bene_desc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "quan_bene", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "grpnr_excl", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "grpnr_excl_desc", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "crname", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "mktg_aggr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "test_aggr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "evt_aggr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "crdate", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "chname", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "chdate", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "submitdt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "submitby", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "till_description", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

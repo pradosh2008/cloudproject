@@ -1,0 +1,217 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_customer_address_key", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_customer_key", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "zip_postal_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "zip_4_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "latitude_num", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "longitude_num", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "mailability_score_num", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "return_mail_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "return_mail_flagged_dt", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "closest_store_num", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "closest_store_dist", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "next_closest_store_num", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "next_closest_store_dist", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "dma_do_not_mail_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "foreign_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "prison_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "military_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_ncoa_dt", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ncoa_return_addr_source_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ncoalink_match_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "move_effective_dt", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "dsf_business_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "nursing_home_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "po_box_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "dpv_vacancy_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "dsf_seasonal_address_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "fips_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "carrier_route_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "delivery_point_barcode_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "lot_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "geo_match_level_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_update_tms", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_update_job_id", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_update_source_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "address_rec_type_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "dpv_footer_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "suitelink_ret_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "lacs_ret_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "check_digit_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "lot_order_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "jfs_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

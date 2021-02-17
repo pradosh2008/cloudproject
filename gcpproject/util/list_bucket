@@ -1,0 +1,6 @@
+gsutil ls gs://p-ascena-aadp-landing-01/pre/atg/ >buckets.lst
+gsutil ls gs://p-ascena-aadp-landing-01/pre/aw/ >>buckets.lst
+gsutil ls gs://p-ascena-aadp-landing-01/pre/bi/ >>buckets.lst
+gsutil ls gs://p-ascena-aadp-landing-01/pre/dom/ >>buckets.lst
+gsutil ls gs://p-ascena-aadp-landing-01/pre/sapd/ >>buckets.lst
+gsutil ls gs://p-ascena-aadp-landing-01/pre/sapwm/ >>buckets.lst

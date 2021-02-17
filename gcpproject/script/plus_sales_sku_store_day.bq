@@ -1,0 +1,151 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_sku_store_day.json \
+        edl_landing.lbca_sales_sku_store_day \
+        " gs://${default_bucket}/plus/edw/lb_sales_sku_store_day*.txt.gz"
+rc_check $? "EDL_LANDING load for LBCA_SALES_SKU_STORE_DAY Complete"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_sales_sku_store_day_new --use_legacy_sql=false <<!
+SELECT 
+  CURR.CHAIN_NBR
+, CURR.SKU_NBR
+, CURR.STORE_NBR
+, CURR.TRANSACTION_DT
+, CURR.SALES_CHANNEL_TYPE_CD
+, CURR.RETURN_QTY
+, CURR.RETURN_CST
+, CURR.RETURN_RTL
+, CURR.ECOMM_CREDIT_RETURN_QTY
+, CURR.ECOMM_CREDIT_RETURN_RTL
+, CURR.ECOMM_CREDIT_RETURN_CST
+, CURR.SALES_QTY
+, CURR.SALES_RTL
+, CURR.SALES_CST
+, CURR.SALES_ORDER_QTY
+, CURR.SALES_ORDER_RTL
+, CURR.SALES_ORDER_CST
+, CURR.DISCOUNT_MARKDOWN_RTL
+, CURR.SALES_DISCOUNT_MARKDOWN_RTL
+, CURR.RETURN_DISCOUNT_MARKDOWN_RTL
+, CURR.PRODUCTIVE_SALES_QTY
+, CURR.PRODUCTIVE_SALES_RTL
+, CURR.PRODUCTIVE_SALES_CST
+, CURR.GROSS_SALES_QTY
+, CURR.GROSS_SALES_RTL
+, CURR.GROSS_SALES_CST
+, CURR.NET_SALES_QTY
+, CURR.NET_SALES_RTL
+, CURR.NET_SALES_CST
+, CURR.GROSS_PROFIT_PRODTV_SLS_RTL
+, CURR.GROSS_PROFIT_RETURN_RTL
+, CURR.GROSS_PROFIT_NET_SALES_RTL
+, CURR.STYLE_LOCATOR_QTY
+, CURR.STYLE_LOCATOR_RTL
+, CURR.STYLE_LOCATOR_CST
+, CURR.MERCH_DISCOUNT_AMT
+, CURR.NON_MERCH_DISCOUNT_AMT
+, CURR.COMMISSION_AMT
+, CURR.FEE_AMT
+, CURR.CUSTOMER_PAID_TAX_AMT
+, CURR.COMPANY_OWED_TAX_AMT
+, CURR.TAX_AMT
+, CURR.PRICE_TYPE_CD
+, CURR.LAST_UPDATE_TS
+, CURR.EXTRACT_TS
+FROM ( 
+       SELECT
+         CAST(TRIM(d.CHAIN_NBR)                                                                                          AS INT64  )         AS CHAIN_NBR
+       , TRIM(d.SKU_NBR)                                                                                                                     AS SKU_NBR
+       , CAST(TRIM(d.STORE_NBR)                                                                                          AS NUMERIC)         AS STORE_NBR
+       , CASE WHEN TRIM(d.TRANSACTION_DT)              = '' THEN NULL ELSE PARSE_DATE("%Y-%m-%d",TRIM(d.TRANSACTION_DT))              END    AS TRANSACTION_DT
+       , TRIM(d.SALES_CHANNEL_TYPE_CD)                                                                                                       AS SALES_CHANNEL_TYPE_CD
+       , CASE WHEN TRIM(d.RETURN_QTY)                   = '' THEN NULL ELSE CAST(TRIM(d.RETURN_QTY)                       AS INT64  )  END   AS RETURN_QTY
+       , CASE WHEN TRIM(d.RETURN_CST)                   = '' THEN NULL ELSE CAST(TRIM(d.RETURN_CST)                       AS NUMERIC)  END   AS RETURN_CST
+       , CASE WHEN TRIM(d.RETURN_RTL)                   = '' THEN NULL ELSE CAST(TRIM(d.RETURN_RTL)                       AS NUMERIC)  END   AS RETURN_RTL
+       , CASE WHEN TRIM(d.ECOMM_CREDIT_RETURN_QTY)      = '' THEN NULL ELSE CAST(TRIM(d.ECOMM_CREDIT_RETURN_QTY)          AS INT64  )  END   AS ECOMM_CREDIT_RETURN_QTY
+       , CASE WHEN TRIM(d.ECOMM_CREDIT_RETURN_RTL)      = '' THEN NULL ELSE CAST(TRIM(d.ECOMM_CREDIT_RETURN_RTL)          AS NUMERIC)  END   AS ECOMM_CREDIT_RETURN_RTL
+       , CASE WHEN TRIM(d.ECOMM_CREDIT_RETURN_CST)      = '' THEN NULL ELSE CAST(TRIM(d.ECOMM_CREDIT_RETURN_CST)          AS NUMERIC)  END   AS ECOMM_CREDIT_RETURN_CST
+       , CASE WHEN TRIM(d.SALES_QTY)                    = '' THEN NULL ELSE CAST(TRIM(d.SALES_QTY)                        AS INT64  )  END   AS SALES_QTY
+       , CASE WHEN TRIM(d.SALES_RTL)                    = '' THEN NULL ELSE CAST(TRIM(d.SALES_RTL)                        AS NUMERIC)  END   AS SALES_RTL
+       , CASE WHEN TRIM(d.SALES_CST)                    = '' THEN NULL ELSE CAST(TRIM(d.SALES_CST)                        AS NUMERIC)  END   AS SALES_CST
+       , CASE WHEN TRIM(d.SALES_ORDER_QTY)              = '' THEN NULL ELSE CAST(TRIM(d.SALES_ORDER_QTY)                  AS INT64  )  END   AS SALES_ORDER_QTY
+       , CASE WHEN TRIM(d.SALES_ORDER_RTL)              = '' THEN NULL ELSE CAST(TRIM(d.SALES_ORDER_RTL)                  AS NUMERIC)  END   AS SALES_ORDER_RTL
+       , CASE WHEN TRIM(d.SALES_ORDER_CST)              = '' THEN NULL ELSE CAST(TRIM(d.SALES_ORDER_CST)                  AS NUMERIC)  END   AS SALES_ORDER_CST
+       , CASE WHEN TRIM(d.DISCOUNT_MARKDOWN_RTL)        = '' THEN NULL ELSE CAST(TRIM(d.DISCOUNT_MARKDOWN_RTL)            AS NUMERIC)  END   AS DISCOUNT_MARKDOWN_RTL
+       , CASE WHEN TRIM(d.SALES_DISCOUNT_MARKDOWN_RTL)  = '' THEN NULL ELSE CAST(TRIM(d.SALES_DISCOUNT_MARKDOWN_RTL)      AS NUMERIC)  END   AS SALES_DISCOUNT_MARKDOWN_RTL
+       , CASE WHEN TRIM(d.RETURN_DISCOUNT_MARKDOWN_RTL) = '' THEN NULL ELSE CAST(TRIM(d.RETURN_DISCOUNT_MARKDOWN_RTL)     AS NUMERIC)  END   AS RETURN_DISCOUNT_MARKDOWN_RTL
+       , CASE WHEN TRIM(d.PRODUCTIVE_SALES_QTY)         = '' THEN NULL ELSE CAST(TRIM(d.PRODUCTIVE_SALES_QTY)             AS INT64  )  END   AS PRODUCTIVE_SALES_QTY
+       , CASE WHEN TRIM(d.PRODUCTIVE_SALES_RTL)         = '' THEN NULL ELSE CAST(TRIM(d.PRODUCTIVE_SALES_RTL)             AS NUMERIC)  END   AS PRODUCTIVE_SALES_RTL
+       , CASE WHEN TRIM(d.PRODUCTIVE_SALES_CST)         = '' THEN NULL ELSE CAST(TRIM(d.PRODUCTIVE_SALES_CST)             AS NUMERIC)  END   AS PRODUCTIVE_SALES_CST
+       , CASE WHEN TRIM(d.GROSS_SALES_QTY)              = '' THEN NULL ELSE CAST(TRIM(d.GROSS_SALES_QTY)                  AS INT64  )  END   AS GROSS_SALES_QTY
+       , CASE WHEN TRIM(d.GROSS_SALES_RTL)              = '' THEN NULL ELSE CAST(TRIM(d.GROSS_SALES_RTL)                  AS NUMERIC)  END   AS GROSS_SALES_RTL
+       , CASE WHEN TRIM(d.GROSS_SALES_CST)              = '' THEN NULL ELSE CAST(TRIM(d.GROSS_SALES_CST)                  AS NUMERIC)  END   AS GROSS_SALES_CST
+       , CASE WHEN TRIM(d.NET_SALES_QTY)                = '' THEN NULL ELSE CAST(TRIM(d.NET_SALES_QTY)                    AS INT64  )  END   AS NET_SALES_QTY
+       , CASE WHEN TRIM(d.NET_SALES_RTL)                = '' THEN NULL ELSE CAST(TRIM(d.NET_SALES_RTL)                    AS NUMERIC)  END   AS NET_SALES_RTL
+       , CASE WHEN TRIM(d.NET_SALES_CST)                = '' THEN NULL ELSE CAST(TRIM(d.NET_SALES_CST)                    AS NUMERIC)  END   AS NET_SALES_CST
+       , CASE WHEN TRIM(d.GROSS_PROFIT_PRODTV_SLS_RTL)  = '' THEN NULL ELSE CAST(TRIM(d.GROSS_PROFIT_PRODTV_SLS_RTL)      AS NUMERIC)  END   AS GROSS_PROFIT_PRODTV_SLS_RTL
+       , CASE WHEN TRIM(d.GROSS_PROFIT_RETURN_RTL)      = '' THEN NULL ELSE CAST(TRIM(d.GROSS_PROFIT_RETURN_RTL)          AS NUMERIC)  END   AS GROSS_PROFIT_RETURN_RTL
+       , CASE WHEN TRIM(d.GROSS_PROFIT_NET_SALES_RTL)   = '' THEN NULL ELSE CAST(TRIM(d.GROSS_PROFIT_NET_SALES_RTL)       AS NUMERIC)  END   AS GROSS_PROFIT_NET_SALES_RTL
+       , CASE WHEN TRIM(d.STYLE_LOCATOR_QTY)            = '' THEN NULL ELSE CAST(TRIM(d.STYLE_LOCATOR_QTY)                AS INT64  )  END   AS STYLE_LOCATOR_QTY
+       , CASE WHEN TRIM(d.STYLE_LOCATOR_RTL)            = '' THEN NULL ELSE CAST(TRIM(d.STYLE_LOCATOR_RTL)                AS NUMERIC)  END   AS STYLE_LOCATOR_RTL
+       , CASE WHEN TRIM(d.STYLE_LOCATOR_CST)            = '' THEN NULL ELSE CAST(TRIM(d.STYLE_LOCATOR_CST)                AS NUMERIC)  END   AS STYLE_LOCATOR_CST
+       , CASE WHEN TRIM(d.MERCH_DISCOUNT_AMT)           = '' THEN NULL ELSE CAST(TRIM(d.MERCH_DISCOUNT_AMT)               AS NUMERIC)  END   AS MERCH_DISCOUNT_AMT
+       , CASE WHEN TRIM(d.NON_MERCH_DISCOUNT_AMT)       = '' THEN NULL ELSE CAST(TRIM(d.NON_MERCH_DISCOUNT_AMT)           AS NUMERIC)  END   AS NON_MERCH_DISCOUNT_AMT
+       , CASE WHEN TRIM(d.COMMISSION_AMT)               = '' THEN NULL ELSE CAST(TRIM(d.COMMISSION_AMT)                   AS NUMERIC)  END   AS COMMISSION_AMT
+       , CASE WHEN TRIM(d.FEE_AMT)                      = '' THEN NULL ELSE CAST(TRIM(d.FEE_AMT)                          AS NUMERIC)  END   AS FEE_AMT
+       , CASE WHEN TRIM(d.CUSTOMER_PAID_TAX_AMT)        = '' THEN NULL ELSE CAST(TRIM(d.CUSTOMER_PAID_TAX_AMT)            AS NUMERIC)  END   AS CUSTOMER_PAID_TAX_AMT
+       , CASE WHEN TRIM(d.COMPANY_OWED_TAX_AMT)         = '' THEN NULL ELSE CAST(TRIM(d.COMPANY_OWED_TAX_AMT)             AS NUMERIC)  END   AS COMPANY_OWED_TAX_AMT
+       , CASE WHEN TRIM(d.TAX_AMT)                      = '' THEN NULL ELSE CAST(TRIM(d.TAX_AMT)                          AS NUMERIC)  END   AS TAX_AMT
+       , TRIM(d.PRICE_TYPE_CD)                                                                                                               AS PRICE_TYPE_CD
+       , CASE WHEN TRIM(d.LAST_UPDATE_TS)               = '' THEN NULL ELSE PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",d.LAST_UPDATE_TS,"America/New_York") END AS LAST_UPDATE_TS
+       , CASE WHEN TRIM(d.EXTRACT_TS)                   = '' THEN NULL ELSE PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",d.EXTRACT_TS,"America/New_York")     END AS EXTRACT_TS
+       , ROW_NUMBER() OVER (PARTITION BY  d.CHAIN_NBR
+                                        , d.SKU_NBR
+                                        , d.STORE_NBR
+                                        , d.TRANSACTION_DT
+                                        , d.SALES_CHANNEL_TYPE_CD
+                            ORDER BY d.LAST_UPDATE_TS desc
+                           )                                      as ROW_NUM
+       FROM edl_landing.lbca_sales_sku_store_day d
+     ) CURR
+where ROW_NUM = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_sku_store_day_new --use_legacy_sql=false <<!
+select stg.*
+from edl_stage.plus_sales_sku_store_day stg
+left join (
+            select 
+            TRANSACTION_DT
+            from edl_stage.plus_sales_sku_store_day_new
+            group by TRANSACTION_DT
+          ) temp
+          ON TEMP.TRANSACTION_DT = STG.TRANSACTION_DT
+where TEMP.TRANSACTION_DT is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_sku_store_day edl_archive.plus_sales_sku_store_day
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_sku_store_day_new edl_stage.plus_sales_sku_store_day
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_sku_store_day_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_sku_store_day*.txt.gz"
+
+
+
+
+

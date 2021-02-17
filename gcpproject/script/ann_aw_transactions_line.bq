@@ -1,0 +1,68 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --quote='' --field_delimiter="|" --schema=${schema_path}/edl_landing/ann_aw_transactions_line.json edl_landing.ann_aw_transactions_line  "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_LINE_*"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.ann_aw_transactions_line_new --use_legacy_sql=false <<!
+SELECT if_entry_no
+    ,interface_control_flag
+    ,record_type
+    ,line_id
+    ,line_object_type
+    ,line_object
+    ,line_action
+    ,reference_no
+    ,cast(gross_line_amount/100 as numeric) gross_line_amount
+    ,cast(pos_discount_amount/100 as numeric) pos_discount_amount
+    ,db_cr_none
+    ,reference_type
+    ,voiding_reversal_flag
+    ,line_void_flag
+   ,batch_id 
+   from (select c.*
+        ,max(c.batch_id) over (partition by c.if_entry_no) as max_batch_id
+    from edl_landing.ann_aw_transactions_line c
+) curr
+where curr.max_batch_id = curr.batch_id  
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_aw_transactions_line_new --use_legacy_sql=false <<!
+select c.if_entry_no
+    ,c.interface_control_flag
+    ,c.record_type
+    ,c.line_id
+    ,c.line_object_type
+    ,c.line_object
+    ,c.line_action
+    ,c.reference_no
+    ,cast(c.gross_line_amount as numeric) gross_line_amount
+    ,cast(c.pos_discount_amount as numeric) pos_discount_amount
+    ,c.db_cr_none
+    ,c.reference_type
+    ,c.voiding_reversal_flag
+    ,c.line_void_flag
+   ,c.batch_id
+from edl_stage.pre_aw_transaction_line c
+left join edl_stage.ann_aw_transactions_line_new w
+    on  w.if_entry_no = c.if_entry_no AND w.line_id = c.line_id
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_aw_transaction_line edl_archive.pre_aw_transaction_line
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_aw_transactions_line_new edl_stage.pre_aw_transaction_line
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_aw_transactions_line_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_LINE_*"
+

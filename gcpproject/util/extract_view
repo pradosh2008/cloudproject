@@ -1,0 +1,13 @@
+bq show --view edl_stage.pre_acc_df_prod_hier_curr >pre_acc_df_prod_hier_curr.ddl
+bq show --view edl_stage.pre_ann_ann_bi_transaction_fpnfp_curr >pre_ann_ann_bi_transaction_fpnfp_curr.ddl
+bq show --view edl_stage.pre_atg_order_commerceItem_curr >pre_atg_order_commerceItem_curr.ddl
+bq show --view edl_stage.pre_atg_order_commerceitemadjustments_curr >pre_atg_order_commerceitemadjustments_curr.ddl
+bq show --view edl_stage.pre_atg_order_commerceitemcoupons_curr >pre_atg_order_commerceitemcoupons_curr.ddl
+bq show --view edl_stage.pre_atg_order_header_curr >pre_atg_order_header_curr.ddl
+bq show --view edl_stage.pre_atg_order_payment_curr >pre_atg_order_payment_curr.ddl
+bq show --view edl_stage.pre_atg_order_return_commerceitem_curr >pre_atg_order_return_commerceitem_curr.ddl
+bq show --view edl_stage.pre_atg_order_return_curr >pre_atg_order_return_curr.ddl
+bq show --view edl_stage.pre_atg_order_return_method_curr >pre_atg_order_return_method_curr.ddl
+bq show --view edl_stage.pre_atg_order_shipment_curr >pre_atg_order_shipment_curr.ddl
+bq show --view edl_stage.pre_atg_order_shipment_tracking_curr >pre_atg_order_shipment_tracking_curr.ddl
+bq show --view edl_stage.pre_aw_transaction_header_curr >pre_aw_transaction_header_curr.ddl

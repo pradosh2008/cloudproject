@@ -1,0 +1,31 @@
+[
+     {"name":"subclass_id"          ,"type":"integer"}
+    ,{"name":"class_id"          ,"type":"string"}
+    ,{"name":"department_id"          ,"type":"integer"}
+    ,{"name":"group_id"          ,"type":"integer"}
+    ,{"name":"division_id"          ,"type":"string"}
+    ,{"name":"chain_id"          ,"type":"integer"}
+    ,{"name":"channel_id"          ,"type":"integer"}
+    ,{"name":"country_id"          ,"type":"string"}
+    ,{"name":"week_id"          ,"type":"integer"}
+    ,{"name":"month_id"          ,"type":"integer"}
+    ,{"name":"sales_type"          ,"type":"string"}
+    ,{"name":"op_net_sls_retail_cnt"          ,"type":"float"}
+    ,{"name":"op_net_sls_unit_cnt"          ,"type":"integer"}
+    ,{"name":"op_net_sls_aur"          ,"type":"integer"}
+    ,{"name":"op_ttl_store_cnt"          ,"type":"integer"}
+    ,{"name":"op_comp_store_cnt"          ,"type":"integer"}
+    ,{"name":"op_bop_store_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"op_bop_store_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"op_eop_store_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"op_eop_store_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"cp_net_sls_retail_cnt"          ,"type":"float"}
+    ,{"name":"cp_net_sls_unit_cnt"          ,"type":"integer"}
+    ,{"name":"cp_net_sls_aur"          ,"type":"integer"}
+    ,{"name":"cp_ttl_store_cnt"          ,"type":"integer"}
+    ,{"name":"cp_comp_store_cnt"          ,"type":"integer"}
+    ,{"name":"cp_bop_store_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"cp_bop_store_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"cp_eop_store_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"cp_eop_store_inv_unit_cnt"          ,"type":"integer"}
+]

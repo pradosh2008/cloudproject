@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+drop table analytic_mart.dim_item_new;
+drop table analytic_mart.dim_item_new1;
+!

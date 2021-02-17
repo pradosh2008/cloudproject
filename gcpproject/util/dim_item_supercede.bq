@@ -1,0 +1,90 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+#Load data from temp table to get the latest supercede data
+#bq query --replace=true --max_rows 1 --allow_large_results --destination_table work.dim_item --use_legacy_sql=false <<!
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false <<!
+drop table work.dim_item
+!
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false <<!
+create view work.dim_item
+as
+SELECT i.item_key
+    , i.sku_id
+    , i.vendor_key
+    , i.item_des
+    , i.item_short_des
+    , i.style_id
+    , i.style_des
+    , i.color_cd
+    , i.color_des
+    , i.size_cd
+    , i.size_des
+    , i.department_id
+    , i.department_nam
+    , i.class_id
+    , i.class_nam
+    , i.subclass_id
+    , i.subclass_nam
+    , i.division_id
+    , i.division_nam
+    , i.group_num
+    , i.group_nam
+    , i.item_status_cd
+    , i.standard_uom_des
+    , i.regular_unit_retail_amt
+    , i.selling_unit_retail_amt
+    , i.inventory_ind
+    , i.merchandise_ind
+    , i.orderable_ind
+    , i.sellable_ind
+    , i.ship_alone_ind
+    , i.item_create_tms
+    , i.last_update_tms
+    , i.unit_cost_amt
+    , i.origin_country_cd
+    , i.item_record_status_cd
+    , i.season_id
+    , i.season_des
+    , IFNULL(s.item_key,       i.item_key      ) as current_item_key
+    , IFNULL(s.sku_id,         i.sku_id        ) as current_sku_id
+    , IFNULL(s.item_des,       i.item_des      ) as current_item_des
+    , IFNULL(s.item_short_des, i.item_short_des) as current_item_short_des
+    , IFNULL(s.color_cd,       i.color_cd      ) as current_color_cd
+    , IFNULL(s.color_des,      i.color_des     ) as current_color_des
+    , IFNULL(s.size_cd,        i.size_cd       ) as current_size_cd
+    , IFNULL(s.size_des,       i.size_des      ) as current_size_des
+    , IFNULL(s.style_id,       i.style_id      ) as current_style_id
+    , IFNULL(s.style_des,      i.style_des     ) as current_style_des
+    , IFNULL(s.subclass_id,    i.subclass_id   ) as current_subclass_id
+    , IFNULL(s.subclass_nam,   i.subclass_nam  ) as current_subclass_nam
+    , i.edl_create_tms
+    , i.edl_create_job_nam
+    , i.edl_last_update_tms
+    , i.edl_last_update_job_nam
+    , i.brand_cd
+FROM analytic_mart.dim_item i
+left join (select cast(s1.sku_id as string) as from_sku_id
+            , i1.item_key
+            , i1.sku_id        
+            , i1.item_des   
+            , i1.item_short_des
+            , i1.color_cd 
+            , i1.color_des
+            , i1.size_cd       
+            , i1.size_des      
+            , i1.style_id     
+            , i1.style_des    
+            , i1.subclass_id   
+            , i1.subclass_nam  
+    from work.plus_item_sku_supercede s1
+    join analytic_mart.dim_item i1
+        on  i1.sku_id   = cast(s1.current_sku_nbr as string)
+        and i1.brand_cd = 'LB'
+    where s1.chain_id = 7
+) s
+    on s.from_sku_id = i.sku_id
+where i.brand_cd = 'LB'
+!
+#rc_check $? "Supercede Data added in analytic_mart.dim_item Table"

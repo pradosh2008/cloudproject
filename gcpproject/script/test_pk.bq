@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --use_legacy_sql=false --parameter=days:INT64:$1 <<!
+select     
+--count(*),
+date_sub(current_date,interval @days day),
+PARSE_DATE('%Y%m%d',cast(ord.batch_id as string))
+    FROM  edl_stage.pre_atg_order_header_curr ord
+    where PARSE_DATE('%Y%m%d',cast(ord.batch_id as string))>date_sub(current_date,interval @days day);       
+!
+

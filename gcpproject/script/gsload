@@ -1,0 +1,68 @@
+#!/usr/bin/bash
+
+#. $HOME/lib/set_env.sh
+. $HOME/lib/common.sh
+
+#defaults and variable initialization
+usage="Usage: `basename $0` [-h] [-p project_name] [-b bucket_name] data_path "
+
+script_name=`basename ${0}`
+bucket_name="p-asna-datasink-003"
+status_code="Ready"
+data_root="/data"
+
+##### Parse command line #####
+#
+while getopts hnd:b:t: OPT; do
+    case "$OPT" in
+        h)
+            echo $usage
+            echo " Copy all files in data_path to Google Cloud Storage
+    -h) Display this help text.
+    -p) Specify a Google project other than the service accounts default
+    -b) Specify a Google storage bucket other than the default
+    The data_path ...
+"
+            exit 0
+            ;;
+        p)  project_name=$OPTARG
+            ;;
+        b)  bucket_name=$OPTARG
+            ;;
+        \?) # getopts issues an error message
+            echo $usage 
+            exit 1
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`    # Remove the switches we parsed above.
+
+##### Define local functions #####
+#
+archive_data_files() {
+    archive_src=$1
+
+    day=`date +%a`
+    tar -czvf ${archive_src}/arc/${day}.tar.gz ${archive_src}/*.*
+    rc_check $? 'archive_data_files'
+
+}
+##### Main #####
+#
+# Set variables
+
+data_dir=${1#*data/} #remove data prefex if it exists
+#echo "data_dir: $data_dir"
+#echo "data_root: $data_root"
+exec_log ${script_name}_${data_dir}
+
+if [ -d ${data_root}/${data_dir} ]; then
+    gsutil -m cp ${data_root}/${data_dir}/*.* gs://${bucket_name}/${data_dir}
+    rc_check $? 'gsutil-copy'
+    archive_data_files "${data_root}/${data_dir}"
+    rm -f ${data_root}/${data_dir}/*.*
+    rc_check $? "rm-${data_dir}"
+else
+    echo "Error - unknown directory: /data/${data_dir}"
+    exit 1
+fi

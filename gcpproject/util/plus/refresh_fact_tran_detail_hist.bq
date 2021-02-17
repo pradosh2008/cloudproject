@@ -1,0 +1,314 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#backup of current prod table
+#bq cp --force analytic_mart.fact_transaction_detail analytic_mart.fact_transaction_detail_bkup
+rc_check $? "backup table"
+
+#Loading 7 years data to mart
+#Loading in temporary stage table in the mart schema from the stage table
+bq query --max_rows 1 --replace --allow_large_results --destination_table analytic_mart.fact_transaction_detail --use_legacy_sql=false <<!
+select
+td.transaction_key,
+td.transaction_line_num,
+td.transaction_dt,
+td.order_dt,
+td.store_key,
+case when c.brand_customer_key is not null then c.brand_customer_key else '0' end as brand_customer_key,
+td.item_key,
+td.return_ind,
+td.original_transaction_header_key,
+td.original_transaction_store_key,
+td.original_transaction_dt,
+td.original_transaction_line_num,
+td.line_action_cd,
+td.line_object_type_cd,
+td.line_object_cd,
+td.line_void_ind,
+td.scanned_ind,
+td.gift_card_ind,
+td.taxable_ind,
+td.style_locator_ind,
+td.permanent_markdown_type_cd,
+td.return_reason_cd,
+td.return_disposition_cd,
+td.return_reason_desc,
+td.return_to_dc_ind,
+td.layaway_ind,
+td.order_ind,
+ROUND(CAST(td.sku_cost_amt AS NUMERIC), 2) sku_cost_amt,
+td.sku_quantity_num,
+ROUND(CAST(td.sku_retail_amt AS NUMERIC), 2) sku_retail_amt,
+ROUND(CAST(td.markdown_amt AS NUMERIC), 2) markdown_amt,
+ROUND(CAST(td.customer_paid_tax_amt AS NUMERIC), 2) customer_paid_tax_amt,
+ROUND(CAST(td.company_owed_tax_amt AS NUMERIC), 2) as company_owed_tax_amt,
+ROUND(CAST(td.commision_amt AS NUMERIC), 2) as commision_amt,
+ROUND(CAST(td.current_retail_amt AS NUMERIC), 2) as current_retail_amt,
+ROUND(CAST(td.original_unit_retail_amt AS NUMERIC), 2) as original_unit_retail_amt,
+td.primary_salesperson_id,
+td.secondary_salesperson_id,
+td.original_primary_salesperson_id,
+td.original_secondary_salesperson_id,
+td.upc_store_key,
+td.upc_num,
+td.size_cd,
+td.cross_brand_store_key,
+td.overseas_item_ind,
+td.edl_create_tms,
+td.edl_create_job_nam,
+td.edl_last_update_tms,
+td.edl_last_update_job_nam,
+td.brand_cd
+from
+(SELECT TO_HEX(MD5( CONCAT(case when tmci001.id_chain = 4
+								THEN 'CA|'
+								when tmci001.id_chain = 7
+								THEN 'LB|'
+							end
+							,cast(tmci001.id_store as string)
+							,"|",cast(tmci001.id_register as string)
+							,"|",cast(tmci001.da_trns as string)
+							,"|",cast(tmci001.nu_trns as string)
+				))) 																			AS transaction_key
+		,tmci001.nu_trns_dtl_seq 																AS transaction_line_num
+		,tmci001.da_trns 																		AS transaction_dt
+		,case	when tmci001.id_store=6000
+				then lbhtmci002.da_order_received
+				else tmci001.da_trns
+		 end 																					as order_dt
+		,TO_HEX(MD5(CONCAT(case when tmci001.id_chain = 4
+								THEN 'CA|'
+								when tmci001.id_chain = 7
+								THEN 'LB|'
+							end
+					,CAST (tmci001.id_store AS string)))) 										as store_key
+		,TO_HEX(MD5(CONCAT(case when tmci001.id_chain = 4
+								THEN 'CA|'
+								when tmci001.id_chain = 7
+								THEN 'LB|'
+							end
+					,cast (tmci001.id_sku AS STRING)))) 											as item_key
+		,case	when tmci001.am_rtl <= 0
+				then 1
+				else 0
+ 		 end 																					AS return_ind
+		,case 	when tmci001.am_rtl <= 0
+				then TO_HEX( md5(concat (case	when tmci001.id_chain = 4
+												THEN 'CA|'
+												when tmci001.id_chain = 7
+												THEN 'LB|'
+										end
+										,cast(tmci001.id_store as string) -- RJ - as per EDL hist load code file,id_store is orig store id
+										,"|",cast(lbhtmci002.id_orig_register as string)
+										,"|",cast(lbhtmci002.da_orig_trns as string)
+										,"|",cast(lbhtmci002.nu_orig_trns as string))))
+				else TO_HEX( MD5( CONCAT(case 	when tmci001.id_chain = 4
+												THEN 'CA|'
+												when tmci001.id_chain = 7
+												THEN 'LB|'
+										 end
+										,cast(tmci001.id_store as string)
+										,"|",cast(lbhtmci002.id_orig_register as string)
+										,"|",cast(lbhtmci002.da_orig_trns as string)
+										,"|",cast(lbhtmci002.nu_orig_trns as string))))
+		 end 																					AS original_transaction_header_key
+		,case	when tmci001.am_rtl <= 0
+				then TO_HEX(MD5(CONCAT(case when tmci001.id_chain = 4
+											THEN 'CA|'
+											when tmci001.id_chain = 7
+											THEN 'LB|'
+										end
+										,cast (tmci001.id_store AS string))))
+				else TO_HEX(MD5(CONCAT(case when tmci001.id_chain = 4
+											THEN 'CA|'
+											when tmci001.id_chain = 7
+											THEN 'LB|'
+										end
+										,cast (tmci001.id_store AS string))))
+		 end 																					as original_transaction_store_key
+		,case 	when tmci001.am_rtl <= 0
+				then lbhtmci002.da_orig_trns
+				else tmci001.da_trns
+		 end 																					AS original_transaction_dt
+		,case 	when tmci001.am_rtl > 0
+				then tmci001.nu_trns_dtl_seq
+				else NULL
+		 end				 																	AS original_transaction_line_num
+		,cast(NULL as string)  																					AS line_action_cd
+		,cast(NULL as string)  																					AS line_object_type_cd
+		,cast(NULL as string)  																					AS line_object_cd
+		,CASE when tmci001.cd_trns_type = "99"
+				then 1
+				else 0
+		 END	 																				as line_void_ind
+		,case 	when tmci001.fl_scanned ='Y'
+				then 1
+				when tmci001.fl_scanned ='N'
+				then 0
+				else cast(tmci001.fl_scanned as int64)
+		 end 																					as scanned_ind
+		,case 	when tmci001.id_sku = 0
+				then 1
+				else 0
+		 end 																					as gift_card_ind
+		,case 	when tmci001.fl_taxable ='Y'
+				then 1
+				else 0
+		 end 																					as taxable_ind
+		,case 	when tmci001.fl_style_loc ='Y'
+				then 1
+				else 0
+		 end 																					as style_locator_ind
+		,tmci001.in_perm_mrkdn_type 															as permanent_markdown_type_cd
+		,tmci001.cd_rtn_reason 																	as return_reason_cd
+		,cast(NULL as string)																	as return_disposition_cd
+		,cast(NULL as string) 																as return_reason_desc
+		,cast(NULL as int64)  																					as return_to_dc_ind
+		,cast(NULL as int64) 																					as layaway_ind
+		,cast(NULL as int64)  																					as order_ind
+		,tmci001.am_cost																		AS sku_cost_amt
+		,tmci001.am_cost																		AS net_unit_cogs_amt
+		,tmci001.qu_item																		as sku_quantity_num
+		,round(am_rtl+am_mrkdn_extd,2)															AS sku_retail_amt
+		,round(am_mrkdn_extd,2)																	AS markdown_amt
+		,tmci001.am_tax_cust_paid 																as customer_paid_tax_amt
+		,tmci001.am_tax_company_owed 																as company_owed_tax_amt
+		,tmci001.am_commission 																		as commision_amt
+		,tmci001.am_rtl_curr 																		as current_retail_amt
+		,tmci001.am_rtl_orig 																	as original_unit_retail_amt
+		,cast(tmci001.id_slsper as string) 														as primary_salesperson_id
+		,cast(NULL as string)									 												as secondary_salesperson_id
+		,cast(NULL as string)							 														as original_primary_salesperson_id
+		,cast(NULL as string) 							 														as original_secondary_salesperson_id
+		,cast(NULL as string) 																as upc_store_key
+		,cast(NULL as int64)  																as upc_num
+		,cast(NULL as string) 																as size_cd
+		,TO_HEX(md5(concat(coalesce(cast(tmci001.id_store_owner as string),"")
+				,"|"
+				,coalesce(cast(tmci001.id_chain_owner as string),""))))					   					    AS cross_brand_store_key
+		,CAST(NULL AS int64)																	as overseas_item_ind
+		,CURRENT_TIMESTAMP 																		AS edl_create_tms
+		,'TRANS' 																				AS edl_create_job_nam
+		,CURRENT_TIMESTAMP 																		AS edl_last_update_tms
+		,'TRANS' 																				AS edl_last_update_job_nam
+		,case 	when tmci001.id_chain = 4
+				THEN 'CA'
+				when tmci001.id_chain = 7
+				THEN 'LB'
+		 end 																					as brand_cd
+FROM edl_stage.lbca_hst_trans_detail tmci001
+LEFT JOIN edl_stage.lbca_hst_trans_header lbhtmci002
+ON md5(concat (tmci001.id_chain,"|",tmci001.id_store,"|",tmci001.id_register,"|",tmci001.da_trns,"|",tmci001.nu_trns)) = md5(concat (lbhtmci002.id_chain,"|",lbhtmci002.id_store,"|",lbhtmci002.id_register,"|",lbhtmci002.da_trns,"|",lbhtmci002.nu_trns))
+ where   COALESCE(id_sku, 0) != 0 and id_sku not in (210360988,100000021)
+)td
+left join analytic_mart.transaction_customer_xref c
+on c.transaction_key = td.transaction_key
+!
+rc_check $? "7 years data loaded to mart"
+
+# _new table with 1 year data to update cost amt from teradata
+
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table analytic_mart.fact_transaction_detail_new <<!
+select  d.transaction_key
+,d.transaction_line_num
+,d.transaction_dt
+,d.order_dt
+,d.store_key
+,case when c.brand_customer_key is not null then c.brand_customer_key else d.brand_customer_key end as brand_customer_key
+,d.item_key
+,d.return_ind
+,d.original_transaction_header_key
+,d.original_transaction_store_key
+,d.original_transaction_dt
+,d.original_transaction_line_num
+,d.line_action_cd
+,d.line_object_type_cd
+,d.line_object_cd
+,d.line_void_ind
+,d.scanned_ind
+,d.gift_card_ind
+,d.taxable_ind
+,d.style_locator_ind
+,d.permanent_markdown_type_cd
+,d.return_reason_cd
+,d.return_disposition_cd
+,d.return_reason_desc
+,d.return_to_dc_ind
+,d.layaway_ind
+,d.order_ind
+,d.sku_retail_amt 													as net_sales_amt -- to not have any impact on DS team queries
+,case 	when d.transaction_dt between '2019-03-29' and '2020-04-03' 
+		then ROUND(CAST(tdh.transaction_line_cst AS NUMERIC), 2) 
+		else d.sku_cost_amt 
+end 																as net_unit_cogs_amt    -- to not have any impact on DS team queries 
+,case 	when d.transaction_dt between '2019-03-29' and '2020-04-03'
+		then ROUND(CAST(tdh.transaction_line_cst AS NUMERIC), 2) 
+		else d.sku_cost_amt 
+end 																as sku_cost_amt
+,d.sku_quantity_num
+,d.sku_retail_amt
+,d.markdown_amt
+,d.customer_paid_tax_amt
+,d.company_owed_tax_amt
+,d.commision_amt
+,d.current_retail_amt
+,d.original_unit_retail_amt
+,d.primary_salesperson_id
+,d.secondary_salesperson_id
+,d.original_primary_salesperson_id
+,d.original_secondary_salesperson_id
+,d.upc_store_key
+,d.upc_num
+,d.size_cd
+,d.cross_brand_store_key
+,d.overseas_item_ind
+,d.edl_create_tms
+,d.edl_create_job_nam
+,d.edl_last_update_tms
+,d.edl_last_update_job_nam
+,d.brand_cd
+from analytic_mart.fact_transaction_detail_bkup d -- prod backup table created in earlier step   
+left join analytic_mart.transaction_customer_xref c -- to get update customer key
+on c.transaction_key = d.transaction_key
+left outer join edl_stage.plus_sales_transaction_detail_hist tdh -- TD cost table
+on d.transaction_key=TO_HEX(MD5( CONCAT(case when tdh.selling_chain_nbr = 4
+                                              THEN 'CA|'
+                                              when tdh.selling_chain_nbr = 7
+                                              THEN 'LB|'
+                                         end
+                            ,cast(tdh.selling_store_nbr as string)
+                            ,"|",cast(tdh.register_nbr as string)
+                            ,"|",cast(tdh.transaction_dt as string)
+                            ,"|",cast(tdh.transaction_nbr as string)
+                   )))
+and d.transaction_line_num = tdh.detail_seq_nbr
+where COALESCE(d.line_object_cd,'0')  != '110' and  COALESCE(d.gift_card_ind, 0) = 0
+ and d.item_key NOT IN  ('bbe0cce8883644e1956b414915a61e84', '830c306516851e2fdf1fe20bd7cfabce')
+and d.transaction_dt >=  '2019-03-29'  
+!
+rc_check $? "create _new td table"
+
+#Merging 7 years hist with td cost amt table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_detail_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.fact_transaction_detail c
+left join analytic_mart.fact_transaction_detail_new w
+    on w.transaction_key=c.transaction_key
+    and w.transaction_line_num=c.transaction_line_num
+    where w.transaction_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.fact_transaction_detail analytic_mart.fact_transaction_detail_archive
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_detail_new analytic_mart.fact_transaction_detail
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_detail_new
+rc_check $? "drop the temp table"
+
+

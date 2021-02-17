@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh 
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci021_cust_phone_curr as
+SELECT
+stg.ID_CUST
+,stg.TE_CUST
+,stg.IN_PHONE_SRCE
+,stg.FL_PHONE_UNLISTED
+,stg.DA_PHONE_ADDED
+,stg.IN_PHONE_TYPE
+,stg.TE_PHONE_EXT
+,stg.CD_PHONE_VERIFIED
+,stg.DA_PHONE_VERIFIED
+,stg.CD_PHONE_CATEGORY
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST,lbca.TE_CUST
+order by lbca.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_vmci021_cust_phone\` as lbca
+)  as stg where row_num=1
+!
+

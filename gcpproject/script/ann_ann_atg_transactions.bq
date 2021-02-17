@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_atg_transactions  'gs://p-asna-datasink-003/ann_ann_atg_transactions/*'
+
+rc_check $? "Load edl_landing"
+pid=$$
+
+echo "pre_atg_order_header.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_commerceitem.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_commerceitemadjustments.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_commerceitemcoupons.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_shipment.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_payment.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl
+sleep 10
+echo "pre_atg_order_shipment_tracking.bq" >/data/ctl/$pid-`date +%m%d%H%M%S`.ctl

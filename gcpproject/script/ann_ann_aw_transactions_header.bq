@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_aw_transactions_header  'gs://p-asna-datasink-003/ann_ann_aw_transactions_header/*'
+rc_check $? "Load edl_landing"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.ann_ann_aw_transactions_header c
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_aw_transaction_header c
+left join edl_landing.ann_ann_aw_transactions_header w
+    on  w.if_entry_no = c.if_entry_no
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+bq cp --force edl_stage.pre_aw_transaction_header edl_archive.pre_aw_transaction_header
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_ann_aw_transactions_header_new edl_stage.pre_aw_transaction_header
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_ann_aw_transactions_header_new
+rc_check $? "drop the temp table"
+
+

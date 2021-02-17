@@ -1,0 +1,84 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_inventory_store_week_new --use_legacy_sql=false <<!
+SELECT 
+TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN cast(pssi.chain_id as INT64) = 35 THEN 'LB' 
+                           WHEN cast(pssi.chain_id as INT64) = 37 THEN 'CA' 
+                    END
+                    , '|'
+                    , CAST(CAST(RIGHT(pssi.store_id, 4) as INT64) as STRING)))) as store_key
+, TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN cast(pssi.chain_id as INT64) = 35 THEN 'LB' 
+                           WHEN cast(pssi.chain_id as INT64) = 37 THEN 'CA' 
+                      END
+                    , '|'
+                    , CAST(CAST(pssi.sku_id as INT64) as STRING)))) as item_key
+, CAST(pssi.week_id as INT64) as fiscal_week_nbr
+, CASE
+       WHEN cast(pssi.chain_id as INT64) = 35 then 'LB'
+       WHEN cast(pssi.chain_id as INT64) = 37 then 'CA'
+  END AS brand_cd
+, pssi.store_id
+, pssi.sku_id
+, pssi.style_id
+, pssi.color_id
+, pssi.size_id
+, pssi.bop_store_inv_unit_cnt
+, pssi.bop_store_inv_retail_amt
+, pssi.bop_store_inv_actual_cost_amt
+, pssi.bop_store_inv_valued_cost_amt
+, pssi.bop_store_it_unit_cnt
+, pssi.bop_store_it_retail_amt
+, pssi.bop_store_it_actual_cost_amt
+, pssi.bop_store_it_valued_cost_amt
+, pssi.store_receipt_unit_cnt
+, pssi.store_receipt_retail_amt
+, pssi.store_receipt_actual_cost_amt
+, pssi.store_receipt_valued_cost_amt
+, pssi.bop_mkd_store_it_unit_cnt
+, pssi.bop_mkd_store_it_retail_amt
+, pssi.bop_mkd_store_it_actual_cost_amt
+, pssi.bop_mkd_store_it_valued_cost_amt
+, pssi.dmos_unit_cnt
+, pssi.dmos_retail_amt
+, pssi.dmos_actual_cost_amt
+, pssi.dmos_valued_cost_amt
+, pssi.store_trans_out_unit_cnt
+, pssi.store_trans_out_retail_amt
+, pssi.store_trans_out_actual_cost_amt
+, pssi.store_trans_out_valued_cost_amt
+, pssi.store_trans_in_unit_cnt
+, pssi.store_trans_in_retail_amt
+, pssi.store_trans_in_actual_cost_amt
+, pssi.store_trans_in_valued_cost_amt
+, pssi.bop_alloc_notship_inv_unit_cnt
+, pssi.bop_alloc_notship_inv_retail_amt
+, pssi.bop_alloc_notship_actual_cost_amt
+, pssi.bop_alloc_notship_valued_cost_amt
+, pssi.mkd_issue_unit_cnt
+, pssi.mkd_issue_retail_amt
+, pssi.mkd_issue_cost_amt
+, CURRENT_TIMESTAMP as edl_create_tms
+, 'PLUS_FACT_INVENTORY_STORE_WEEK' as edl_create_job_nam
+, CURRENT_TIMESTAMP as edl_last_update_tms
+, 'PLUS_FACT_INVENTORY_STORE_WEEK' as edl_last_update_job_nam
+FROM edl_stage.plus_store_sku_inventory pssi
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_inventory_store_week edl_archive.plus_fact_inventory_store_week
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_inventory_store_week_new analytic_mart.plus_fact_inventory_store_week
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_inventory_store_week_new
+rc_check $? "drop the temp table"
+
+

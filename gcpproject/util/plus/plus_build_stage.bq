@@ -1,0 +1,32 @@
+bq query  --use_legacy_sql=false <<!
+create or replace table edl_stage.plus_item_sku as select * from edl_stage.plus_item_sku where 1=2;
+create or replace table edl_stage.plus_sales_customer as select * from edl_stage.plus_sales_customer where 1=2;
+create or replace table edl_stage.plus_sales_transaction_detail as select * from edl_stage.plus_sales_transaction_detail where 1=2;
+create or replace table edl_stage.plus_sales_transaction_discount as select * from edl_stage.plus_sales_transaction_discount where 1=2;
+create or replace table edl_stage.plus_sales_transaction_fee as select * from edl_stage.plus_sales_transaction_fee where 1=2;
+create or replace table edl_stage.plus_sales_transaction_header as select * from edl_stage.plus_sales_transaction_header where 1=2;
+create or replace table edl_stage.plus_sales_transaction_notes as select * from edl_stage.plus_sales_transaction_notes where 1=2;
+create or replace table edl_stage.plus_sales_transaction_payment as select * from edl_stage.plus_sales_transaction_payment where 1=2;
+create or replace table edl_stage.plus_sales_transaction_tax as select * from edl_stage.plus_sales_transaction_tax where 1=2;
+create or replace table edl_stage.plus_sales_transaction_tender as select * from edl_stage.plus_sales_transaction_tender where 1=2;
+create or replace table edl_stage.plus_sku_attr_channel as select * from edl_stage.plus_sku_attr_channel where 1=2;
+create or replace table edl_stage.plus_store as select * from edl_stage.plus_store where 1=2;
+create or replace table edl_stage.plus_tmci997_esp_outbound as select * from edl_stage.plus_tmci997_esp_outbound where 1=2;
+create or replace table edl_stage.plus_vmci015_cust_ccard as select * from edl_stage.plus_vmci015_cust_ccard where 1=2;
+create or replace table edl_stage.plus_vmci019_customer as select * from edl_stage.plus_vmci019_customer where 1=2;
+create or replace table edl_stage.plus_vmci019_custonly as select * from edl_stage.plus_vmci019_custonly where 1=2;
+create or replace table edl_stage.plus_vmci021_cust_phone as select * from edl_stage.plus_vmci021_cust_phone where 1=2;
+create or replace table edl_stage.plus_vmci067_cust_block as select * from edl_stage.plus_vmci067_cust_block where 1=2;
+create or replace table edl_stage.plus_vmci079_club_memb as select * from edl_stage.plus_vmci079_club_memb where 1=2;
+create or replace table edl_stage.plus_vmci105_chain_cust as select * from edl_stage.plus_vmci105_chain_cust where 1=2;
+create or replace table edl_stage.plus_vmci172_chain_cust_email as select * from edl_stage.plus_vmci172_chain_cust_email where 1=2;
+create or replace table edl_stage.plus_vmci173_full_email_addr_status as select * from edl_stage.plus_vmci173_full_email_addr_status where 1=2;
+create or replace table edl_stage.plus_vmci173_full_email_address as select * from edl_stage.plus_vmci173_full_email_address where 1=2;
+create or replace table edl_stage.plus_vmci180_cust_demog as select * from edl_stage.plus_vmci180_cust_demog where 1=2;
+create or replace table edl_stage.plus_vmci396_curr_opt_in_out_full as select * from edl_stage.plus_vmci396_curr_opt_in_out_full where 1=2;
+create or replace table edl_stage.plus_vmci972_chain_cust_fullemail as select * from edl_stage.plus_vmci972_chain_cust_fullemail where 1=2;
+create or replace table edl_stage.plus_vmci995_esp_last_click_open as select * from edl_stage.plus_vmci995_esp_last_click_open where 1=2;
+--one time load
+create or replace table edl_stage.plus_vmci198_opt_in_out_type as select * from edl_stage.plus_vmci198_opt_in_out_type;
+create or replace table edl_stage.plus_vmci016_ccard_type as select * from edl_stage.plus_vmci016_ccard_type;
+!

@@ -1,0 +1,69 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_vmci995_esp_last_click_open.json \
+        edl_landing.lbca_vmci995_esp_last_click_open \
+        "gs://${default_bucket}/plus/crm/vmci995_esp_last_click_open*.txt.gz"
+rc_check $? "Load edl_landing"
+
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci995_esp_last_click_open_new --use_legacy_sql=false <<!
+SELECT
+ stgn.ID_CHAIN
+,stgn.ID_EMAIL
+,stgn.TS_LAST_CLICK
+,stgn.TS_LAST_OPEN
+,stgn.DA_LAST_CLICK
+,stgn.DA_LAST_OPEN
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN, lbca.ID_EMAIL order by lbca.EXTRACT_TS desc) as row_num
+from
+(SELECT
+ CAST(TRIM(c.ID_CHAIN) AS INT64) as ID_CHAIN
+,CAST(TRIM(c.ID_EMAIL) AS INT64) as ID_EMAIL
+,case when TRIM(c.TS_LAST_CLICK)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.TS_LAST_CLICK,"America/New_York") end as TS_LAST_CLICK
+,case when TRIM(c.TS_LAST_OPEN)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.TS_LAST_OPEN,"America/New_York") end as TS_LAST_OPEN
+,case when TRIM(c.DA_LAST_CLICK)='' then null
+ else PARSE_DATE("%y/%m/%d",TRIM(c.DA_LAST_CLICK)) end as DA_LAST_CLICK
+,case when TRIM(c.DA_LAST_OPEN)='' then null
+ else PARSE_DATE("%y/%m/%d",TRIM(c.DA_LAST_OPEN)) end as DA_LAST_OPEN
+,case when TRIM(c.EXTRACT_TS)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.EXTRACT_TS,"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci995_esp_last_click_open c
+) lbca
+) stgn
+where stgn.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci995_esp_last_click_open_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci995_esp_last_click_open c
+left join edl_stage.plus_vmci995_esp_last_click_open_new w
+    on w.ID_CHAIN=c.ID_CHAIN
+    and w.ID_EMAIL=c.ID_EMAIL
+    where w.ID_EMAIL is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci995_esp_last_click_open edl_archive.plus_vmci995_esp_last_click_open
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci995_esp_last_click_open_new edl_stage.plus_vmci995_esp_last_click_open
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci995_esp_last_click_open_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci995_esp_last_click_open*.txt.gz"
+

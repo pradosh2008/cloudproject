@@ -1,0 +1,35 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+    chain_id,sku_id,batch_id,count(*)
+    from edl_stage.plus_item_sku
+    group by chain_id,sku_id,batch_id
+    having count(*)>1
+)'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.lb_item_sku l
+left join edl_stage.plus_item_sku p
+    on CAST(TRIM(l.chain_id) AS INT64) = p.chain_id
+    and CAST(TRIM(l.sku_id) AS INT64) = p.sku_id
+    and CAST(TRIM(l.batch_id) AS INT64) = p.batch_id
+where p.chain_id = 7 and p.sku_id is null'
+
+run_validation "$sql" "Completeness Check for LB"
+
+exit ${ERROR_CD:-0}
+
+

@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+echo "hello: $0"
+rc_check $? "Hello"
+
+

@@ -1,0 +1,74 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_on_order_sku_dc_day_new --use_legacy_sql=false <<!
+select
+  to_hex(md5(concat(  case 
+                           when posdd.chain_nbr = 7 then 'LB' 
+                           else 'CA'
+                      end
+                    , '|'
+                    , cast(cast(posdd.sku_nbr as int64) as string)))) as   item_key
+, posdd.dc_nbr                                                        as   dc_id
+, posdd.purchase_order_nbr                                            as   purchase_order_num
+, posdd.transaction_dt                                                as   transaction_dt
+, posdd.sku_nbr                                                       as   sku_id
+, cast(case
+            when posdd.chain_nbr = 4 then 'CA'
+            when posdd.chain_nbr = 7 then 'LB'
+       end as string
+      )                                                               as   brand_cd
+, posdd.sales_channel_type_cd                                         as   sales_channel_type_cd
+, posdd.purchase_order_dt                                             as   purchase_order_dt
+, posdd.not_before_dt                                                 as   not_before_dt
+, posdd.not_after_dt                                                  as   not_after_dt
+, posdd.otb_eop_dt                                                    as   otb_eop_dt
+, posdd.supplier_nbr                                                  as   supplier_num
+, posdd.unit_cst                                                      as   unit_cst_amt
+, posdd.unit_rtl                                                      as   unit_rtl_amt
+, posdd.on_order_received_qty                                         as   on_order_received_qty
+, posdd.on_order_received_rtl                                         as   on_order_received_rtl_amt
+, posdd.on_order_received_cst                                         as   on_order_received_cst_amt
+, posdd.on_order_ordered_qty                                          as   on_order_ordered_qty
+, posdd.on_order_ordered_rtl                                          as   on_order_ordered_rtl_amt
+, posdd.on_order_ordered_cst                                          as   on_order_ordered_cst_amt
+, posdd.on_order_open_balance_qty                                     as   on_order_open_balance_qty
+, posdd.on_order_open_balance_rtl                                     as   on_order_open_balance_rtl_amt
+, posdd.on_order_open_balance_cst                                     as   on_order_open_balance_cst_amt
+, posdd.on_order_closed_balance_qty                                   as   on_order_closed_balance_qty
+, posdd.on_order_closed_balance_rtl                                   as   on_order_closed_balance_rtl_amt
+, posdd.on_order_closed_balance_cst                                   as   on_order_closed_balance_cst_amt
+, posdd.on_order_cancelled_qty                                        as   on_order_cancelled_qty
+, posdd.on_order_cancelled_rtl                                        as   on_order_cancelled_rtl_amt
+, posdd.on_order_cancelled_cst                                        as   on_order_cancelled_cst_amt
+, posdd.price_type_cd                                                 as   price_type_cd
+, posdd.last_update_ts                                                as   last_update_dt
+, CURRENT_TIMESTAMP                                                   as   edl_create_tms
+, 'PLUS_FACT_ON_ORDER_SKU_DC_DAY'                                     as   edl_create_job_nam
+, CURRENT_TIMESTAMP                                                   as   edl_last_update_tms
+, 'PLUS_FACT_ON_ORDER_SKU_DC_DAY'                                     as   edl_last_update_job_nam
+from edl_stage.plus_on_order_sku_dc_day posdd
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_on_order_sku_dc_day edl_archive.plus_fact_on_order_sku_dc_day
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_on_order_sku_dc_day_new analytic_mart.plus_fact_on_order_sku_dc_day
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_on_order_sku_dc_day_new
+rc_check $? "drop the temp table"
+
+desc="A daily snapshot of items on order.
+Primary Key: item_key, dc_id, purchase_order_num, transaction_dt"
+
+bq update --description "$desc" analytic_mart.plus_fact_on_order_sku_dc_day
+
+
+
+

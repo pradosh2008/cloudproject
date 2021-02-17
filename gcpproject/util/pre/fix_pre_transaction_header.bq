@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_transaction_header_fixed --use_legacy_sql=false <<!
+select transaction_key 
+    ,transaction_num 
+    ,transaction_source_cd   
+    ,transaction_type_cd 
+    ,transaction_status_cd   
+    ,store_key   
+    ,week_id 
+    ,register_num    
+    ,transaction_dt  
+    ,transaction_tms 
+    ,channel_cd  
+    ,cast(transaction_net_amt as numeric)        as transaction_net_amt 
+    ,cast(transaction_tax_amt as numeric)        as transaction_tax_amt
+    ,cast(transaction_net_ret_amt as numeric)    as transaction_net_ret_amt 
+    ,batch_id    
+from analytic_mart.pre_transaction_header 
+!
+rc_check $? "Create fix table"
+
+bq cp --force analytic_mart.pre_transaction_header edl_archive.pre_transaction_header
+rc_check $? "archive copy"
+bq cp --force analytic_mart.pre_transaction_header_fixed analytic_mart.pre_transaction_header
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.pre_transaction_header_fixed
+rc_check $? "drop the temp table"

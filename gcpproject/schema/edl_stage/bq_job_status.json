@@ -1,0 +1,9 @@
+[
+     {"name":"runDate"         ,"type":"date"}
+    ,{"name":"runSeq"          ,"type":"numeric"}
+    ,{"name":"ctlFileName"     ,"type":"string"}
+    ,{"name":"bqScriptName"    ,"type":"string"}
+    ,{"name":"logFileName"     ,"type":"string"}
+    ,{"name":"runStatus"       ,"type":"string"}
+    ,{"name":"errorMsg"        ,"type":"string"}
+]

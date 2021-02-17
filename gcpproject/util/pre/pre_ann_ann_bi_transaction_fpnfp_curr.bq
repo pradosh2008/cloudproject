@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_ann_ann_bi_transaction_fpnfp_curr
+as
+     SELECT transaction_nbr
+          , transaction_type_cd
+          , item_sku
+          , full_price_flg
+          , batch_id
+       FROM (
+             SELECT transaction_nbr
+                  , transaction_type_cd
+                  , item_sku
+                  , full_price_flg
+                  , batch_id
+                  , row_number() OVER ( PARTITION BY transaction_nbr
+                                                    , item_sku
+                                        order by batch_id desc
+                                                , full_price_flg desc
+                    ) as rn
+               FROM \`${project}.edl_stage.pre_ann_ann_bi_transaction_fpnfp\`
+            ) AS A
+      WHERE rn = 1
+!
+

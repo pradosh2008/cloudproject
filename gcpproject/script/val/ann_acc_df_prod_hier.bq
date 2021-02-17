@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --autodetect --replace=true --quote "" --field_delimiter='|' --skip_leading_rows=1 --source_format=CSV edl_landing.ann_acc_df_prod_hier  'gs://p-asna-datasink-003/ann_acc_df_prod_hier/ANN_ACC_DF_PROD_HIER_20191110121135.txt'
+
+rc_check $? "Load edl_landing"
+
+
+echo "Moving the bucket $bucket_path_name$filename* to archive $archive_path"
+	
+#move the files to pre/archive folder
+gsutil mv $bucket_path_name$filename* $archive_path
+
+rc_check $? "move the processed file to archive folder"	
+
+

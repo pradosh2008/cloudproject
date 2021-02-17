@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+sql='
+SELECT COUNT(*) 
+FROM (
+        SELECT orderid
+        , lastmodifieddate
+        , COALESCE(paymentgroupid, "")
+        , COALESCE(payorderrelpaymentgroupid, "")
+        , COALESCE(relationshippayorderrelamount, "")
+        , batch_id
+        , count(*)
+        FROM edl_stage.pre_atg_order_payment
+        WHERE orderid NOT IN ("881461993328") 
+        GROUP BY 1,2,3,4,5,6
+        HAVING COUNT(*)>1
+)'
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT count(*)
+from edl_landing.ann_ann_atg_transactions c
+left join edl_stage.pre_atg_order_payment w
+    on  w.orderid = c.orderid
+    and w.lastmodifieddate = PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",c.lastmodifieddate)
+    and COALESCE(w.paymentgroupid, "") = COALESCE(c.paymentgroupid, "")
+    and w.batch_id = c.batch_id
+where w.orderid is null
+and c.orderid not like ".orderid"
+'
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

@@ -1,0 +1,16 @@
+#loading the temporary table in staging
+bq query  --max_rows 1 --allow_large_results --replace --destination_table analytic_mart.transaction_notes --use_legacy_sql=false <<!
+SELECT
+  TO_HEX( MD5( CONCAT('LB|',lbstn.selling_store_nbr,"|",lbstn.register_nbr,"|",lbstn.transaction_dt,"|",lbstn.transaction_nbr ))) AS transaction_key,
+  lbstn.detail_fee_seq_nbr AS transaction_notes_line_num,
+  lbstn.notes_seq_nbr AS transaction_notes_sequence_num,
+  lbstn.note_type_desc AS note_type_desc,
+  lbstn.free_form_note_desc,
+  CURRENT_TIMESTAMP AS edl_create_tms,
+  'TRANS' AS edl_create_job_nam,
+  CURRENT_TIMESTAMP AS edl_last_update_tms,
+  'TRANS' AS edl_last_update_job_nam,
+  'LB' AS brand_cd
+FROM
+  edl_stage.lb_sales_transaction_notes lbstn
+!

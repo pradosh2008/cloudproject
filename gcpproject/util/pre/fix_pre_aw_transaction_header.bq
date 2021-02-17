@@ -1,0 +1,53 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --destination_table=edl_stage.pre_aw_transaction_header_fix --use_legacy_sql=false <<!
+SELECT if_entry_no
+    ,interface_control_flag
+    ,record_type
+    ,store_no
+    ,register_no
+    ,transaction_date
+    ,entry_date_time
+    ,transaction_series
+    ,transaction_no
+    ,cashier_no
+    ,transaction_category
+    ,cast(tender_total as numeric)                      as tender_total 
+    ,transaction_void_flag
+    ,exception_flag
+    ,deposit_declaration_flag
+    ,closeout_flag
+    ,media_count_flag
+    ,tax_override_flag
+    ,pos_tax_jurisdiction
+    ,employee_no
+    ,transaction_remark
+    ,updated_by_user_name
+    ,company_no
+    ,till_no
+    ,batch_id
+from edl_stage.pre_aw_transaction_header c
+!
+rc_check $? "build fix"
+
+bq cp --force edl_stage.pre_aw_transaction_header edl_archive.pre_aw_transaction_header
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_aw_transaction_header_fix edl_stage.pre_aw_transaction_header
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_aw_transaction_header_fix
+rc_check $? "drop the temp table"
+
+
+#select if_entry_no, tender_total --7307
+#from edl_landing.ann_ann_aw_transactions_header 
+#where if_entry_no = 1093620096
+#;
+#select if_entry_no, tender_total --73.06999969482422
+#from edl_stage.pre_aw_transaction_header
+#where if_entry_no = 1093620096
+#;
+#select if_entry_no, tender_total --73.069999695
+#from edl_stage.pre_aw_transaction_header_fix
+#where if_entry_no = 1093620096
+#;

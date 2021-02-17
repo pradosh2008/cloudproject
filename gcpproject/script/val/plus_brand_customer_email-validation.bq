@@ -1,0 +1,72 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+       email_id,
+       brand_customer_key 
+       from analytic_mart.plus_brand_customer_email
+       group by 1,2
+       having count(*)>1
+)'
+run_validation "$sql" "Unique Key Check"
+
+#alternate column key check
+
+sql='
+select count(*) cnt
+from
+    (select
+       email_id,
+       brand_customer_id,
+       brand_cd 
+       from analytic_mart.plus_brand_customer_email
+       group by 1,2,3
+       having count(*)>1
+)'
+run_validation "$sql" "Alternate Key Check"
+
+#completeness check
+
+sql='
+select count(*) cnt 
+from 
+(select bce.* FROM analytic_mart.plus_brand_customer_email bce left outer join
+(select cce.id_email as email_id
+,TO_HEX(MD5(concat(cast(case when cce.id_chain = 7 then 'LB' else 'CA' end as string),'|',cast(cce.id_cust as string)))) as brand_customer_key 
+from edl_stage.plus_vmci172_chain_cust_email_curr as cce
+inner join edl_stage.plus_vmci972_chain_cust_fullemail_curr as ccf
+on cce.id_chain=ccf.id_chain
+and cce.id_cust=ccf.id_cust
+and cce.id_email=ccf.id_email 
+) stg 
+ON bce.brand_customer_key = stg.brand_customer_key 
+and bce.email_id = stg.email_id 
+where stg.brand_customer_key is null 
+)'
+
+run_validation "$sql" "completeness check"
+
+#null check
+
+#sql='
+#select cast(count(*) as int64) cnt
+#from
+#    (select * 
+#       FROM analytic_mart.plus_brand_customer_email
+#       WHERE email_id is NULL or 
+#       brand_customer_key IS NULL
+#)'
+#run_validation "$sql" "null check"
+
+
+
+exit ${ERROR_CD:-0}
+

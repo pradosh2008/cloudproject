@@ -1,0 +1,117 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_merch_plan_week_new --use_legacy_sql=false <<!
+select 
+  TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PMPW.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PMPW.CHAIN_NBR = 7 THEN 'LB' 
+                      END
+                    , '|'
+                    , CAST(PMPW.SUBCLASS_NBR as STRING))))  as SUBCLASS_KEY
+, CAST(CASE 
+            WHEN PMPW.CHAIN_NBR = 4 THEN 'CA' 
+            WHEN PMPW.CHAIN_NBR = 7 THEN 'LB' 
+            END as STRING
+      )                                                     as BRAND_CD
+, PMPW.FISCAL_WEEK_NBR                                      as FISCAL_WEEK_NBR
+, CAST(PMPW.SUBCLASS_NBR as STRING)                         as SUBCLASS_ID
+, PMPW.MERCH_CHANNEL_TYPE_CD                                as MERCH_CHANNEL_TYPE_CD
+, PMPW.PLAN_CHANNEL_TYPE_CD                                 as PLAN_CHANNEL_TYPE_CD
+, PMPW.PLAN_VERSION_NBR                                     as PLAN_VERSION_NBR
+, PMPW.MERCH_PLAN_TYPE_CD                                   as MERCH_PLAN_TYPE_CD
+, PMPW.PLAN_INITIAL_MARKUP_RTL                              as PLAN_INITIAL_MARKUP_RTL_AMT
+, PMPW.PLAN_ON_ORDER_QTY                                    as PLAN_ON_ORDER_QTY
+, PMPW.PLAN_ON_ORDER_RTL                                    as PLAN_ON_ORDER_RTL_AMT
+, PMPW.PLAN_ON_ORDER_CST                                    as PLAN_ON_ORDER_CST_AMT
+, PMPW.PLAN_DC_RECEIPTS_QTY                                 as PLAN_DC_RECEIPTS_QTY
+, PMPW.PLAN_DC_RECEIPTS_RTL                                 as PLAN_DC_RECEIPTS_RTL_AMT
+, PMPW.PLAN_DC_RECEIPTS_CST                                 as PLAN_DC_RECEIPTS_CST_AMT
+, PMPW.PLAN_DC_BOP_QTY                                      as PLAN_DC_BOP_QTY
+, PMPW.PLAN_DC_BOP_RTL                                      as PLAN_DC_BOP_RTL_AMT
+, PMPW.PLAN_DC_BOP_CST                                      as PLAN_DC_BOP_CST_AMT
+, PMPW.PLAN_DC_ON_HAND_QTY                                  as PLAN_DC_ON_HAND_QTY
+, PMPW.PLAN_DC_ON_HAND_RTL                                  as PLAN_DC_ON_HAND_RTL_AMT
+, PMPW.PLAN_DC_ON_HAND_CST                                  as PLAN_DC_ON_HAND_CST_AMT
+, PMPW.PLAN_DC_DISTRIBUTED_OUT_QTY                          as PLAN_DC_DISTRIBUTED_OUT_QTY
+, PMPW.PLAN_DC_DISTRIBUTED_OUT_RTL                          as PLAN_DC_DISTRIBUTED_OUT_RTL_AMT
+, PMPW.PLAN_DC_DISTRIBUTED_OUT_CST                          as PLAN_DC_DISTRIBUTED_OUT_CST_AMT
+, PMPW.PLAN_DC_PERM_MARKDOWN_QTY                            as PLAN_DC_PERM_MARKDOWN_QTY
+, PMPW.PLAN_DC_PERM_MARKDOWN_RTL                            as PLAN_DC_PERM_MARKDOWN_RTL_AMT
+, PMPW.PLAN_DC_PERM_MARKDOWN_CST                            as PLAN_DC_PERM_MARKDOWN_CST_AMT
+, PMPW.PLAN_DC_ADJUSTMENT_QTY                               as PLAN_DC_ADJUSTMENT_QTY
+, PMPW.PLAN_DC_ADJUSTMENT_RTL                               as PLAN_DC_ADJUSTMENT_RTL_AMT
+, PMPW.PLAN_DC_ADJUSTMENT_CST                               as PLAN_DC_ADJUSTMENT_CST_AMT
+, PMPW.PLAN_DC_SHRINK_QTY                                   as PLAN_DC_SHRINK_QTY
+, PMPW.PLAN_DC_SHRINK_RTL                                   as PLAN_DC_SHRINK_RTL_AMT
+, PMPW.PLAN_DC_SHRINK_CST                                   as PLAN_DC_SHRINK_CST_AMT
+, PMPW.PLAN_IN_TRANSIT_QTY                                  as PLAN_IN_TRANSIT_QTY
+, PMPW.PLAN_IN_TRANSIT_RTL                                  as PLAN_IN_TRANSIT_RTL_AMT
+, PMPW.PLAN_IN_TRANSIT_CST                                  as PLAN_IN_TRANSIT_CST_AMT
+, PMPW.PLAN_STORE_RECEIPTS_QTY                              as PLAN_STORE_RECEIPTS_QTY
+, PMPW.PLAN_STORE_RECEIPTS_RTL                              as PLAN_STORE_RECEIPTS_RTL_AMT
+, PMPW.PLAN_STORE_RECEIPTS_CST                              as PLAN_STORE_RECEIPTS_CST_AMT
+, PMPW.PLAN_STORE_BOP_QTY                                   as PLAN_STORE_BOP_QTY
+, PMPW.PLAN_STORE_BOP_RTL                                   as PLAN_STORE_BOP_RTL_AMT
+, PMPW.PLAN_STORE_BOP_CST                                   as PLAN_STORE_BOP_CST_AMT
+, PMPW.PLAN_STORE_COUNT_QTY                                 as PLAN_STORE_COUNT_QTY
+, PMPW.PLAN_STORE_ON_HAND_QTY                               as PLAN_STORE_ON_HAND_QTY
+, PMPW.PLAN_STORE_ON_HAND_RTL                               as PLAN_STORE_ON_HAND_RTL_AMT
+, PMPW.PLAN_STORE_ON_HAND_CST                               as PLAN_STORE_ON_HAND_CST_AMT
+, PMPW.PLAN_STORE_SALES_QTY                                 as PLAN_STORE_SALES_QTY
+, PMPW.PLAN_STORE_SALES_RTL                                 as PLAN_STORE_SALES_RTL_AMT
+, PMPW.PLAN_STORE_SALES_CST                                 as PLAN_STORE_SALES_CST_AMT
+, PMPW.PLAN_MARKUP_INITIAL                                  as PLAN_MARKUP_INITIAL_AMT
+, PMPW.PLAN_MARKUP_QTY                                      as PLAN_MARKUP_QTY
+, PMPW.PLAN_MARKUP_RTL                                      as PLAN_MARKUP_RTL_AMT
+, PMPW.PLAN_MARKUP_CST                                      as PLAN_MARKUP_CST_AMT
+, PMPW.PLAN_STORE_PERM_MARKDOWN_QTY                         as PLAN_STORE_PERM_MARKDOWN_QTY
+, PMPW.PLAN_STORE_PERM_MARKDOWN_RTL                         as PLAN_STORE_PERM_MARKDOWN_RTL_AMT
+, PMPW.PLAN_STORE_PERM_MARKDOWN_CST                         as PLAN_STORE_PERM_MARKDOWN_CST_AMT
+, PMPW.PLAN_STORE_PROMO_MARKDOWN_QTY                        as PLAN_STORE_PROMO_MARKDOWN_QTY
+, PMPW.PLAN_STORE_PROMO_MARKDOWN_RTL                        as PLAN_STORE_PROMO_MARKDOWN_RTL_AMT
+, PMPW.PLAN_STORE_PROMO_MARKDOWN_CST                        as PLAN_STORE_PROMO_MARKDOWN_CST_AMT
+, PMPW.PLAN_STORE_SHRINK_QTY                                as PLAN_STORE_SHRINK_QTY
+, PMPW.PLAN_STORE_SHRINK_RTL                                as PLAN_STORE_SHRINK_RTL_AMT
+, PMPW.PLAN_STORE_SHRINK_CST                                as PLAN_STORE_SHRINK_CST_AMT
+, PMPW.PLAN_STORE_ADJUSTMENT_QTY                            as PLAN_STORE_ADJUSTMENT_QTY
+, PMPW.PLAN_STORE_ADJUSTMENT_RTL                            as PLAN_STORE_ADJUSTMENT_RTL_AMT
+, PMPW.PLAN_STORE_ADJUSTMENT_CST                            as PLAN_STORE_ADJUSTMENT_CST_AMT
+, PMPW.PLAN_TOTAL_BOP_QTY                                   as PLAN_TOTAL_BOP_QTY
+, PMPW.PLAN_TOTAL_BOP_RTL                                   as PLAN_TOTAL_BOP_RTL_AMT
+, PMPW.PLAN_TOTAL_BOP_CST                                   as PLAN_TOTAL_BOP_CST_AMT
+, PMPW.PLAN_TOTAL_ON_HAND_QTY                               as PLAN_TOTAL_ON_HAND_QTY
+, PMPW.PLAN_TOTAL_ON_HAND_RTL                               as PLAN_TOTAL_ON_HAND_RTL_AMT
+, PMPW.PLAN_TOTAL_ON_HAND_CST                               as PLAN_TOTAL_ON_HAND_CST_AMT
+, PMPW.PLAN_EROSION_FACTOR_QTY                              as PLAN_EROSION_FACTOR_QTY
+, PMPW.PLAN_EROSION_FACTOR_RTL                              as PLAN_EROSION_FACTOR_RTL_AMT
+, PMPW.PLAN_EROSION_FACTOR_CST                              as PLAN_EROSION_FACTOR_CST_AMT
+, PMPW.PLAN_EROSION_QTY                                     as PLAN_EROSION_QTY
+, PMPW.PLAN_EROSION_RTL                                     as PLAN_EROSION_RTL_AMT
+, PMPW.PLAN_EROSION_CST                                     as PLAN_EROSION_CST_AMT
+, PMPW.PLAN_STORES_CST                                      as PLAN_STORES_CST_AMT
+, PMPW.PLAN_ADDITIONAL_MARKUP_RTL                           as PLAN_ADDITIONAL_MARKUP_RTL
+, PMPW.PLAN_ADDITIONAL_MARKUP_CST                           as PLAN_ADDITIONAL_MARKUP_CST_AMT
+, PMPW.PLAN_ADDITIONAL_MARKUP_QTY                           as PLAN_ADDITIONAL_MARKUP_QTY_AMT
+, PMPW.CHAIN_PLAN_TYPE_DESC                                 as CHAIN_PLAN_TYPE_DES
+, CURRENT_TIMESTAMP                                         as EDL_CREATE_TMS
+, 'PLUS_FACT_MERCH_PLAN_WEEK'                               as EDL_CREATE_JOB_NAM
+, CURRENT_TIMESTAMP                                         as EDL_LAST_UPDATE_TMS
+, 'PLUS_FACT_MERCH_PLAN_WEEK'                               as EDL_LAST_UPDATE_JOB_NAM
+from edl_stage.plus_merch_plan_week PMPW
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+bq cp --force analytic_mart.plus_fact_merch_plan_week edl_archive.plus_fact_merch_plan_week
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_merch_plan_week_new analytic_mart.plus_fact_merch_plan_week
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_merch_plan_week_new
+rc_check $? "drop the temp table"
+
+

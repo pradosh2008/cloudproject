@@ -1,0 +1,155 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_shipment_new --use_legacy_sql=false <<!
+select distinct
+            orderid
+           ,case when lastmodifieddate='' 
+                then null 
+                else PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) 
+            end as lastmodifieddate
+          ,shippinggroupid
+          ,shippingmethod
+          ,description
+          ,shipondate
+          ,actualshipdate
+          ,shippinggroupstate
+          ,shippinggroupstatedetail
+          ,shippinggroupsubmitteddate
+          ,rawshipping
+          ,shippingtax
+          ,order_no
+          ,shippinggroupspecialinstructions
+          ,shippinggrouptype
+          ,hardgoodshippinggrouptrackingnumber
+          ,pickuptype
+          ,storenum
+          ,shippingaddressprefix
+          ,shippingaddressfirstname
+          ,shippingaddressmiddlename
+          ,shippingaddresslastname
+          ,shippingaddresssuffix
+          ,shippingaddresscompanyname
+          ,shippingaddressjobtitle
+          ,shippingaddresspobox
+          ,shippingaddressaddress1
+          ,shippingaddressaddress2
+          ,shippingaddressaddress3
+          ,shippingaddresscity
+          ,shippingaddressstateaddress
+          ,shippingaddresscountry
+          ,shippingaddresspostalcode
+          ,shippingaddressemail
+          ,shippingaddressphonenumber
+          ,shippingaddresscounty
+          ,shippingaddressfaxnumber
+          ,electronicshippinggroupemail
+          ,handlinginstructionstype
+          ,giftlistid
+          ,giftlistitemid
+          ,handlingmethod
+          ,handlinginstructionsshippinggroupid
+          ,handlinginstructionscommerceitemid
+          ,handlinginstructionsquantity
+          ,relationshiptype
+          ,shipitemrelshippinggroupid
+          ,shipitemrelcommerceitemid
+          ,shipitemrelquantity
+          ,returnedquantity
+          ,relationshipshipitemrelamount 
+          ,shipitemrelstate
+          ,shipitemrelstatedetail
+          ,lowbound
+          ,highbound
+          ,shortshippedquantity
+          ,egcnumber
+          ,batch_id
+    from edl_landing.ann_ann_atg_transactions atg
+    --where orderid not like "%.orderid%" and relationshiptype != 'payOrderRel'
+    
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_shipment_new --use_legacy_sql=false <<!
+select 
+           c.orderid
+          ,c.lastmodifieddate
+          ,c.shippinggroupid
+          ,c.shippingmethod
+          ,c.description
+          ,c.shipondate
+          ,c.actualshipdate
+          ,c.shippinggroupstate
+          ,c.shippinggroupstatedetail
+          ,c.shippinggroupsubmitteddate
+          ,cast(c.rawshipping as numeric) as rawshipping
+          ,cast(c.shippingtax as numeric) as shippingtax
+          ,c.order_no
+          ,c.shippinggroupspecialinstructions
+          ,c.shippinggrouptype
+          ,c.hardgoodshippinggrouptrackingnumber
+          ,c.pickuptype
+          ,c.storenum
+          ,c.shippingaddressprefix
+          ,c.shippingaddressfirstname
+          ,c.shippingaddressmiddlename
+          ,c.shippingaddresslastname
+          ,c.shippingaddresssuffix
+          ,c.shippingaddresscompanyname
+          ,c.shippingaddressjobtitle
+          ,c.shippingaddresspobox
+          ,c.shippingaddressaddress1
+          ,c.shippingaddressaddress2
+          ,c.shippingaddressaddress3
+          ,c.shippingaddresscity
+          ,c.shippingaddressstateaddress
+          ,c.shippingaddresscountry
+          ,c.shippingaddresspostalcode
+          ,c.shippingaddressemail
+          ,c.shippingaddressphonenumber
+          ,c.shippingaddresscounty
+          ,c.shippingaddressfaxnumber
+          ,c.electronicshippinggroupemail
+          ,c.handlinginstructionstype
+          ,c.giftlistid
+          ,c.giftlistitemid
+          ,c.handlingmethod
+          ,c.handlinginstructionsshippinggroupid
+          ,c.handlinginstructionscommerceitemid
+          ,c.handlinginstructionsquantity
+          ,c.relationshiptype
+          ,c.shipitemrelshippinggroupid
+          ,c.shipitemrelcommerceitemid
+          ,c.shipitemrelquantity
+          ,c.returnedquantity
+          ,cast(c.relationshipshipitemrelamount as numeric ) as relationshipshipitemrelamount
+          ,c.shipitemrelstate
+          ,c.shipitemrelstatedetail
+          ,c.lowbound
+          ,c.highbound
+          ,c.shortshippedquantity
+          ,c.egcnumber
+          ,c.batch_id          
+from edl_stage.pre_atg_order_shipment c
+left join edl_stage.pre_atg_order_shipment_new w
+    on  w.orderid = c.orderid
+    and w.lastmodifieddate = c.lastmodifieddate
+    and COALESCE(w.shippinggroupid, '') = COALESCE(c.shippinggroupid, '')
+        and COALESCE(w.shipitemrelcommerceitemid, '') = COALESCE(c.shipitemrelcommerceitemid,'')
+        and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+
+bq cp --force edl_stage.pre_atg_order_shipment edl_archive.pre_atg_order_shipment
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_shipment_new edl_stage.pre_atg_order_shipment
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_shipment_new
+

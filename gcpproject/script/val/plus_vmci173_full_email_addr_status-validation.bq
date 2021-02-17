@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='select count(*)
+from
+(select
+    h.id_email
+    , h.EXTRACT_TS
+    , count(*)
+    from edl_stage.plus_vmci173_full_email_addr_status h
+    group by 1,2
+    having count(*)>1
+)'
+
+run_validation "$sql" "Unique Key Check"
+
+#Completeness check
+sql="SELECT count(*) cnt
+from edl_landing.lbca_vmci173_full_email_addr_status l
+left join edl_stage.plus_vmci173_full_email_addr_status s
+    on CAST(TRIM(l.id_email) AS INT64) =s.id_email  
+where s.id_email is null"
+
+run_validation "$sql" "Completeness Check"
+
+exit ${ERROR_CD:-0}
+
+

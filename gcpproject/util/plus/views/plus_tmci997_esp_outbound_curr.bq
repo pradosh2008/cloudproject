@@ -1,0 +1,95 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_tmci997_esp_outbound_curr as
+SELECT
+stg.id_chain
+,stg.id_email
+,stg.id_cust
+,stg.cd_email_srce_initial
+,stg.cd_email_srce_recent
+,stg.cd_plcc_status_lb
+,stg.cd_plcc_status_ca
+,stg.cd_plcc_status_fb
+,stg.da_premier_exp_fb
+,stg.fl_perk_status
+,stg.da_perk_exp_ca
+,stg.fl_opt_in_em_lb
+,stg.fl_opt_in_em_lbo
+,stg.fl_opt_in_em_ca
+,stg.fl_opt_in_em_sonsi
+,stg.fl_opt_in_em_fb
+,stg.fl_opt_in_dm
+,stg.fl_opt_in_pa
+,stg.fl_opt_in_td
+,stg.id_store_near_any_ch
+,stg.nu_dist_near_any_ch
+,stg.id_store_near_this_ch
+,stg.nu_dist_near_this_ch
+,stg.fl_employee
+,stg.fl_cust_international
+,stg.id_store_loyalty
+,stg.da_em_opt_in_1st
+,stg.cd_life_cycle
+,stg.cd_cust_segment
+,stg.da_ecomm_1st_purch
+,stg.da_store_1st_purch
+,stg.da_1st_purch
+,stg.da_ecomm_last_purch
+,stg.da_store_last_purch
+,stg.da_credit_last_purch
+,stg.pc_store_rev_12m
+,stg.am_sales_net_12m
+,stg.am_margin_net_12m
+,stg.qu_txns_net_12m
+,stg.pc_margin_12m
+,stg.fl_petite_buyer
+,stg.fl_talls_buyer
+,stg.id_size_tops
+,stg.id_size_bottoms
+,stg.id_size_shoes
+,stg.id_size_dress
+,stg.id_size_bra
+,stg.pc_clearance_3m
+,stg.fl_clearance_buyer_13m
+,stg.da_last_purch_acrs_24m
+,stg.da_last_purch_active_24m
+,stg.da_last_purch_bra_24m
+,stg.da_last_purch_casual_24m
+,stg.da_last_purch_denim_24m
+,stg.da_last_purch_dress_24m
+,stg.da_last_purch_knits_24m
+,stg.da_last_purch_hosry_24m
+,stg.da_last_purch_jewlry_24m
+,stg.da_last_purch_outerwr_24m
+,stg.da_last_purch_panties_24m
+,stg.da_last_purch_shapewr_24m
+,stg.da_last_purch_shoes_24m
+,stg.da_last_purch_sleepwr_24m
+,stg.da_last_purch_spanx_24m
+,stg.da_last_purch_sweater_24m
+,stg.da_last_purch_swimwear_24m
+,stg.da_last_purch_wtw_24m
+,stg.da_last_purch_wmn_tops_24m
+,stg.da_last_purch_bttms_24m
+,stg.da_last_purch_innerwr_24m
+,stg.da_last_purch_coats_24m
+,stg.da_last_purch_social_24m
+,stg.da_last_purch_misc_24m
+,stg.da_last_open
+,stg.da_last_clicked
+,stg.da_tmci997_created
+,stg.da_tmci997_updated
+,stg.da_em_opt_in_last
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_chain,lbca.id_email,lbca.id_cust
+order by lbca.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_tmci997_esp_outbound\` as lbca
+)  as stg where row_num=1
+!
+

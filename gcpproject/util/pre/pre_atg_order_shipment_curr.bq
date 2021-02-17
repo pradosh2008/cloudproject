@@ -1,0 +1,63 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_shipment_curr
+as
+  select     orderid
+            ,lastmodifieddate
+            ,shippinggroupid
+            ,shippingmethod
+            ,description
+            ,shipondate
+            ,actualshipdate
+            ,shippinggroupstate
+            ,shippinggroupstatedetail
+            ,shippinggroupsubmitteddate
+            ,rawshipping
+            ,shippingtax
+            ,order_no
+            ,shippinggroupspecialinstructions
+            ,shippinggrouptype
+            ,hardgoodshippinggrouptrackingnumber
+            ,pickuptype
+            ,storenum
+            ,shippingaddressprefix
+            ,shippingaddressfirstname
+            ,shippingaddressmiddlename
+            ,shippingaddresslastname
+            ,shippingaddresssuffix
+            ,shippingaddresscompanyname
+            ,shippingaddressjobtitle
+            ,shippingaddresspobox
+            ,shippingaddressaddress1
+            ,shippingaddressaddress2
+            ,shippingaddressaddress3
+            ,shippingaddresscity
+            ,shippingaddressstateaddress
+            ,shippingaddresscountry
+            ,shippingaddresspostalcode
+            ,shippingaddressemail
+            ,shippingaddressphonenumber
+            ,shippingaddresscounty
+            ,shippingaddressfaxnumber
+            ,electronicshippinggroupemail
+            ,handlinginstructionstype
+            ,giftlistid
+            ,giftlistitemid
+            ,handlingmethod
+            ,handlinginstructionsshippinggroupid
+            ,handlinginstructionscommerceitemid
+            ,handlinginstructionsquantity
+  		    ,batch_id
+  from ( select *
+  				,dense_rank() over (PARTITION BY orderid 
+                                    order by batch_id desc
+                                            ,lastmodifieddate desc
+                                ) rn
+  		from \`${project}.edl_stage.pre_atg_order_shipment\`
+  		) m
+  where rn = 1
+!

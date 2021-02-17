@@ -1,0 +1,422 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "detail_seq_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_action_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_object_type_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_object_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_void_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "sku_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_line_cst", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_line_qty", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_line_rtl", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "permanent_markdown_type_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "discount_markdown_rtl", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_paid_tax_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "company_owed_tax_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "return_reason_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "commission_amt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "current_rtl", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "original_unit_rtl", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "scanned_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "gift_card_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "taxable_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "style_locator_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "primary_salesperson_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "secondary_salesperson_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "sales_return_ind", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "original_store_nbr", 
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_register_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_transaction_dt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_transaction_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ret_primary_sales_person_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ret_secondary_sales_person_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_disposition_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_layaway_ind",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "upc_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "selection_store_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "overseas_item_ind",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "selling_chain_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "selling_store_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "chain_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "transaction_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "transaction_dt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "register_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "record_seq_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "merchandise_salesperson_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "selection_chain_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ship_from_store_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_discount_markdown_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "sales_promo_markdown_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_discount_markdown_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_promo_markdown_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_original_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_current_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "productive_sales_register_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_sales_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_sales_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_sales_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "net_sales_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "net_sales_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "net_sales_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "style_locator_qty",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "style_locator_cst",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "style_locator_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "net_sales_original_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "net_sales_current_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_original_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "return_current_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_profit_prodtv_sls_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_profit_return_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gross_profit_net_sales_rtl",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tax_amt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "perm_markdown_type_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "create_dt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_update_ts",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "original_chain_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "extract_ts",
+    "type": "STRING"
+  }
+]

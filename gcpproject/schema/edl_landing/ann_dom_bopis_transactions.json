@@ -1,0 +1,52 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "order_id", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "item_sku", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "store_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pickup_type", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "qty_pickedup", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "qty_cancel", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "order_status", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "cancellation_reason", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pickup_date", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

@@ -1,0 +1,35 @@
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,a.line_num
+    ,a.OFFER_KEY
+    ,count(*)
+from jus_stage.fact_transaction_discount a
+group by a.transaction_key 
+    ,a.line_num
+    ,a.OFFER_KEY
+having count(*) > 1
+limit 10
+!
+
+
+echo 'Transaction count by month'
+bq query --use_legacy_sql=false <<!
+select date_trunc(s.transaction_dt,MONTH) 
+    ,count(distinct s.transaction_key)                          as tran_cnt
+    ,sum(case when d.transaction_key is null then 1 else 0 end) as orphan_tran_discount_cnt
+    ,sum(case when o.offer_key is null then 1 else 0 end)       as orphan_offer_tran_discount_cnt
+    ,count(distinct case when o.offer_key is null
+                         then s.offer_key else null
+                    end)                                        as orphan_offer_cnt
+
+from jus_stage.fact_transaction_discount s 
+left join jus_stage.fact_transaction_detail d 
+    on d.transaction_key = s.transaction_key 
+    and d.line_num = s.line_num
+left join jus_stage.dim_offer o
+    on o.offer_key = s.offer_key
+group by date_trunc(s.transaction_dt,MONTH) 
+order by 1
+!
+

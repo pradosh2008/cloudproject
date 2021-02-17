@@ -1,0 +1,67 @@
+[
+	{
+		"name": "ID_CUST",
+		"type": "string"
+	},
+	{
+		"name": "ID_ACCOUNT",
+		"type": "string"
+	},
+	{
+		"name": "CD_CCARD_PROCESS_STATUS",
+		"type": "string"
+	},
+	{
+		"name": "CD_BANK_CARD_TYPE",
+		"type": "string"
+	},
+	{
+		"name": "IN_BANK_CARD_SRCE",
+		"type": "string"
+	},
+	{
+		"name": "DA_BANK_CARD_ADDED",
+		"type": "string"
+	},
+	{
+		"name": "IN_FB_ACCT_TYPE",
+		"type": "string"
+	},
+	{
+		"name": "FL_ACCOUNT_CLOSED",
+		"type": "string"
+	},
+	{
+		"name": "FL_ACCOUNT_ACTIVE",
+		"type": "string"
+	},
+	{
+		"name": "CD_ACCOUNT_TERM",
+		"type": "string"
+	},
+	{
+		"name": "DA_APPLY_HOUSCARD",
+		"type": "string"
+	},
+	{
+		"name": "IN_CUST_SOURCE_2ND",
+		"type": "string"
+	},
+	{
+		"name": "CD_BNK_CRD_SUBTYPE",
+		"type": "string"
+	},
+	{
+		"name": "DA_CARD_ISSUED",
+		"type": "string"
+	},
+	{
+		"name": "DA_TMCI015_ROW_UPDATED",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+
+]

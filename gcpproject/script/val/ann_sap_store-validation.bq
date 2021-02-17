@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (SELECT 
+    store_no
+    , batch_id
+    , count(*) 
+    FROM edl_stage.pre_sap_store
+    group by 1,2
+    having count(*)>1
+)'	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.ann_sap_store l
+left join edl_stage.pre_sap_store s
+    on l.store_no = s.store_no
+where COALESCE(s.store_no, "") IS NULL'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

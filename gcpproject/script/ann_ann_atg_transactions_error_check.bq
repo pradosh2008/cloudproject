@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_atg_transactions_error_check  'gs://p-asna-datasink-003/ann_ann_atg_transactions/*'
+
+rc_check $? "Load edl_landing"

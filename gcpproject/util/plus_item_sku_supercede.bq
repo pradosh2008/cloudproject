@@ -1,0 +1,13 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load data into work db
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=plus_item_sku_supercede.json \
+        work.plus_item_sku_supercede \
+        " gs://p-asna-datasink-003/plus/item/item_sku_20210108.txt"
+rc_check $? "Data load for WORK.PLUS_ITEM_SKU_SUPERCEDE Complete"
+

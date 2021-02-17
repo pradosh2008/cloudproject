@@ -1,0 +1,114 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the LB tax landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote=""\
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_tax.json \
+        edl_landing.lb_sales_transaction_tax  \
+        "gs://${default_bucket}/plus/edw/lb_sales_transaction_tax*.txt.gz"
+rc_check $? "Load edl_landing LB tax Completed"
+
+
+#Loading in single temporary stage table from Landing tables
+bq query --replace=true --max_rows 1 --allow_large_results \
+    --destination_table edl_stage.lbca_sales_transaction_tax_new --use_legacy_sql=false <<!
+SELECT stg.tax_category_nbr
+    ,stg.tax_jurisdiction_cd
+    ,stg.tax_level_nbr
+    ,stg.line_action_cd
+    ,stg.line_object_type_cd
+    ,stg.line_object_cd
+    ,stg.tax_rt
+    ,stg.customer_paid_tax_amt
+    ,stg.company_owed_tax_amt
+    ,stg.selling_chain_nbr
+    ,stg.selling_store_nbr
+    ,stg.chain_nbr
+    ,stg.store_nbr
+    ,stg.register_nbr
+    ,stg.transaction_nbr
+    ,stg.transaction_dt
+    ,stg.detail_fee_seq_nbr
+    ,stg.detail_fee_ind
+    ,stg.record_seq_nbr
+    ,stg.note_type_cd
+    ,stg.tax_amt
+    ,stg.last_update_ts
+    ,stg.extract_ts
+from (SELECT c.tax_category_nbr
+        ,c.tax_jurisdiction_cd
+        ,c.tax_level_nbr
+        ,c.line_action_cd
+        ,c.line_object_type_cd
+        ,c.line_object_cd
+        ,c.tax_rt
+        ,c.customer_paid_tax_amt
+        ,c.company_owed_tax_amt
+        ,c.selling_chain_nbr
+        ,c.selling_store_nbr
+        ,c.chain_nbr
+        ,c.store_nbr
+        ,c.register_nbr
+        ,c.transaction_nbr
+        ,case when TRIM(c.transaction_dt)='' 
+                then null else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) 
+         end as transaction_dt
+        ,c.detail_fee_seq_nbr
+        ,c.detail_fee_ind
+        ,c.record_seq_nbr
+        ,c.note_type_cd
+        ,c.tax_amt
+        ,case when TRIM(c.last_update_ts)='' 
+                then null 
+                else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.last_update_ts,"America/New_York") 
+         end                                                                    as last_update_ts
+        ,case when TRIM(c.extract_ts)='' 
+                then null 
+                else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") 
+         end                                                                    as extract_ts
+        ,ROW_NUMBER() OVER (partition by c.selling_chain_nbr
+                                    ,c.selling_store_nbr
+                                    ,c.register_nbr
+                                    ,c.transaction_dt
+                                    ,c.transaction_nbr
+                                    ,c.detail_fee_seq_nbr
+                                    ,c.record_seq_nbr
+                        order by case when TRIM(c.extract_ts)='' 
+                                    then null 
+                                    else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") 
+                                end desc
+                    ) as row_num
+    from edl_landing.lb_sales_transaction_tax c
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_tax_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_tax c
+left join edl_stage.lbca_sales_transaction_tax_new w
+    on  w.selling_chain_nbr=c.selling_chain_nbr
+    AND w.selling_store_nbr=c.selling_store_nbr
+    AND w.register_nbr=c.register_nbr
+    AND w.transaction_nbr=c.transaction_nbr
+    AND w.transaction_dt=c.transaction_dt
+    AND w.detail_fee_seq_nbr=c.detail_fee_seq_nbr
+    AND w.record_seq_nbr=c.record_seq_nbr
+    where w.record_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_tax edl_archive.plus_sales_transaction_tax
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_tax_new edl_stage.plus_sales_transaction_tax
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_tax_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_tax*.txt.gz*"
+

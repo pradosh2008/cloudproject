@@ -1,0 +1,63 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load Data from dim_item table into dim_item_temp
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table analytic_mart.dim_item_temp <<!
+select
+  item_key
+, sku_id
+, vendor_key
+, item_des
+, item_short_des
+, style_id
+, style_des
+, different_color_cd  as color_cd
+, different_color_des as color_des
+, different_size_cd   as size_cd
+, different_size_des  as size_des
+, department_id
+, department_nam
+, class_id
+, class_nam
+, subclass_id
+, subclass_nam
+, division_id
+, division_nam
+, group_num
+, group_nam
+, item_status_cd
+, standard_uom_des
+, regular_unit_retail_amt
+, selling_unit_retail_amt
+, inventory_ind
+, merchandise_ind
+, orderable_ind
+, sellable_ind
+, ship_alone_ind
+, item_create_tms
+, last_update_tms
+, unit_cost_amt
+, origin_country_cd
+, item_record_status_cd
+, season_id
+, season_des
+, edl_create_tms
+, edl_create_job_nam
+, edl_last_update_tms
+, edl_last_update_job_nam
+, brand_cd
+from analytic_mart.dim_item
+!
+rc_check $? "Data Loaded from dim_item to analytic_mart.dim_item_temp table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.dim_item_temp analytic_mart.dim_item
+rc_check $? "Copy temp table"
+bq rm --force analytic_mart.dim_item_temp
+rc_check $? "Remove temp table"
+
+

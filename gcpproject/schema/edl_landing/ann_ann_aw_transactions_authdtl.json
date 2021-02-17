@@ -1,0 +1,92 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "if_entry_no", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "interface_control_flag", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "record_type", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_id", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "card_type", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "authorization_no", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "expiry_date", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "swipe_indicator", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "approval_message", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "license_no", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pos_state_code", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "other_id_type", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "other_id", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "deferred_billing_date", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "deferred_billing_plan", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_signature_obtained", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "offline_flag", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

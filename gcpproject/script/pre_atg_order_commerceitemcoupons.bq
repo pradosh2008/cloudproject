@@ -1,0 +1,51 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_commerceitemcoupons_new --use_legacy_sql=false <<!
+select distinct
+orderid
+,commerceitemid
+,catalogrefid
+,commerceitemcouponscouponcode
+,commerceitemcouponsdiscountamt
+,batch_id
+,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) as lastmodifieddate
+FROM edl_landing.ann_ann_atg_transactions atg
+--where orderid not like '%.orderid%'
+
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_commerceitemcoupons_new --use_legacy_sql=false <<!
+select
+        c.orderid
+        ,c.commerceitemid
+        ,c.catalogrefid
+        ,c.commerceitemcouponscouponcode
+        ,CAST(c.commerceitemcouponsdiscountamt as numeric) as commerceitemcouponsdiscountamt
+        ,c.batch_id
+        ,c.lastmodifieddate
+      from edl_stage.pre_atg_order_commerceitemcoupons c
+       left join edl_stage.pre_atg_order_commerceitemcoupons_new w
+          on  w.orderid = c.orderid
+          and w.commerceitemid=c.commerceitemid
+           and w.catalogrefid=c.catalogrefid
+           and coalesce(w.commerceitemcouponscouponcode,'')=coalesce(c.commerceitemcouponscouponcode,'')
+           and coalesce(w.commerceitemcouponsdiscountamt,0.0)=coalesce(c.commerceitemcouponsdiscountamt,0.0)
+           and w.lastmodifieddate=c.lastmodifieddate
+          and w.batch_id=c.batch_id
+    where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_atg_order_commerceitemcoupons edl_archive.pre_atg_order_commerceitemcoupons
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_commerceitemcoupons_new edl_stage.pre_atg_order_commerceitemcoupons
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_commerceitemcoupons_new
+rc_check $? "drop the temp table"
+

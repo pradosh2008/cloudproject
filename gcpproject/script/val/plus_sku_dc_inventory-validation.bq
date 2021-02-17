@@ -1,0 +1,39 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+     SELECT count(*)
+     FROM (
+           SELECT 
+                   dc_id
+                 , sku_id
+                 , week_id
+                 , count(*) 
+           FROM edl_stage.plus_sku_dc_inventory 
+           group by 1,2,3
+           having count(*)>1
+          )
+    '
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+     SELECT count(*) cnt
+     from edl_landing.plus_sku_dc_inventory L
+     left join edl_stage.plus_sku_dc_inventory S 
+                        ON  S.dc_id   = L.dc_id
+                        AND S.sku_id  = L.sku_id
+                        AND S.week_id = cast(L.week_id as int64)
+     WHERE S.week_id is null
+    '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+
+

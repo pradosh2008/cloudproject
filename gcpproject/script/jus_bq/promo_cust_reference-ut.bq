@@ -1,0 +1,19 @@
+
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select promo_cust_reference_key
+    ,count(*)
+from jus_stage.promo_cust_reference
+group by promo_cust_reference_key
+having count(*) > 1
+limit 10
+!
+
+echo 'Completeness check -- 0 equals success'
+bq query --use_legacy_sql=false <<!
+select count(*)
+FROM `p-asna-analytics-002.jus_stage.work_promo_cust_reference`w
+left join `p-asna-analytics-002.jus_stage.promo_cust_reference` c
+    on  w.promo_cust_reference_key = c.promo_cust_reference_key
+where c.promo_cust_reference_key is null
+!

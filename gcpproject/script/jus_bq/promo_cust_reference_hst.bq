@@ -1,0 +1,14 @@
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table \
+--destination_table jus_stage.promo_cust_reference_hst --use_legacy_sql=false <<!
+select w.*
+from jus_stage.work_promo_cust_reference w
+left join (select distinct promo_cust_reference_key
+                    ,promotion_execution_dt
+    from jus_stage.promo_cust_reference_hst
+) c
+    on  w.promo_cust_reference_key = c.promo_cust_reference_key
+    and w.promotion_execution_dt = c.promotion_execution_dt
+where w.promo_cust_reference_key is null
+!
+

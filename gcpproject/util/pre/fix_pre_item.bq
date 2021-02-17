@@ -1,0 +1,69 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_item_fix --use_legacy_sql=false <<!
+SELECT item_key
+    ,style_key
+    ,brand_cd
+    ,division_id
+    ,sku_id
+    ,product_id
+    ,style_id
+    ,style_des
+    ,department_cd
+    ,department_des
+    ,department_category_cd
+    ,class_cd
+    ,class_des
+    ,merch_category_cd
+    ,merch_category_des
+    ,color_cd
+    ,color_des
+    ,size_cd
+    ,size_des
+    ,vendor_cd
+    ,vendor_nam
+    ,cast(retail_amt as numeric)            as retail_amt
+    ,cast(landed_cost_amt as numeric)       as landed_cost_amt
+    ,intern_excl_ind
+    ,intern_tallstyle_ind
+    ,markdown_week_num
+    ,exit_week_num
+    ,gift_wrap_ind
+    ,season_cd
+    ,season_des
+    ,storeset_cd
+    ,storeset_des
+    ,purch_org_cd
+    ,ean_upc_des
+    ,missy_style_num
+    ,petite_style_num
+    ,tall_style_num
+    ,fabric_profile_cd
+    ,fabric_profile_des
+    ,silhouette_profile_cd
+    ,silhouette_profile_des
+    ,top_silhouette_des
+    ,neckline_des
+    ,sleeve_len_des
+    ,novelty_des
+    ,end_use_des
+    ,pyramid_des
+    ,currency_des
+    ,cast(original_retail_amt as numeric)   as original_retail_amt
+    ,cast(markdown_retail_amt as numeric)   as markdown_retail_amt
+    ,reason_cd
+    ,plus_style_num
+    ,batch_id
+from analytic_mart.pre_item
+!
+rc_check $? "Load fix table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.pre_item edl_archive.pre_item
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.pre_item_fix analytic_mart.pre_item
+rc_check $? "Copy fix table "
+bq rm --force analytic_mart.pre_item_fix
+rc_check $? "Remove fix table "

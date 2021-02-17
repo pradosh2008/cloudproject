@@ -1,0 +1,71 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sap_store_inventory_fix --use_legacy_sql=false <<!
+select l.chain_id
+    ,l.store_id
+    ,l.week_id
+    ,l.style_id
+    ,l.color_id
+    ,l.size_id
+    ,l.sku_id
+    ,l.bop_store_inv_unit_cnt
+    ,l.bop_store_inv_retail_amt
+    ,l.bop_store_inv_actual_cost_amt
+    ,l.bop_store_inv_valued_cost_amt
+    ,l.bop_store_it_unit_cnt
+    ,l.bop_store_it_retail_amt
+    ,l.bop_store_it_actual_cost_amt
+    ,l.bop_store_it_valued_cost_amt
+    ,l.store_receipt_unit_cnt
+    ,l.store_receipt_retail_amt
+    ,l.store_receipt_actual_cost_amt
+    ,l.store_receipt_valued_cost_amt
+    ,l.bop_mkd_store_it_unit_cnt
+    ,l.bop_mkd_store_it_retail_amt
+    ,l.bop_mkd_store_it_actual_cost_amt
+    ,l.bop_mkd_store_it_valued_cost_amt
+    ,l.dmos_unit_cnt
+    ,l.dmos_retail_amt
+    ,l.dmos_actual_cost_amt
+    ,l.dmos_valued_cost_amt
+    ,l.store_trans_out_unit_cnt
+    ,l.store_trans_out_retail_amt
+    ,l.store_trans_out_actual_cost_amt
+    ,l.store_trans_out_valued_cost_amt
+    ,l.store_trans_in_unit_cnt
+    ,l.store_trans_in_retail_amt
+    ,l.store_trans_in_actual_cost_amt
+    ,l.store_trans_in_valued_cost_amt
+    ,l.bop_alloc_notship_inv_unit_cnt
+    ,l.bop_alloc_notship_inv_retail_amt
+    ,l.bop_alloc_notship_actual_cost_amt
+    ,l.bop_alloc_notship_valued_cost_amt
+    ,l.mkd_issue_unit_cnt
+    ,l.mkd_issue_retail_amt
+    ,l.mkd_issue_cost_amt
+    ,l.bop_store_mkd_it_unit_cnt
+    ,l.bop_store_mkd_it_retail_amt
+    ,l.bop_store_mkd_it_actual_cost_amt
+from (SELECT row_number() over (partition by week_id
+                                            ,chain_id
+                                            ,store_id
+                                            ,sku_id
+                                order by abs(bop_store_inv_unit_cnt) desc
+                           )                                     as dedup_rank
+            ,c.*
+    from edl_stage.pre_sap_store_inventory c
+) l
+where dedup_rank = 1
+!
+
+rc_check $? "Appending stage table"
+
+exit 0
+bq cp --force edl_stage.pre_sap_store_inventory edl_archive.pre_sap_store_inventory
+rc_check $? "archive copy"
+
+

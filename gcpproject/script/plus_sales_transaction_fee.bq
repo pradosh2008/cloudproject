@@ -1,0 +1,127 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_fee.json \
+        edl_landing.lb_sales_transaction_fee \
+        "gs://${default_bucket}/plus/edw/lb_sales_transaction_fee*.txt.gz"
+rc_check $? "Load edl_landing LB Complete"
+
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_sales_transaction_fee_new --use_legacy_sql=false <<!
+SELECT
+ stg.fee_seq_nbr
+,stg.fee_nbr
+,stg.fee_amt
+,stg.non_merch_tax_type
+,stg.non_merch_prorated_tax_amt
+,stg.non_merch_tax_amt
+,stg.selling_chain_nbr
+,stg.selling_store_nbr
+,stg.chain_nbr
+,stg.store_nbr
+,stg.register_nbr
+,stg.transaction_nbr
+,stg.transaction_dt
+,stg.sku_nbr
+,stg.perks_card_associate_nbr
+,stg.record_seq_nbr
+,stg.line_object_type_cd
+,stg.line_object_cd
+,stg.line_action_cd
+,stg.selection_chain_nbr
+,stg.selection_store_nbr
+,stg.create_dt
+,stg.last_update_ts
+,stg.original_store_nbr
+,stg.original_chain_nbr
+,stg.original_transaction_dt
+,stg.original_register_nbr
+,stg.original_transaction_nbr
+,stg.original_return_reason_cd
+,stg.return_reason_cd
+,stg.return_disposition_cd
+,stg.ret_primary_sales_person_nbr
+,stg.ret_secondary_sales_person_nbr
+,stg.renewal_perks_cnt
+,stg.new_perks_cnt
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.fee_seq_nbr
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+ CAST(TRIM(c.fee_seq_nbr) AS INT64) AS fee_seq_nbr
+,c.fee_nbr
+,CAST(TRIM(c.fee_amt) AS NUMERIC) AS fee_amt
+,c.non_merch_tax_type
+,CAST(TRIM(c.non_merch_prorated_tax_amt) AS NUMERIC) AS non_merch_prorated_tax_amt
+,CAST(TRIM(c.non_merch_tax_amt) AS NUMERIC) AS non_merch_tax_amt
+,CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+,case when TRIM(c.transaction_dt)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+,c.sku_nbr
+,c.perks_card_associate_nbr
+,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+,c.line_object_type_cd
+,c.line_object_cd
+,c.line_action_cd
+,CAST(TRIM(c.selection_chain_nbr) AS INT64) AS selection_chain_nbr
+,CAST(TRIM(c.selection_store_nbr) as NUMERIC) AS selection_store_nbr
+,case when TRIM(c.create_dt)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.create_dt)) end as create_dt
+,case when TRIM(c.last_update_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.last_update_ts,"America/New_York") end as last_update_ts
+,CAST(TRIM(c.original_store_nbr) AS NUMERIC) AS original_store_nbr
+,CAST(TRIM(c.original_chain_nbr) AS INT64) AS original_chain_nbr
+,case when TRIM(c.original_transaction_dt)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.original_transaction_dt)) end as original_transaction_dt
+,CAST(TRIM(c.original_register_nbr) AS INT64) AS original_register_nbr
+,CAST(TRIM(c.original_transaction_nbr) AS INT64) AS original_transaction_nbr
+,c.original_return_reason_cd
+,c.return_reason_cd
+,c.return_disposition_cd
+,c.ret_primary_sales_person_nbr
+,c.ret_secondary_sales_person_nbr
+,CAST(TRIM(c.renewal_perks_cnt) AS INT64) AS renewal_perks_cnt
+,CAST(TRIM(c.new_perks_cnt) AS INT64) AS new_perks_cnt
+,case when TRIM(c.extract_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lb_sales_transaction_fee c
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_fee_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_fee c
+left join edl_stage.lbca_sales_transaction_fee_new w
+    ON w.selling_chain_nbr = c.selling_chain_nbr
+    AND w.selling_store_nbr = c.selling_store_nbr
+    AND w.register_nbr = c.register_nbr
+    AND w.transaction_nbr = c.transaction_nbr
+    AND w.transaction_dt= c.transaction_dt
+    AND w.fee_seq_nbr = c.fee_seq_nbr
+    where w.fee_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_fee edl_archive.plus_sales_transaction_fee
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_fee_new edl_stage.plus_sales_transaction_fee
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_fee_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_fee*.txt.gz*"

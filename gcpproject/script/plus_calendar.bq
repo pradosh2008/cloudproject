@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_conform.plus_calendar  'gs://p-asna-datasink-003/plus_calendar/*'
+
+rc_check $? "creating plus calendar table"

@@ -1,0 +1,423 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "dbSchemaVersion": {
+      "type": "string"
+    },
+    "exportSequenceNumber": {
+      "type": "string"
+    },
+    "promotionEvent": {
+      "type": "object",
+      "properties": {
+        "eventIdentifier": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "startDateTime": {
+          "type": "string"
+        },
+        "endDateTime": {
+          "type": "string"
+        },
+        "startDailyTime": {
+          "type": "string"
+        },
+        "endDailyTime": {
+          "type": "string"
+        },
+        "applyDay1": {
+          "type": "string"
+        },
+        "applyDay2": {
+          "type": "string"
+        },
+        "applyDay3": {
+          "type": "string"
+        },
+        "applyDay4": {
+          "type": "string"
+        },
+        "applyDay5": {
+          "type": "string"
+        },
+        "applyDay6": {
+          "type": "string"
+        },
+        "applyDay7": {
+          "type": "string"
+        },
+        "storeGroup": {
+          "type": "object",
+          "properties": {
+            "storeGroupId": {
+              "type": "string"
+            },
+            "groupDescription": {
+              "type": "string"
+            },
+            "storeCode": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+        },
+        "promotionSet": {
+          "type": "object",
+          "properties": {
+            "eventIdentifier": {
+              "type": "string"
+            },
+            "setIdentifier": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "descReceipt": {
+              "type": "string"
+            },
+            "operatorFlag": {
+              "type": "string"
+            },
+            "dealLimit": {
+              "type": "string"
+            },
+            "priceBase": {
+              "type": "string"
+            },
+            "discountRule": {
+              "type": "string"
+            },
+            "promoStacking": {
+              "type": "string"
+            },
+            "stackingResolution": {
+              "type": "string"
+            },
+            "itemizeAcrossComponents": {
+              "type": "string"
+            },
+            "customerType": {
+              "type": "string"
+            },
+            "doNotAffectTax": {
+              "type": "string"
+            },
+            "promoEvalPhase": {
+              "type": "string"
+            },
+            "customerChoice": {
+              "type": "string"
+            },
+            "forceNonPromotable": {
+              "type": "string"
+            },
+            "promoTypeIndicator": {
+              "type": "string"
+            },
+            "multiplierPointsLimit": {
+              "type": "string"
+            },
+            "randomNthValue": {
+              "type": "string"
+            },
+            "bonusPointsStacking": {
+              "type": "string"
+            },
+            "continuity": {
+              "type": "string"
+            },
+            "transType": {
+              "type": "string"
+            },
+            "discountValueLimit": {
+              "type": "string"
+            },
+            "giftCardValueLimit": {
+              "type": "string"
+            },
+            "printStyle": {
+              "type": "string"
+            },
+            "setExclusiveFlags": {
+              "type": "string"
+            },
+            "checkExclusiveFlags": {
+              "type": "string"
+            },
+            "priorList": {
+              "type": "string"
+            },
+            "upsellComponentsTarget": {
+              "type": "string"
+            },
+            "legalText": {
+              "type": "string"
+            },
+            "couponsAsInstances": {
+              "type": "string"
+            },
+            "promotionSetComponent": {
+              "type": "object",
+              "properties": {
+                "eventIdentifier": {
+                  "type": "string"
+                },
+                "setIdentifier": {
+                  "type": "string"
+                },
+                "compIdentifier": {
+                  "type": "string"
+                },
+                "targetType": {
+                  "type": "string"
+                },
+                "targetValue": {
+                  "type": "string"
+                },
+                "discountType": {
+                  "type": "string"
+                },
+                "discountValue": {
+                  "type": "string"
+                },
+                "discountQty": {
+                  "type": "string"
+                },
+                "discountBase": {
+                  "type": "string"
+                },
+                "exclusivityRule": {
+                  "type": "string"
+                },
+                "amountThresholdType": {
+                  "type": "string"
+                },
+                "loyaltyPointsNumber": {
+                  "type": "string"
+                },
+                "loyaltyPointsFormula": {
+                  "type": "string"
+                },
+                "loyaltyPointsBonus": {
+                  "type": "string"
+                },
+                "giftCardAmount": {
+                  "type": "string"
+                },
+                "messageID": {
+                  "type": "string"
+                },
+                "messagePri": {
+                  "type": "string"
+                },
+                "loyaltyPointsMultiplier": {
+                  "type": "string"
+                },
+                "bonusPointsType": {
+                  "type": "string"
+                },
+                "hostPointsType": {
+                  "type": "string"
+                },
+                "loyaltyPointsRedeemed1": {
+                  "type": "string"
+                },
+                "loyaltyPointsRedeemed2": {
+                  "type": "string"
+                },
+                "giftCardIssuedAndLoaded": {
+                  "type": "string"
+                },
+                "strCoupAffectThreshold": {
+                  "type": "string"
+                },
+                "strCoupAffectReward": {
+                  "type": "string"
+                },
+                "vdrCoupAffectThreshold": {
+                  "type": "string"
+                },
+                "vdrCoupAffectReward": {
+                  "type": "string"
+                },
+                "itmRedeemAffectThreshold": {
+                  "type": "string"
+                },
+                "itmRedeemAffectReward": {
+                  "type": "string"
+                },
+                "trnRedeemAffectThreshold": {
+                  "type": "string"
+                },
+                "trnRedeemAffectReward": {
+                  "type": "string"
+                },
+                "priceAccuracyThreshold": {
+                  "type": "string"
+                },
+                "priceAccuracyReward": {
+                  "type": "string"
+                },
+                "manualDiscountThreshold": {
+                  "type": "string"
+                },
+                "manualDiscountReward": {
+                  "type": "string"
+                },
+                "cashierMessage": {
+                  "type": "string"
+                },
+                "trackingItemNr": {
+                  "type": "string"
+                },
+                "couponItemNr": {
+                  "type": "string"
+                },
+                "bonusPointsByWgt": {
+                  "type": "string"
+                },
+                "vendorPercentage": {
+                  "type": "string"
+                },
+                "vendorReferenceId": {
+                  "type": "string"
+                },
+                "storePercentage": {
+                  "type": "string"
+                },
+                "storeReferenceId": {
+                  "type": "string"
+                },
+                "giftCardType": {
+                  "type": "string"
+                },
+                "giftCardItemized": {
+                  "type": "string"
+                },
+                "targetValueUpsell": {
+                  "type": "string"
+                },
+                "messageUpsell": {
+                  "type": "string"
+                },
+                "priorUpsell": {
+                  "type": "string"
+                },
+                "couponIssuanceAction": {
+                  "type": "string"
+                },
+                "couponMaxUses": {
+                  "type": "string"
+                },
+                "promotionSetMember": {
+                  "type": "object",
+                  "properties": {
+                    "eventIdentifier": {
+                      "type": "string"
+                    },
+                    "setIdentifier": {
+                      "type": "string"
+                    },
+                    "compIdentifier": {
+                      "type": "string"
+                    },
+                    "memberIdentifier": {
+                      "type": "string"
+                    },
+                    "memberStatus": {
+                      "type": "string"
+                    },
+                    "memberType": {
+                      "type": "string"
+                    },
+                    "memberValueMin": {
+                      "type": "string"
+                    },
+                    "memberValueMax": {
+                      "type": "string"
+                    },
+                    "amountMin": {
+                      "type": "string"
+                    },
+                    "amountMax": {
+                      "type": "string"
+                    },
+                    "pricePoint": {
+                      "type": "string"
+                    },
+                    "memberClearance": {
+                      "type": "string"
+                    },
+                    "pointable": {
+                      "type": "string"
+                    },
+                    "promotable": {
+                      "type": "string"
+                    },
+                    "discountable1": {
+                      "type": "string"
+                    },
+                    "discountable2": {
+                      "type": "string"
+                    },
+                    "discountable3": {
+                      "type": "string"
+                    },
+                    "discountable4": {
+                      "type": "string"
+                    },
+                    "brandType": {
+                      "type": "string"
+                    },
+                    "brand": {
+                      "type": "string"
+                    },
+                    "skuType": {
+                      "type": "string"
+                    },
+                    "discountValue": {
+                      "type": "string"
+                    },
+                    "property": {
+                      "type": "string"
+                    },
+                    "getsReward": {
+                      "type": "string"
+                    },
+                    "colour": {
+                      "type": "string"
+                    },
+                    "season": {
+                      "type": "string"
+                    },
+                    "style": {
+                      "type": "string"
+                    }
+                  },
+                }
+              },
+            }
+          },
+        }
+      },
+    }
+  },
+}

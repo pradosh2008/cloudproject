@@ -1,0 +1,63 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+SELECT COUNT(*) cnt
+FROM (
+      SELECT store_key, COUNT(*)
+      FROM analytic_mart.pre_store
+      GROUP BY store_key
+      HAVING COUNT(*)>1
+)
+'
+
+run_validation "$sql" "Unique Key Check"
+
+
+#Completeness CHECK
+
+sql='
+SELECT count(*) cnt 
+FROM 
+(SELECT CAST(CAST(store_no AS INT64) AS STRING) as store_id FROM edl_stage.pre_sap_store WHERE store_no NOT LIKE 'A%' AND store_no NOT LIKE 'R%'
+UNION DISTINCT
+SELECT store_no AS store_id FROM edl_stage.pre_sap_store WHERE store_no LIKE 'A%' OR store_no LIKE 'R%'
+UNION DISTINCT
+SELECT CAST(store_nbr AS STRING) as store_id FROM edl_stage.pre_lu_store_vw
+) as s 
+LEFT OUTER JOIN analytic_mart.pre_store a
+ON (a.store_id = s.store_id)
+WHERE a.store_id is NULL
+'
+
+run_validation "$sql" "Completeness Check"
+
+#FK Store_key CHECK in pre_transaction_header table
+
+sql='
+SELECT count(*) cnt 
+FROM (SELECT distinct store_key FROM analytic_mart.pre_transaction_header WHERE store_key IS NOT NULL) a
+LEFT OUTER JOIN analytic_mart.pre_store i
+ON (a.store_key = i.store_key)
+WHERE a.store_key is NULL
+'
+
+run_validation "$sql" "FK Store_Key Check in pre_transaction_header table"
+
+
+#FK Store_key CHECK in pre_transaction_item table
+
+sql='
+SELECT count(*) cnt 
+FROM (SELECT distinct store_key FROM analytic_mart.pre_transaction_item WHERE store_key IS NOT NULL) a
+LEFT OUTER JOIN analytic_mart.pre_store i
+ON (a.store_key = i.store_key)
+WHERE a.store_key is NULL
+'
+
+run_validation "$sql" "FK Store_Key Check in pre_transaction_item table"
+
+exit ${ERROR_CD:-0}

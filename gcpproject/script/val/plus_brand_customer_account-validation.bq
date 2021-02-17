@@ -1,0 +1,48 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+                SELECT brand_customer_key, account_id, ccard_process_status_cd
+                FROM analytic_mart.plus_brand_customer_account a
+                GROUP BY 1, 2, 3
+                HAVING COUNT(*)>1
+)'
+run_validation "$sql" "Unique key  Check"
+
+#Null Key Check
+sql='select count(*)  FROM(
+                SELECT brand_customer_key
+                FROM analytic_mart.plus_brand_customer_account a
+                WHERE brand_customer_key IS NULL
+)'
+run_validation "$sql" "Null key Check"
+
+#Completeness Check
+sql='SELECT count(*) FROM (SELECT a.brand_customer_key
+FROM analytic_mart.plus_brand_customer_account a
+LEFT OUTER JOIN (SELECT c.ID_CUST, c.ID_ACCOUNT, CASE WHEN ccust.ID_CHAIN = 4 THEN "CA" WHEN ccust.ID_CHAIN = 7 THEN "LB" ELSE NULL END AS BRAND_CD 
+                FROM edl_stage.plus_vmci015_cust_ccard_curr c
+                INNER JOIN edl_stage.plus_vmci016_ccard_type cct 
+                ON cct.cd_bank_card_type = c.cd_bank_card_type AND cct.ID_CHAIN IN (4,7)
+                INNER JOIN edl_stage.plus_vmci019_customer_curr cust
+                ON cust.ID_CUST = c.ID_CUST
+                INNER JOIN edl_stage.plus_vmci105_chain_cust_curr ccust
+                ON ccust.ID_CUST = c.ID_CUST AND ccust.ID_CHAIN = cct.ID_CHAIN
+) c
+ON a.brand_customer_id = CAST(c.ID_CUST AS STRING)
+AND a.account_id = c.ID_ACCOUNT
+AND a.brand_cd = c.BRAND_CD
+WHERE c.ID_CUST is null
+)'
+run_validation "$sql" "Completeness Check"
+
+#Foreign Key Check
+sql='SELECT count(*) FROM (
+SELECT a.*
+FROM `analytic_mart.plus_brand_customer_account` a
+LEFT OUTER JOIN analytic_mart.dim_brand_customer b
+ON a.brand_customer_key = b.brand_customer_key
+WHERE b.brand_customer_key IS NULL
+)'
+run_validation "$sql" "Foreign Key Check"

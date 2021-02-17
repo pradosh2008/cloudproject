@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='select count(*) cnt 
+from (SELECT chain_id
+    ,store_id
+    ,batch_id
+    ,count(*)
+    FROM edl_stage.plus_store
+    group by 1,2,3 having count(*)>1)'	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='SELECT
+    count(*) cnt
+from edl_landing.lb_store l
+left join edl_stage.plus_store s
+    on CAST(TRIM(l.chain_id) AS INT64) = s.chain_id
+    AND CAST(TRIM(l.store_id) AS INT64) = s.store_id
+    AND CAST(TRIM(l.batch_id) AS INT64) = s.batch_id
+where s.chain_id=7 and s.store_id IS NULL'
+
+run_validation "$sql" "LB Completeness Check"
+
+exit ${ERROR_CD:-0}

@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci016_ccard_type.json \
+        edl_landing.lbca_vmci016_ccard_type \
+        "gs://${default_bucket}/plus/crm/vmci016_ccard_type*.txt.gz"
+rc_check $? "edl_landing Load for VMCI016_CCARD_TYPE Complete"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci016_ccard_type_new --use_legacy_sql=false <<!
+SELECT
+stg.cd_bank_card_type
+,stg.id_chain
+,stg.tx_bank_card_type
+,stg.fl_housecard
+,stg.fl_cobrand
+,stg.fl_updt_hc_act
+,stg.fl_updt_co_act
+,stg.fl_updt_hc_cls
+,stg.fl_updt_co_cls
+,stg.fl_updt_hc_dnp
+,stg.fl_updt_co_dnp
+,stg.fl_populate_tmci115
+,stg.fl_apply_account_term
+,stg.fl_outbound
+,stg.cd_parent_type
+,stg.cd_ctype_process_status
+,stg.fl_foreign_key
+,stg.fl_horizon_score
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_chain,lbca.cd_bank_card_type order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+trim(cd_bank_card_type) as cd_bank_card_type
+,cast(trim(id_chain) as int64) as id_chain
+,trim(tx_bank_card_type) as tx_bank_card_type
+,trim(fl_housecard) as fl_housecard
+,trim(fl_cobrand) as fl_cobrand
+,trim(fl_updt_hc_act) as fl_updt_hc_act
+,trim(fl_updt_co_act) as fl_updt_co_act
+,trim(fl_updt_hc_cls) as fl_updt_hc_cls
+,trim(fl_updt_co_cls) as fl_updt_co_cls
+,trim(fl_updt_hc_dnp) as fl_updt_hc_dnp
+,trim(fl_updt_co_dnp) as fl_updt_co_dnp
+,trim(fl_populate_tmci115) as fl_populate_tmci115
+,trim(fl_apply_account_term) as fl_apply_account_term
+,trim(fl_outbound) as fl_outbound
+,trim(cd_parent_type) as cd_parent_type
+,trim(cd_ctype_process_status) as cd_ctype_process_status
+,trim(fl_foreign_key) as fl_foreign_key
+,trim(fl_horizon_score) as fl_horizon_score
+,case when TRIM(extract_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci016_ccard_type
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci016_ccard_type_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci016_ccard_type c
+left join edl_stage.lbca_vmci016_ccard_type_new w
+    on w.id_chain=c.id_chain
+    and w.cd_bank_card_type=c.cd_bank_card_type
+    where w.cd_bank_card_type is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci016_ccard_type edl_archive.plus_vmci016_ccard_type
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci016_ccard_type_new edl_stage.plus_vmci016_ccard_type
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci016_ccard_type_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci016_ccard_type*.txt.gz"

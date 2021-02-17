@@ -1,0 +1,139 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.fact_transaction_discount_new --use_legacy_sql=false <<!
+SELECT
+	TO_HEX(MD5( CONCAT(case when dis.selling_chain_nbr = 4 
+								THEN 'CA|'
+								when dis.selling_chain_nbr = 7 
+								THEN 'LB|' 
+							end
+							,cast(dis.selling_store_nbr as string)
+							,"|",cast(dis.register_nbr as string)
+							,"|",cast(dis.transaction_dt as string)
+							,"|",cast(dis.transaction_nbr as string) 
+				))) 																			AS transaction_key         
+		,cast(dis.detail_fee_seq_nbr as int64) 														as transaction_line_num
+		,cast(dis.discount_seq_nbr as int64) 														as discount_line_num
+		,TO_HEX(MD5(concat(cast(case 	when dis.selling_chain_nbr = 7 					
+										then 'LB|' 					
+										else 'CA|' 					
+								end as string)					
+								,cast(trn.customer_nbr as string)))) 								as brand_customer_key
+		,TO_HEX(MD5(concat(cast(case 	when dis.selling_chain_nbr = 7 					
+										then 'LB|' 					
+										else 'CA|' 					
+								end as string)					
+								,cast(cast(dis.sku_nbr as INT64) as STRING)))) 						as item_key
+		,TO_HEX(MD5(concat(cast(case 	when dis.selling_chain_nbr = 7 					
+										then 'LB|' 					
+										else 'CA|' 					
+								end as string)					
+								,cast(dis.selling_store_nbr as string)))) 							as store_key
+		,case 	when trn.order_received_dt is null 
+				then dis.transaction_dt 
+				else trn.order_received_dt 
+		 end 																						as order_dt
+		,case 	when trim(det.sales_return_ind) = 'Y' 
+						and (det.original_store_nbr 		is not null 
+						and det.original_register_nbr 		is not null 
+						and det.original_transaction_dt 	is not null 
+						and det.original_transaction_nbr 	is not null) 
+				then TO_HEX(MD5(concat(cast(case 	when det.selling_chain_nbr = 7 
+													then 'LB|' 
+													else 'CA|' 
+											end as string)
+                                            ,cast(dis.selling_store_nbr as string)
+											,"|",cast(dis.register_nbr as string)
+											,"|",cast(dis.transaction_dt as string)
+											,"|",cast(dis.transaction_nbr as string))))
+				ELSE NULL 
+		 END 																						as original_transaction_header_key
+		, case 	when trim(det.sales_return_ind) = 'Y' 
+						AND det.original_store_nbr is not null 
+				then TO_HEX(MD5(concat(cast(case when det.selling_chain_nbr = 7 
+												 then 'LB|' 
+												 else 'CA|' 
+											 end as string)
+											,cast(det.original_store_nbr as string)))) 
+				ELSE NULL 
+		 END 																						as original_transaction_store_key
+		, case when trim(det.sales_return_ind) = 'Y' 
+					and det.original_transaction_dt is not null 
+				then det.original_transaction_dt 
+				ELSE NULL 
+		 END 																						as original_transaction_dt
+		, null 																						as orinigal_transaction_line_num
+		, case when trim(det.sales_return_ind) = 'Y' 
+					and det.ret_primary_sales_person_nbr is not null 
+				then det.ret_primary_sales_person_nbr 
+				ELSE NULL 
+		 END 																						as original_primary_salesperson_id
+		, case when trim(det.sales_return_ind) = 'Y' 
+					and det.ret_secondary_sales_person_nbr is not null 
+				then det.ret_secondary_sales_person_nbr 
+				ELSE NULL 
+		 END 																						as original_secondary_salesperson_id
+		, case when trn.transaction_dt IS NULL 
+				then trn.order_received_dt 
+				ELSE  trn.transaction_dt 
+		 END 																						as transaction_dt
+		, dis.coupon_cd 																			as coupon_cd
+		, cast(dis.discount_amt as numeric) 														as discount_amt
+		, dis.discount_reason_cd 																	as discount_reason_cd
+		, cast(dis.discount_sub_reason_cd as string) 												as discount_sub_reason_cd
+		, cast(dis.pos_event_cd as string) 															as point_of_sale_event_cd
+		, dis.discount_type_cd 																		as discount_type_cd
+		, cast(dis.deal_cd as string) 																as deal_cd
+		, dis.discount_method_cd 																	as discount_method_cd
+		, CURRENT_TIMESTAMP 																		as edl_create_tms
+		, 'TRANS' 																					as edl_create_job_nam
+		, CURRENT_TIMESTAMP 																		as edl_last_update_tms
+		, 'TRANS' 																					as edl_last_update_job_nam
+		, cast(case when dis.selling_chain_nbr = 7 
+					then 'LB' 
+					else 'CA' 
+		 end as string) 																			as brand_cd
+from edl_stage.plus_sales_transaction_discount dis 
+left outer join edl_stage.plus_sales_transaction_detail det
+	on dis.transaction_dt = det.transaction_dt
+	AND dis.transaction_nbr = det.transaction_nbr
+	AND dis.selling_chain_nbr = det.selling_chain_nbr
+	AND dis.register_nbr = det.register_nbr
+	AND dis.selling_store_nbr = det.selling_store_nbr
+	AND dis.detail_fee_seq_nbr = det.detail_seq_nbr
+left outer join edl_stage.plus_sales_transaction_header trn 
+	ON dis.transaction_dt = trn.transaction_dt
+	AND dis.transaction_nbr = trn.transaction_nbr
+	AND dis.selling_chain_nbr = trn.selling_chain_nbr
+	AND dis.register_nbr = trn.register_nbr
+	AND dis.selling_store_nbr = trn.selling_store_nbr
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_discount_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.fact_transaction_discount c
+left join analytic_mart.fact_transaction_discount_new w
+    on w.transaction_key=c.transaction_key
+    and w.transaction_line_num=c.transaction_line_num
+    and w.discount_line_num=c.discount_line_num
+    where w.transaction_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.fact_transaction_discount edl_archive.fact_transaction_discount
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_discount_new analytic_mart.fact_transaction_discount
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_discount_new
+rc_check $? "drop the temp table"
+
+

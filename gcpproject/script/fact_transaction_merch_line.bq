@@ -1,0 +1,92 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.fact_transaction_merch_line --use_legacy_sql=false <<!
+select 
+d.transaction_key
+,d.transaction_line_num
+,d.transaction_dt
+,d.order_dt
+,d.store_key
+,d.brand_customer_key
+,d.item_key
+,case when d.transaction_dt > '2019-03-28' 
+        then d.return_ind
+      else (case when d.sku_retail_amt > 0  
+                then 0
+            else 1 end)
+  end as return_ind 
+,d.original_transaction_header_key
+,d.original_transaction_store_key
+,d.original_transaction_dt
+,d.original_transaction_line_num
+,d.line_action_cd
+,d.line_object_type_cd
+,d.line_object_cd
+,d.line_void_ind
+,d.scanned_ind
+,d.gift_card_ind
+,d.taxable_ind
+,d.style_locator_ind
+,d.permanent_markdown_type_cd
+,d.return_reason_cd
+,d.return_disposition_cd
+,d.return_reason_desc
+,d.return_to_dc_ind
+,d.layaway_ind
+,d.order_ind
+,(case when d.transaction_dt > '2019-03-28' 
+            then (d.sku_retail_amt*d.sku_quantity_num)
+      else  ((d.sku_retail_amt*d.sku_quantity_num) - (-1*d.markdown_amt*d.sku_quantity_num) )
+      end) as net_sales_amt     
+,inv.unit_cost_amt as net_unit_cogs_amt   
+,d.sku_cost_amt
+,d.sku_quantity_num
+,d.sku_retail_amt
+,d.markdown_amt
+,d.customer_paid_tax_amt
+,d.company_owed_tax_amt
+,d.commision_amt
+,d.current_retail_amt
+,d.original_unit_retail_amt
+,d.primary_salesperson_id
+,d.secondary_salesperson_id
+,d.original_primary_salesperson_id
+,d.original_secondary_salesperson_id
+,d.upc_store_key
+,d.upc_num
+,d.size_cd
+,d.cross_brand_store_key
+,d.overseas_item_ind
+,d.edl_create_tms
+,d.edl_create_job_nam
+,d.edl_last_update_tms
+,d.edl_last_update_job_nam
+,d.brand_cd
+from analytic_mart.fact_transaction_detail d
+join analytic_mart.fact_transaction  h
+    on h.transaction_key = d.transaction_key         
+join analytic_mart.dim_store s
+    on s.store_key = h.store_key
+JOIN (select * from analytic_mart.dim_item i ) i
+                   ON i.item_key = d.item_key           
+                    --and  i.division_id in ('500','510','520')     -- ONLY LB DATA WILL BE FETCHED
+                    and  i.division_id in ('500','510','520','454','453','455')     -- LB & CA BOTH DATA WILL BE FETCHED
+LEFT OUTER JOIN edl_conform.plus_calendar cal
+     ON cal.calendar_dt = h.transaction_dt
+LEFT OUTER JOIN (
+				select distinct                  
+					store_id
+					,week_id                      
+					,sku_id
+					,unit_cost_amt
+				from edl_stage.plus_store_sku_cogs            
+				)inv
+     ON inv.STORE_ID = CONCAT('350', s.store_id) 
+     AND CAST(inv.WEEK_ID AS INT64) = cal.fiscal_week_nbr 
+     AND CAST(inv.SKU_ID AS INT64) = CAST(i.sku_id AS INT64)
+where COALESCE(d.gift_card_ind, 0) = 0     
+             AND COALESCE(d.line_object_cd, '') NOT IN ('110') 	 
+!

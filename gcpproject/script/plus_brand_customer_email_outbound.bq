@@ -1,0 +1,146 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --replace --destination_table analytic_mart.plus_brand_customer_email_outbound_new --use_legacy_sql=false <<!
+select
+TO_HEX(MD5(CONCAT(CAST(case when eo.id_chain = 7 then 'LB'
+                            when eo.id_chain = 4 then 'CA'
+                            else NULL end as string),
+                 '|',cast(eo.id_cust as string)))) as brand_customer_key,
+eo.id_cust as brand_customer_id,
+eo.id_email as email_id,
+eo.cd_email_srce_initial as email_source_intitial_cd,
+eo.cd_email_srce_recent as email_source_recent_cd,
+eo.cd_plcc_status_lb as plcc_status_lb_cd,
+eo.cd_plcc_status_ca as plcc_status_ca_cd,
+eo.cd_plcc_status_fb as plcc_status_fb_cd,
+eo.da_premier_exp_fb as premier_expiration_fb_dt,
+case when trim(eo.fl_perk_status)='Y' then 1
+     when trim(eo.fl_perk_status)='N' then 0
+     else NULL end as perk_status_ind,
+eo.da_perk_exp_ca as perk_expiration_ca_dt,
+case when trim(eo.fl_opt_in_em_lb)='Y' then 1
+     when trim(eo.fl_opt_in_em_lb)='N' then 0
+     else NULL end as opt_in_email_lb_ind,
+case when trim(eo.fl_opt_in_em_lbo)='Y' then 1
+     when trim(eo.fl_opt_in_em_lbo)='N' then 0
+     else NULL end as opt_in_email_lbo_ind,
+case when trim(eo.fl_opt_in_em_ca)='Y' then 1
+     when trim(eo.fl_opt_in_em_ca)='N' then 0
+     else NULL end as opt_in_email_ca_ind,
+case when trim(eo.fl_opt_in_em_sonsi)='Y' then 1
+     when trim(eo.fl_opt_in_em_sonsi)='N' then 0
+     else NULL end as opt_in_email_sonsi_ind,
+case when trim(eo.fl_opt_in_em_fb)='Y' then 1
+     when trim(eo.fl_opt_in_em_fb)='N' then 0
+     else NULL end as opt_in_email_fb_ind,
+case when trim(eo.fl_opt_in_dm)='Y' then 1
+     when trim(eo.fl_opt_in_dm)='N' then 0
+     else NULL end as opt_in_dm_ind,
+case when trim(eo.fl_opt_in_pa)='Y' then 1
+     when trim(eo.fl_opt_in_pa)='N' then 0
+     else NULL end as opt_in_pa_ind,
+case when trim(eo.fl_opt_in_td)='Y' then 1
+     when trim(eo.fl_opt_in_td)='N' then 0
+     else NULL end as opt_in_td_ind,
+eo.id_store_near_any_ch as store_near_any_ch_ind,
+eo.nu_dist_near_any_ch as distance_near_any_ch_num,
+eo.id_store_near_this_ch as store_near_this_ch_ind,
+eo.nu_dist_near_this_ch as distance_near_this_ch_num,
+eo.fl_employee as employee_ind,
+eo.fl_cust_international as customer_international_ind,
+eo.id_store_loyalty as store_loyalty_ind,
+eo.da_em_opt_in_1st as email_opt_in_1st_dt,
+eo.cd_life_cycle as life_cycle_cd,
+eo.cd_cust_segment as customer_segment_cd,
+eo.da_ecomm_1st_purch as ecomm_1st_purchase_dt,
+eo.da_store_1st_purch as store_1st_purchase_dt,
+eo.da_1st_purch as customer_1st_purchase_dt,
+eo.da_ecomm_last_purch as customer_ecomm_last_purchase_dt,
+eo.da_store_last_purch as store_last_purch_dt,
+eo.da_credit_last_purch as  credit_last_purch_dt,
+eo.pc_store_rev_12m as store_rev_12m_pc,
+eo.am_sales_net_12m as sales_net_12m_am,
+eo.am_margin_net_12m as margin_net_12m_am,
+eo.qu_txns_net_12m as txns_net_12m_qu,
+eo.pc_margin_12m as margin_12m_pct,
+case when trim(eo.fl_petite_buyer )='Y' then 1
+     when trim(eo.fl_petite_buyer)='N' then 0
+     else NULL end as petite_buyer_ind,
+case when trim(eo.fl_talls_buyer)='Y' then 1
+     when trim(eo.fl_talls_buyer)='N' then 0
+     else NULL end as talls_buyer_ind,
+eo.id_size_tops as size_tops_id,
+eo.id_size_bottoms as size_bottoms_id,
+eo.id_size_shoes as size_shoes_id,
+eo.id_size_dress as size_dress_id,
+eo.id_size_bra as size_bra_id,
+eo.pc_clearance_3m as clearance_3m_pct,
+case when trim(eo.fl_clearance_buyer_13m)='Y' then 1
+     when trim(eo.fl_clearance_buyer_13m)='N' then 0
+     else NULL end as clearance_buyer_13m_ind,
+eo.da_last_purch_acrs_24m as last_purch_acrs_24m_dt,
+eo.da_last_purch_active_24m as last_purch_active_24m_dt,
+eo.da_last_purch_bra_24m as last_purch_bra_24m_dt,
+eo.da_last_purch_casual_24m as last_purch_casual_24m_dt,
+eo.da_last_purch_denim_24m as last_purch_denim_24m_dt,
+eo.da_last_purch_dress_24m as last_purch_dress_24m_dt,
+eo.da_last_purch_knits_24m as last_purch_knits_24m_dt,
+eo.da_last_purch_hosry_24m as last_purch_hosry_24m_dt,
+eo.da_last_purch_jewlry_24m as last_purch_jewlry_24m_dt,
+eo.da_last_purch_outerwr_24m as last_purch_outerwr_24m_dt,
+eo.da_last_purch_panties_24m as last_purch_panties_24m_dt,
+eo.da_last_purch_shapewr_24m as last_purch_shapewr_24m_dt,
+eo.da_last_purch_shoes_24m as last_purch_shoes_24m_dt,
+eo.da_last_purch_sleepwr_24m as last_purch_sleepwr_24m_dt,
+eo.da_last_purch_spanx_24m as last_purch_spanx_24m_dt,
+eo.da_last_purch_sweater_24m as last_purch_sweater_24m_dt,
+eo.da_last_purch_swimwear_24m as last_purch_swimwear_24m_dt,
+eo.da_last_purch_wtw_24m as last_purch_wtw_24m_dt,
+eo.da_last_purch_wmn_tops_24m as last_purch_wmn_tops_24m_dt,
+eo.da_last_purch_bttms_24m as last_purch_bttms_24m_dt,
+eo.da_last_purch_innerwr_24m as last_purch_innerwr_24m_dt,
+eo.da_last_purch_coats_24m as last_purch_coats_24m_dt,
+eo.da_last_purch_social_24m as last_purch_social_24m_dt,
+eo.da_last_purch_misc_24m as last_purch_misc_24m_dt,
+eo.da_last_open as last_open_dt,
+eo.da_last_clicked as last_clicked_dt,
+eo.da_tmci997_created as tmci997_created_dt,
+eo.da_tmci997_updated as tmci997_updated_dt,
+eo.da_em_opt_in_last as em_opt_in_last_dt,
+case when eo.id_chain= 7 then 'LB'
+     when eo.id_chain = 4 THEN 'CA'
+     else null end as brand_cd,
+FORMAT_TIMESTAMP('%E4Y%m%d', eo.extract_ts) as batch_id
+from edl_stage.plus_tmci997_esp_outbound_curr eo
+inner join edl_stage.plus_vmci019_customer_curr c
+on eo.id_cust=c.id_cust
+where eo.id_chain in (4,7)
+!
+rc_check $? "loading data into temporary table in the mart from stage layer"
+
+
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_email_outbound_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_email_outbound c
+left join analytic_mart.plus_brand_customer_email_outbound_new w
+    on  w.brand_customer_key = c.brand_customer_key
+    and w.email_id = c.email_id
+where w.brand_customer_key is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force analytic_mart.plus_brand_customer_email_outbound edl_archive.plus_brand_customer_email_outbound
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_email_outbound_new analytic_mart.plus_brand_customer_email_outbound
+rc_check $? "replace the temp table as the analytic_mart table"
+bq rm --force analytic_mart.plus_brand_customer_email_outbound_new
+rc_check $? "drop the temp table"
+
+

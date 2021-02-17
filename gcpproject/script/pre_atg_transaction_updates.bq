@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.pre_atg_transaction_updates  'gs://p-asna-datasink-003/pre_atg_transaction_updates/*'
+rc_check $? "Load edl_landing"
+
+#Archive target
+#rc_check $? "Archive copy"
+
+#Add legacy records from old table
+

@@ -1,0 +1,75 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci021_cust_phone.json \
+        edl_landing.vmci021_cust_phone   \
+        "gs://${default_bucket}/plus/crm/vmci021_cust_phone*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci021_cust_phone_new --use_legacy_sql=false <<!
+SELECT
+stg.ID_CUST
+,stg.TE_CUST
+,stg.IN_PHONE_SRCE
+,stg.FL_PHONE_UNLISTED
+,stg.DA_PHONE_ADDED
+,stg.IN_PHONE_TYPE
+,stg.TE_PHONE_EXT
+,stg.CD_PHONE_VERIFIED
+,stg.DA_PHONE_VERIFIED
+,stg.CD_PHONE_CATEGORY
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST,lbca.TE_CUST
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+cast(TRIM(c.ID_CUST) as INT64) ID_CUST
+,TRIM(c.TE_CUST) TE_CUST
+,TRIM(c.IN_PHONE_SRCE) IN_PHONE_SRCE
+,TRIM(c.FL_PHONE_UNLISTED) FL_PHONE_UNLISTED
+,case when TRIM(c.DA_PHONE_ADDED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_PHONE_ADDED)) end as DA_PHONE_ADDED
+,TRIM(c.IN_PHONE_TYPE) IN_PHONE_TYPE
+,TRIM(c.TE_PHONE_EXT) TE_PHONE_EXT
+,TRIM(c.CD_PHONE_VERIFIED) CD_PHONE_VERIFIED
+,case when TRIM(c.DA_PHONE_VERIFIED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_PHONE_VERIFIED)) end as DA_PHONE_VERIFIED
+,TRIM(c.CD_PHONE_CATEGORY) CD_PHONE_CATEGORY
+,case when TRIM(c.extract_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+from edl_landing.vmci021_cust_phone c
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci021_cust_phone_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci021_cust_phone c
+left join edl_stage.lbca_vmci021_cust_phone_new w
+   on w.ID_CUST=c.ID_CUST
+   and w.TE_CUST=c.TE_CUST
+    where w.ID_CUST is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci021_cust_phone edl_archive.plus_vmci021_cust_phone
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci021_cust_phone_new edl_stage.plus_vmci021_cust_phone
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci021_cust_phone_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci021_cust_phone*.txt.gz"
+

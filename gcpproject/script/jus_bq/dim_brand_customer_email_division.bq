@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_brand_customer_email_division_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_brand_customer_email_division c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_brand_customer_address_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_brand_customer_email_division c
+left join jus_stage.work_dim_brand_customer_email_division w
+    on w.brand_customer_email_division_key = c.brand_customer_email_division_key
+where w.brand_customer_email_division_key is null
+!
+bq cp --force jus_stage.dim_brand_customer_email_division edl_archive.dim_brand_customer_email_division
+bq cp --force jus_stage.dim_brand_customer_email_division_new jus_stage.dim_brand_customer_email_division
+bq rm --force jus_stage.dim_brand_customer_email_division_new

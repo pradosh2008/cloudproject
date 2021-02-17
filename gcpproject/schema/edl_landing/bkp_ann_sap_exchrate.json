@@ -1,0 +1,42 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "kurst_curr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "fcurr_curr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "tcurr_curr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "gdatu_inv", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ukurs_curr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ffact_curr", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "tfact_curr", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

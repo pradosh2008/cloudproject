@@ -1,0 +1,118 @@
+[
+    {
+        "name": "detail_fee_seq_nbr",
+        "type": "string"
+    },
+    {
+        "name": "discount_seq_nbr",
+        "type": "string"
+    },
+    {
+        "name": "coupon_cd",
+        "type": "string"
+    },
+    {
+        "name": "discount_amt",
+        "type": "string"
+    },
+    {
+        "name": "discount_reason_cd",
+        "type": "string"
+    },
+    {
+        "name": "discount_sub_reason_cd",
+        "type": "string"
+    },
+    {
+        "name": "pos_event_cd",
+        "type": "string"
+    },
+    {
+        "name": "discount_type_cd",
+        "type": "string"
+    },
+    {
+        "name": "deal_cd",
+        "type": "string"
+    },
+    {
+        "name": "discount_method_cd",
+        "type": "string"
+    },
+    {
+        "name": "selling_chain_nbr",
+        "type": "string"
+    },
+    {
+        "name": "selling_store_nbr",
+        "type": "string"
+    },
+    {
+        "name": "chain_nbr",
+        "type": "string"
+    },
+    {
+        "name": "store_nbr",
+        "type": "string"
+    },
+    {
+        "name": "transaction_dt",
+        "type": "string"
+    },
+    {
+        "name": "register_nbr",
+        "type": "string"
+    },
+    {
+        "name": "transaction_nbr",
+        "type": "string"
+    },
+    {
+        "name": "detail_fee_ind",
+        "type": "string"
+    },
+    {
+        "name": "sku_nbr",
+        "type": "string"
+    },
+    {
+        "name": "create_dt",
+        "type": "string"
+    },
+    {
+        "name": "last_update_ts",
+        "type": "string"
+    },
+    {
+        "name": "record_seq_nbr",
+        "type": "string"
+    },
+    {
+        "name": "line_object_type_cd",
+        "type": "string"
+    },
+    {
+        "name": "line_object_cd",
+        "type": "string"
+    },
+    {
+        "name": "line_action_cd",
+        "type": "string"
+    },
+    {
+        "name": "promo_nbr",
+        "type": "string"
+    },
+    {
+        "name": "promo_component_nbr",
+        "type": "string"
+    },
+    {
+        "name": "promo_detail_nbr",
+        "type": "string"
+    },
+    {
+        "name": "extract_ts",
+        "type": "string"
+    }
+]

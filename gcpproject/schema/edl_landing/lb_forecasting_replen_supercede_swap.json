@@ -1,0 +1,13 @@
+
+[
+    {"mode": "nullable", "name": "chain_nbr"              , "type": "string"}
+  , {"mode": "nullable", "name": "sku_to_nbr"             , "type": "string"}
+  , {"mode": "nullable", "name": "sku_from_nbr"           , "type": "string"}
+  , {"mode": "nullable", "name": "store_nbr"              , "type": "string"}
+  , {"mode": "nullable", "name": "supercede_to_ref_nbr"   , "type": "string"}
+  , {"mode": "nullable", "name": "supercede_from_ref_nbr" , "type": "string"}
+  , {"mode": "nullable", "name": "record_status_flg"      , "type": "string"}
+  , {"mode": "nullable", "name": "last_update_ts"         , "type": "string"}
+]
+
+

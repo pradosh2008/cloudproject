@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.fact_transaction_merch_line_discount --use_legacy_sql=false <<!
+SELECT dis.transaction_key
+, dis.transaction_line_num
+, dis.discount_line_num
+, dis.transaction_dt
+, dis.brand_customer_key
+, dis.item_key
+, dis.store_key
+, dis.order_dt
+, dis.original_transaction_header_key
+, dis.original_transaction_store_key
+, dis.original_transaction_dt
+, dis.orinigal_transaction_line_num
+, dis.original_primary_salesperson_id
+, dis.original_secondary_salesperson_id
+, dis.coupon_cd
+, ABS(dis.discount_amt) as discount_amt
+, dis.discount_reason_cd
+, dis.discount_sub_reason_cd
+, dis.point_of_sale_event_cd
+, dis.discount_type_cd
+, dis.deal_cd
+, dis.discount_method_cd
+, dis.edl_create_tms
+, dis.edl_create_job_nam
+, dis.edl_last_update_tms
+, dis.edl_last_update_job_nam
+, dis.brand_cd
+FROM analytic_mart.fact_transaction_discount dis
+JOIN (select * from analytic_mart.dim_item i ) i
+                   ON i.item_key = dis.item_key           
+                    --and  i.division_id in ('500','510','520')     -- ONLY LB MERCH SKU DIVISIONS
+                    and  i.division_id in ('500','510','520','454','453','455')     -- CA AND LB MERCH SKU DIVISIONS
+!
+rc_check $? "fact_transaction_merch_line_discount created"

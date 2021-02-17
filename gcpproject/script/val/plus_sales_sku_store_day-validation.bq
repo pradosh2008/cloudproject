@@ -1,0 +1,42 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+     SELECT count(*)
+     FROM (
+           SELECT 
+                   CHAIN_NBR
+                 , SKU_NBR
+                 , STORE_NBR
+                 , TRANSACTION_DT
+                 , SALES_CHANNEL_TYPE_CD
+                 , count(*) 
+           FROM edl_stage.plus_sales_sku_store_day 
+           group by 1,2,3,4,5
+           having count(*)>1
+          )
+    '
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+     SELECT count(*) cnt
+     from edl_landing.lbca_sales_sku_store_day L
+     left join edl_stage.plus_sales_sku_store_day S 
+                        ON  S.CHAIN_NBR                 = CAST(TRIM(L.CHAIN_NBR) AS INT64)
+                        AND S.SKU_NBR                   = TRIM(L.SKU_NBR)
+                        AND S.STORE_NBR                 = CAST(TRIM(L.STORE_NBR) AS NUMERIC)
+                        AND S.TRANSACTION_DT            = PARSE_DATE("%Y-%m-%d",TRIM(L.TRANSACTION_DT))
+                        AND S.SALES_CHANNEL_TYPE_CD     = TRIM(L.SALES_CHANNEL_TYPE_CD)
+     WHERE S.CHAIN_NBR is null
+    '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+

@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/vmci021_cust_phone.json \
+        edl_landing.vmci021_cust_phone   \
+        "gs://${default_bucket}/plus/crm/vmci021_cust_phone_YYYYMMDD*.txt.gz"
+rc_check $? "Load edl_landing"
+

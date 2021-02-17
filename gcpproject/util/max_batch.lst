@@ -1,0 +1,18 @@
+!pre_acc_df_prod_hier ,20200202
+                            pre_ann_ann_bi_transaction_fpnfp ,20200218
+pre_atg_order_commerceItem ,20200219
+pre_atg_order_commerceitemadjustments ,20200219
+pre_atg_order_commerceitemcoupons ,20200219
+pre_atg_order_header ,20200219
+pre_atg_order_payment ,20200219
+                            pre_atg_order_return ,20200218
+                            pre_atg_order_return_commerceitem ,20200218
+                            pre_atg_order_return_method ,20200218
+pre_atg_order_shipment ,20200219
+pre_atg_order_shipment_tracking ,20200219
+pre_aw_transaction_discount_detail ,20200219
+pre_aw_transaction_header ,20200219
+pre_aw_transaction_line ,20200219
+pre_aw_transaction_linenotes ,20200219
+pre_aw_transaction_merch_detail ,20200219
+pre_aw_transaction_return_detail ,20200219

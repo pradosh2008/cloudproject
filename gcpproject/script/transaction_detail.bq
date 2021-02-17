@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.transaction_detail  'gs://p-asna-datasink-003/transaction_detail/*'
+rc_check $? "Load edl_landing"
+
+#Archive target
+bq cp --force edl_conform.transaction_detail edl_archive.transaction_detail
+rc_check $? "Archive copy"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.transaction_detail --use_legacy_sql=false 'select c.* 
+from edl_landing.transaction_detail c
+left join edl_conform.transaction_detail m
+on c.transaction_key = m.transaction_key
+and c.transaction_line_num = m.transaction_line_num
+where m.transaction_key is null'
+rc_check $? "Append to edl_conform"

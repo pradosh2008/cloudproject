@@ -1,0 +1,92 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_payment_curr
+as
+  select
+                 orderid
+                 ,lastmodifieddate
+                 ,paymentgroupid
+                 ,paymentmethod
+                 ,encryptedcreditcardnumber
+                 ,creditcardtype
+                 ,digitalwalletid
+                 ,digitalwallettype
+                 ,creditcardbillingaddressprefix
+                 ,creditcardbillingaddressfirstname
+                 ,creditcardbillingaddressmiddlename
+                 ,creditcardbillingaddresslastname
+                 ,creditcardbillingaddresssuffix
+                 ,creditcardbillingaddresscompanyname
+                 ,creditcardbillingaddressjobtitle
+                 ,creditcardbillingaddresspobox
+                 ,creditcardbillingaddressaddress1
+                 ,creditcardbillingaddressaddress2
+                 ,creditcardbillingaddressaddress3
+                 ,creditcardbillingaddresscity
+                 ,creditcardbillingaddresscountry
+                 ,creditcardbillingaddresspostalcode
+                 ,creditcardbillingaddressemail
+                 ,creditcardbillingaddressphonenumber
+                 ,creditcardbillingaddressstateaddress
+                 ,creditcardbillingaddresscounty
+                 ,creditcardbillingaddressfaxnumber
+                 ,creditcardnumber
+                 ,expirationmonth
+                 ,expirationdayofmonth
+                 ,expirationyear
+                 ,amountcredited
+                 ,paymentgroupamount
+                 ,paymentgroupsubmitteddate
+                 ,paymentgroupcurrencycode
+                 ,paymentgroupstate
+                 ,paymentgroupclasstype
+                 ,amountauthorized
+                 ,amountdebited
+                 ,paymentgroupstatedetail
+                 ,paymentgroupspecialinstructions
+                 ,authorizationstatus
+                 ,debitstatus
+                 ,creditstatus
+                 ,preauthcompletecalls
+                 ,tendertype
+                 ,tendersubtype
+                 ,payerid
+                 ,paypaltransactionid
+                 ,paypalbillingaddressprefix
+                 ,paypalbillingaddressfirstname
+                 ,paypalbillingaddressmiddlename
+                 ,paypalbillingaddresslastname
+                 ,paypalbillingaddresssuffix
+                 ,paypalbillingaddresscompanyname
+                 ,paypalbillingaddressjobtitle
+                 ,paypalbillingaddresspobox
+                 ,paypalbillingaddressaddress1
+                 ,paypalbillingaddressaddress2
+                 ,paypalbillingaddressaddress3
+                 ,paypalbillingaddresscity
+                 ,paypalbillingaddresscountry
+                 ,paypalbillingaddresspostalcode
+                 ,paypalbillingaddressemail
+                 ,paypalbillingaddressphonenumber
+                 ,paypalbillingaddressstateaddress
+                 ,paypalbillingaddresscounty
+                 ,paypalbillingaddressfaxnumber
+                 ,giftcardtransactionid
+                 ,giftcertificateprofileid
+                 ,storecreditprofileid
+                 ,storecreditnumber
+                 ,payorderrelpaymentgroupid
+                 ,orderref
+                 ,relationshippayorderrelamount
+                 ,batch_id
+  from ( select *
+  				,dense_rank() over (PARTITION BY orderid 
+                                    order by batch_id desc,lastmodifieddate desc) rn
+  		from \`${project}.edl_stage.pre_atg_order_payment\` 
+  		)
+  	where rn = 1
+!

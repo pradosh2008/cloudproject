@@ -1,0 +1,43 @@
+ #!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --use_legacy_sql=false <<!
+create table analytic_mart.fact_transaction_notes_dedup as
+with trans_notesCTE as
+(
+select ftf.*
+,row_number() over (partition by transaction_key,transaction_notes_line_num order by transaction_key,transaction_notes_line_num,edl_create_tms desc) as dupnum
+from analytic_mart.fact_transaction_notes ftf
+)
+select
+transaction_key
+,transaction_notes_line_num
+,transaction_notes_sequence_num
+,note_type_desc
+,free_form_notes_desc
+,edl_create_tms
+,edl_create_job_nam
+,edl_last_update_tms
+,edl_last_update_job_nam
+,brand_cd
+from trans_notesCTE
+where dupnum = 1
+!
+rc_check $? "Fix dedup and columns from float to numeric"
+
+
+bq cp --force analytic_mart.fact_transaction_notes edl_archive.fact_transaction_notes
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_notes_dedup analytic_mart.fact_transaction_notes
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_notes_dedup
+rc_check $? "drop the temp table"
+
+
+
+
+
+

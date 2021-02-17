@@ -1,0 +1,13 @@
+Check list:
+    reset_qa_buckets
+    reset_stage.bq
+    fix_stage.sh
+    go_qa_stage.sh -- check ctl folder
+    run_bq_job - for stage, check ctl folder
+    run_bq_job - for atg stage
+    rebuild_views.sh
+    reset_mart.bq
+    fix_pre_mart.sh
+    pre_mart_load.sh -- check ctl folder
+    run_bq_job
+

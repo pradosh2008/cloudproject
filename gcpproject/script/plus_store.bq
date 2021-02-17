@@ -1,0 +1,102 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the LB Store landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_store.json \
+        edl_landing.lb_store  \
+        "gs://${default_bucket}/plus/store/LB_STORE_*.txt"
+rc_check $? "Load edl_landing LB STORE Completed"
+
+#loading the temporary table in staging 
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_store_new --use_legacy_sql=false <<!
+SELECT 
+ CAST(TRIM(chain_id) AS INT64) as chain_id
+,CAST(TRIM(store_id) AS INT64) as store_id
+,CAST(TRIM(region_id) AS INT64) as region_id
+,CAST(TRIM(district_id) AS INT64) as district_id
+,CAST(TRIM(dc_id) AS INT64) as dc_id
+,CAST(TRIM(company_id) AS INT64) as company_id
+,CAST(TRIM(area_id) AS INT64) as area_id
+,case when TRIM(store_remodel_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(store_remodel_date)) end as store_remodel_date
+,case when TRIM(store_open_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(store_open_date)) end as store_open_date        
+,case when TRIM(store_close_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(store_close_date)) end as store_close_date          
+,store_type
+,store_name
+,mall_name
+,store_manager_name
+,district_mgr_name
+,region_mgr_name
+,store_opr_status
+,store_ots_status
+,CAST(TRIM(total_square_ft) AS NUMERIC) as total_square_ft
+,CAST(TRIM(selling_square_ft) AS NUMERIC) as selling_square_ft
+,store_cbsa
+,store_city
+,store_state
+,store_state_cd
+,store_addr_line1
+,store_addr_line2
+,store_addr_line3
+,store_zip_cd
+,store_addr_country_cd
+,store_addr_county
+,store_addr_country_name
+,store_primary_phone_nbr
+,case when TRIM(lease_expire_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(lease_expire_date)) end as lease_expire_date
+,region_name
+,area_name
+,chain_name
+,district_name
+,store_hours
+,site_type_group
+,depth
+,frontage
+,case when TRIM(open_inv_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(open_inv_date)) end as open_inv_date
+,case when TRIM(close_inv_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(close_inv_date)) end as close_inv_date      
+,case when TRIM(gob_start_date)='' then null
+        else parse_date("%Y-%m-%d",TRIM(gob_start_date)) end as gob_start_date      
+,latitude
+,longitude
+,case when TRIM(da_comp_open)='' then null
+        else parse_date("%Y-%m-%d",TRIM(da_comp_open)) end as da_comp_open
+,comp_ind
+,CAST(TRIM(batch_id) AS INT64) as batch_id
+ from edl_landing.lb_store
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_store_new --use_legacy_sql=false <<!
+SELECT c.*
+FROM edl_stage.plus_store c
+WHERE c.batch_id NOT IN (
+  SELECT
+    w.batch_id
+  FROM
+    edl_stage.lbca_store_new w
+    group by w.batch_id
+)
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_store edl_archive.plus_store
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_store_new edl_stage.plus_store
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_store_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/store/LB_STORE*.txt*"
+
+
+

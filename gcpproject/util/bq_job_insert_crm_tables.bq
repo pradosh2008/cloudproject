@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+INSERT edl_stage.bq_job_defn (job_def_id, brand_cd, bq_name, table_name, job_type, load_type) VALUES
+('M227','PLUS', 'plus_brand_customer_direct_marketing_cell.bq', 'plus_brand_customer_direct_marketing_cell', 'Mart', 'Daily' ),
+('M228','PLUS', 'plus_brand_customer_mailing.bq', 'plus_brand_customer_mailing', 'Mart', 'Daily' ),
+('M229','PLUS', 'plus_brand_customer_clcst_gp.bq', 'plus_brand_customer_clcst_gp', 'Mart', 'Daily' );
+!

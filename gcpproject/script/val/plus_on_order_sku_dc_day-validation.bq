@@ -1,0 +1,47 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+     SELECT count(*)
+     FROM (
+           SELECT 
+                   chain_nbr
+                 , sku_nbr
+                 , dc_nbr
+                 , purchase_order_nbr
+                 , transaction_dt
+                 , not_before_dt
+                 , not_after_dt
+                 , count(*) 
+           FROM edl_stage.plus_on_order_sku_dc_day
+           group by 1,2,3,4,5,6,7
+           having count(*)>1
+          )
+    '
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+     SELECT count(*) cnt
+     from edl_landing.lb_on_order_sku_dc_day L
+     left join edl_stage.plus_on_order_sku_dc_day S 
+                        ON  S.chain_nbr             = cast(trim(L.chain_nbr) as int64)
+                        AND S.sku_nbr               = trim(L.sku_nbr)
+                        AND S.dc_nbr                = cast(trim(L.dc_nbr) as numeric)
+                        AND S.purchase_order_nbr    = cast(trim(L.purchase_order_nbr) as int64)
+                        AND S.transaction_dt        = parse_date("%Y-%m-%d",L.transaction_dt)
+                        AND S.not_before_dt         = parse_date("%Y-%m-%d",L.not_before_dt)
+                        AND S.not_after_dt          = parse_date("%Y-%m-%d",L.not_after_dt)
+     WHERE S.chain_nbr is null
+    '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+
+

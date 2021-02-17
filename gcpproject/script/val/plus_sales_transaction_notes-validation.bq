@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='select count(*)
+from
+(select
+    h.selling_chain_nbr, h.selling_store_nbr, h.register_nbr, h.transaction_dt, h.transaction_nbr , h.record_seq_nbr, count(*)
+    from edl_stage.plus_sales_transaction_notes h
+    group by 1,2,3,4,5,6
+    having count(*)>1)'
+
+run_validation "$sql" "Unique Key Check"
+#Completeness check
+
+sql="SELECT count(*) cnt
+from edl_landing.lb_sales_transaction_notes l
+left join edl_stage.plus_sales_transaction_notes s
+    on l.selling_chain_nbr=s.selling_chain_nbr
+    and cast(l.selling_store_nbr as numeric)=s .selling_store_nbr
+    and l.register_nbr =s.register_nbr
+    and (case when TRIM(l.transaction_dt)='' then null else PARSE_DATE(\"%Y-%m-%d\",TRIM(l.transaction_dt)) end ) =s.transaction_dt
+    and l.transaction_nbr =s.transaction_nbr
+    and l.record_seq_nbr = s.record_seq_nbr
+where s.selling_chain_nbr =7 and s.record_seq_nbr is null"
+
+run_validation "$sql" "Completeness Check Finished for LB"
+
+
+exit ${ERROR_CD:-0}
+
+

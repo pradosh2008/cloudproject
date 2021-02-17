@@ -1,0 +1,35 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+select
+direct_marketing_cell_key,
+count(1)
+from
+analytic_mart.plus_brand_customer_direct_marketing_cell
+group by 1 having count(1)>1 )'
+
+run_validation "$sql" "Unique key  Check"
+
+
+#Null Check
+sql='SELECT COUNT(*) AS cnt
+FROM analytic_mart.plus_brand_customer_direct_marketing_cell
+WHERE direct_marketing_cell_id is NULL or direct_marketing_cell_key IS NULL'
+
+run_validation "$sql" "Null check"
+
+
+
+#Completeness Check
+sql='select count(1)
+FROM edl_stage.plus_vmci024_dir_mkt_cl_curr c
+        INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc
+          on  c.id_chain=cc.id_chain
+LEFT JOIN analytic_mart.plus_brand_customer_direct_marketing_cell pm
+on c.id_dir_mkt_cell=pm.direct_marketing_cell_id
+where pm.direct_marketing_cell_id is null'
+
+run_validation "$sql" "Completeness Check"
+

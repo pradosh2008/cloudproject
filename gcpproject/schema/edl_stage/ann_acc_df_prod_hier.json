@@ -1,0 +1,86 @@
+[
+	{
+		"name": "SUBCLASS_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "SUBCLASS_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "CLASS_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "CLASS_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "DEPT_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "DEPT_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "GROUP_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "GROUP_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "DIV_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "DIV_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "BRAND_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "BRAND_NAME",
+		"type": "STRING"
+	},
+	{
+		"name": "STYLE_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "STYLE_DESC",
+		"type": "STRING"
+	},
+	{
+		"name": "COLOR_ID",
+		"type": "STRING"
+	},
+	{
+		"name": "COLOR_DESC",
+		"type": "STRING"
+	},
+	{
+		"name": "STORE_SET_1",
+		"type": "STRING"
+	},
+	{
+		"name": "STORE_SET_2",
+		"type": "STRING"
+	},
+	{
+		"name": "ECOMM_EXCLUSIVE",
+		"type": "STRING"
+	},
+	{
+		"name": "TEST_IND",
+		"type": "STRING"
+	},
+	{
+		"name": "FASHION_PYRAMID",
+		"type": "STRING"
+	}
+]

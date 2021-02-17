@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_promo_execution_hierarchy_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_promo_execution_hierarchy c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_promo_execution_hierarchy_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_promo_execution_hierarchy c
+left join jus_stage.work_dim_promo_execution_hierarchy w
+    on  w.promo_exec_hier_key = c.promo_exec_hier_key
+where w.promo_exec_hier_key is null
+!
+bq cp --force jus_stage.dim_promo_execution_hierarchy edl_archive.dim_promo_execution_hierarchy
+bq cp --force jus_stage.dim_promo_execution_hierarchy_new jus_stage.dim_promo_execution_hierarchy
+bq rm --force jus_stage.dim_promo_execution_hierarchy_new

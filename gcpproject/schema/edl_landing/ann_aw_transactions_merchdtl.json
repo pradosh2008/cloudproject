@@ -1,0 +1,142 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "if_entry_no", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "interface_control_flag", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "record_type", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "line_id", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "merchandise_category", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "upc_lookup_division", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "upc_no", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "sku_id", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "style_reference_id", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "class_code", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "subclass_code", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pos_identifier_type", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pos_identifier", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "pos_dept_class", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "units", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "salesperson", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "salesperson2", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ticket_price", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "sold_at_price", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "price_override", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "upc_missing_in_pos_iplu_flag", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "scanned", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "upc_on_file", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "plu_price", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "origination_store_no", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "source_store_no", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "fulfillment_store_no", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "INTEGER"
+  }
+]

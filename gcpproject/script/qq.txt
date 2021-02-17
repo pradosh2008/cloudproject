@@ -1,0 +1,1 @@
+SELECT {$ expr substr gs://p-asna-datasink-003/pre/ANN_ACC_DF_PROD_HIER_20191124120205.txt 51 8}

@@ -1,0 +1,74 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_vmci972_chain_cust_fullemail.json \
+        edl_landing.lbca_vmci972_chain_cust_fullemail \
+        "gs://${default_bucket}/plus/crm/vmci972_chain_cust_fullemail*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci972_chain_cust_fullemail_new --use_legacy_sql=false <<!
+SELECT
+ stgn.ID_CHAIN
+,stgn.ID_CUST
+,stgn.ID_EMAIL
+,stgn.ID_DOMAIN
+,stgn.CD_EMAIL_STYLE
+,stgn.DA_EMAIL_CREATED
+,stgn.FL_PRIMARY_EMAIL
+,stgn.DA_EM_CUST_VERIFIED
+,stgn.FL_EMAIL_VALID
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN,lbca.ID_CUST, lbca.ID_EMAIL
+order by lbca.EXTRACT_TS desc) as row_num
+from
+(SELECT
+ CAST(TRIM(c.ID_CHAIN) AS INT64) as ID_CHAIN
+,CAST(TRIM(c.ID_CUST) AS INT64) as ID_CUST
+,CAST(TRIM(c.ID_EMAIL) AS INT64) as ID_EMAIL
+,CAST(TRIM(c.ID_DOMAIN) AS INT64) as ID_DOMAIN
+,TRIM(c.CD_EMAIL_STYLE) AS CD_EMAIL_STYLE
+,case when TRIM(c.DA_EMAIL_CREATED)='' then null
+ else PARSE_DATE("%Y/%m/%d",TRIM(c.DA_EMAIL_CREATED)) end as DA_EMAIL_CREATED
+,TRIM(c.FL_PRIMARY_EMAIL) AS FL_PRIMARY_EMAIL
+,case when TRIM(c.DA_EM_CUST_VERIFIED)='' then null
+ else PARSE_DATE("%Y/%m/%d",TRIM(c.DA_EM_CUST_VERIFIED)) end as DA_EM_CUST_VERIFIED
+,TRIM(c.FL_EMAIL_VALID) AS FL_EMAIL_VALID
+,case when TRIM(c.EXTRACT_TS)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.EXTRACT_TS,"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci972_chain_cust_fullemail c
+) lbca
+) stgn
+where stgn.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci972_chain_cust_fullemail_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci972_chain_cust_fullemail c
+left join edl_stage.plus_vmci972_chain_cust_fullemail_new w
+    on w.ID_CHAIN=c.ID_CHAIN
+    and w.ID_CUST=c.ID_CUST
+    and w.ID_EMAIL=c.ID_EMAIL
+    where w.ID_EMAIL is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci972_chain_cust_fullemail edl_archive.plus_vmci972_chain_cust_fullemail
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci972_chain_cust_fullemail_new edl_stage.plus_vmci972_chain_cust_fullemail
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci972_chain_cust_fullemail_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci972_chain_cust_fullemail*.txt.gz"
+

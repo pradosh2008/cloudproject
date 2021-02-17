@@ -1,0 +1,46 @@
+bq cp --force  p-ascn-da-aadp-001:edl_stage.bq_job_defn p-ascn-da-aadp-001:edl_stage_qa.bq_job_defn &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.bq_job_status p-ascn-da-aadp-001:edl_stage_qa.bq_job_status &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_item_sku p-ascn-da-aadp-001:edl_stage_qa.plus_item_sku &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_customer p-ascn-da-aadp-001:edl_stage_qa.plus_sales_customer &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_detail p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_detail &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_discount p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_discount &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_fee p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_fee &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_header p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_header &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_notes p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_notes &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_payment p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_payment &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_tax p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_tax &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sales_transaction_tender p-ascn-da-aadp-001:edl_stage_qa.plus_sales_transaction_tender &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_sku_attr_channel p-ascn-da-aadp-001:edl_stage_qa.plus_sku_attr_channel &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_store p-ascn-da-aadp-001:edl_stage_qa.plus_store &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_tmci997_esp_outbound p-ascn-da-aadp-001:edl_stage_qa.plus_tmci997_esp_outbound &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci015_cust_ccard p-ascn-da-aadp-001:edl_stage_qa.plus_vmci015_cust_ccard &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci016_ccard_type p-ascn-da-aadp-001:edl_stage_qa.plus_vmci016_ccard_type &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci019_customer p-ascn-da-aadp-001:edl_stage_qa.plus_vmci019_customer &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci019_custonly p-ascn-da-aadp-001:edl_stage_qa.plus_vmci019_custonly &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci021_cust_phone p-ascn-da-aadp-001:edl_stage_qa.plus_vmci021_cust_phone &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci067_cust_block p-ascn-da-aadp-001:edl_stage_qa.plus_vmci067_cust_block &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci079_club_memb p-ascn-da-aadp-001:edl_stage_qa.plus_vmci079_club_memb &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci105_chain_cust p-ascn-da-aadp-001:edl_stage_qa.plus_vmci105_chain_cust &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci172_chain_cust_email p-ascn-da-aadp-001:edl_stage_qa.plus_vmci172_chain_cust_email &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci173_full_email_addr_status p-ascn-da-aadp-001:edl_stage_qa.plus_vmci173_full_email_addr_status &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci173_full_email_address p-ascn-da-aadp-001:edl_stage_qa.plus_vmci173_full_email_address &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci180_cust_demog p-ascn-da-aadp-001:edl_stage_qa.plus_vmci180_cust_demog &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci198_opt_in_out_type p-ascn-da-aadp-001:edl_stage_qa.plus_vmci198_opt_in_out_type &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci396_curr_opt_in_out_full p-ascn-da-aadp-001:edl_stage_qa.plus_vmci396_curr_opt_in_out_full &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci972_chain_cust_fullemail p-ascn-da-aadp-001:edl_stage_qa.plus_vmci972_chain_cust_fullemail &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.plus_vmci995_esp_last_click_open p-ascn-da-aadp-001:edl_stage_qa.plus_vmci995_esp_last_click_open &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_acc_df_prod_hier p-ascn-da-aadp-001:edl_stage_qa.pre_acc_df_prod_hier &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_ann_ann_bi_transaction_fpnfp p-ascn-da-aadp-001:edl_stage_qa.pre_ann_ann_bi_transaction_fpnfp &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_ann_calendar p-ascn-da-aadp-001:edl_stage_qa.pre_ann_calendar &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_ann_dom_bopis_transactions p-ascn-da-aadp-001:edl_stage_qa.pre_ann_dom_bopis_transactions &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_ann_dom_bopis_transactions_new p-ascn-da-aadp-001:edl_stage_qa.pre_ann_dom_bopis_transactions_new &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_commerceItem p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_commerceItem &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_commerceitemadjustments p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_commerceitemadjustments &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_commerceitemcoupons p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_commerceitemcoupons &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_header p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_header &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_payment p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_payment &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_return p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_return &
+bq cp --force  p-ascn-da-aadp-001:edl_stage.pre_atg_order_return_commerceitem p-ascn-da-aadp-001:edl_stage_qa.pre_atg_order_return_commerceitem &
+
+wait
+

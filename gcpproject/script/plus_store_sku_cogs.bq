@@ -1,0 +1,70 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --replace=true --destination_table edl_stage.plus_store_sku_cogs --use_legacy_sql=false <<!
+select                  
+                store_id
+                ,week_id
+                ,style_id
+                ,color_id       
+                ,sku_id
+                ,max(cast (cogs_amt as float64)) unit_cost_amt
+            from(                           
+                select s.*
+                       ,case when bop_store_inv_unit_cnt <> 0 
+                                then round(COALESCE(cast(bop_store_inv_actual_cost_amt as NUMERIC), 0)/COALESCE(cast(bop_store_inv_unit_cnt as INT64),0),2)
+                        -- This will give the cogs amount from previous week if current week is 0 
+                             when LAG (ROUND(SAFE_DIVIDE(bop_store_inv_actual_cost_amt,bop_store_inv_unit_cnt),2))  
+                                                    over (partition by s.chain_id,s.store_id,s.style_id,s.color_id,s.size_id, s.sku_id 
+													order by s.week_id )  is not null                            
+                                then LAG (ROUND(SAFE_DIVIDE(bop_store_inv_actual_cost_amt,bop_store_inv_unit_cnt),2)) 
+                                                    over (partition by s.chain_id,s.store_id,s.style_id,s.color_id,s.size_id, s.sku_id 
+													order by s.week_id )    
+                        -- If previous week is also zero then get the max amount                                                            
+										else max_amt           
+                        end as cogs_amt  
+                        from 
+                            (select chain_id
+                                    ,store_id
+                                    ,week_id
+                                    ,style_id
+                                    ,color_id
+                                    ,size_id
+                                    ,sku_id
+                                    ,bop_store_inv_actual_cost_amt
+                                    ,bop_store_inv_unit_cnt
+                                    ,ROW_NUMBER() OVER (PARTITION BY chain_id,store_id,week_id,style_id,color_id,size_id,sku_id 
+														ORDER BY abs(bop_store_inv_unit_cnt) DESC 
+								) rn -- to remove dups from table                   
+                            FROM  edl_stage.plus_store_sku_inventory s    
+                            )s 
+    JOIN -- to get MAX cogs amt at store,sky level
+        (
+            select chain_id
+                   ,store_id
+                   ,style_id
+                   ,color_id
+                   ,size_id
+                   ,sku_id
+                   ,max(safe_divide(bop_store_inv_actual_cost_amt,bop_store_inv_unit_cnt) ) max_amt
+                from  edl_stage.plus_store_sku_inventory 
+                group by chain_id
+                    ,store_id
+                    ,style_id
+                    ,color_id
+                    ,size_id
+                    ,sku_id
+            ) mx
+            on mx.chain_id = s.chain_id 
+            and mx.store_id = s.store_id 
+            and mx.style_id = s.style_id 
+            and mx.color_id = s.color_id 
+            and mx.size_id= s.size_id 
+            and mx.sku_id = s.sku_id
+                            where rn = 1
+				)unit_amt        
+            group by 1,2,3,4,5
+!

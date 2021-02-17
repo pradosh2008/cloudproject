@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+        a.orderid
+    , a.commerceitemid
+    , a.catalogrefid
+    , a.adjustmentdescription
+    , a.totaladjustment
+    , a.quantityadjusted
+        , a.batch_id
+        , a.lastmodifieddate
+        ,count(*)
+    from edl_stage.pre_atg_order_commerceitemadjustments a
+        where orderid not in ("881016112839","881073299182")     
+        group by 1,2,3,4,5,6,7,8 
+    having count(*) >1
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT 
+    count(*) cnt
+from edl_landing.ann_ann_atg_transactions c
+left join edl_stage.pre_atg_order_commerceitemadjustments w
+    on  w.orderid = c.orderid
+    and w.commerceitemid=c.commerceitemid
+    and w.catalogrefid=c.catalogrefid
+    and coalesce(w.adjustmentdescription,"") = coalesce(c.adjustmentdescription,"")
+    and coalesce(w.totaladjustment,0.0) = coalesce(CAST(c.totaladjustment as FLOAT64),0.0)
+    and coalesce(w.quantityadjusted,0) = coalesce(CAST(c.quantityadjusted AS INT64),0)
+    and w.lastmodifieddate = PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",c.lastmodifieddate)     
+    and w.batch_id=c.batch_id
+where w.orderid is null
+and c.orderid not like "%.orderid%"'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+

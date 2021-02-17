@@ -1,0 +1,88 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.plus_brand_customer_clcst_gp_new --use_legacy_sql=false <<!
+select
+ o.brand_customer_key
+,o.brand_customer_id
+,o.direct_marketing_cell_key
+,o.direct_marketing_cell_id
+,o.cell_customer_type_cd
+,o.cell_version_id
+,o.responded_cd
+,o.interaction_cd
+,o.package_id
+,o.batch_id
+,o.edl_create_tms
+,o.edl_create_job_nam
+,o.edl_last_update_tms
+,o.edl_last_update_job_nam
+,o.brand_cd
+from
+(
+SELECT
+ TO_HEX( MD5( CONCAT(CASE
+          WHEN cc.id_chain = 4 THEN 'CA'
+          WHEN cc.id_chain = 7 THEN 'LB' END ,"|"
+        ,m.id_cust))) AS brand_customer_key
+,m.id_cust as brand_customer_id
+,TO_HEX( MD5( CONCAT(CASE
+          WHEN cc.id_chain = 4 THEN 'CA'
+          WHEN cc.id_chain = 7 THEN 'LB' END ,"|"
+        ,m.id_dir_mkt_cell))) AS direct_marketing_cell_key
+,m.id_dir_mkt_cell     AS   direct_marketing_cell_id
+,m.cd_cell_cust_type as cell_customer_type_cd
+,m.id_cell_version as cell_version_id
+,m.fl_responded as responded_cd
+,m.cd_interaction as interaction_cd
+,m.id_package as package_id
+,FORMAT_TIMESTAMP('%E4Y%m%d',m.extract_ts) AS batch_id
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'CRMCUST' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'CRMCUST' AS edl_last_update_job_nam
+, CASE
+    WHEN cc.id_chain = 4 THEN 'CA'
+    WHEN cc.id_chain = 7 THEN 'LB'
+END
+  AS brand_cd
+FROM
+  edl_stage.plus_vmci051_clcst_gp_h_curr m
+  inner join edl_stage.plus_vmci105_chain_cust_curr cc
+  on m.id_cust = cc.id_cust
+where cc.id_chain in (4,7) 
+) o
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_clcst_gp_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_clcst_gp c
+left join analytic_mart.plus_brand_customer_clcst_gp_new w
+    on w.brand_customer_key = c.brand_customer_key
+    and w.direct_marketing_cell_key =c.direct_marketing_cell_key
+    and w.cell_customer_type_cd = c.cell_customer_type_cd
+    and w.responded_cd = c.responded_cd
+    and w.package_id = c.package_id
+    and w.batch_id = c.batch_id
+    where w.brand_customer_key is null
+    and w.direct_marketing_cell_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_brand_customer_clcst_gp edl_archive.plus_brand_customer_clcst_gp
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_clcst_gp_new analytic_mart.plus_brand_customer_clcst_gp
+rc_check $? "replace the temp table as the stage table"
+bq rm --force analytic_mart.plus_brand_customer_clcst_gp_new
+rc_check $? "drop the temp table"
+
+

@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --use_legacy_sql=false <<!
+create table analytic_mart.fact_transaction_tax_dedup as
+with trans_taxCTE as
+(
+select ftf.*
+,row_number() over (partition by transaction_key,tax_line_num order by transaction_key,tax_line_num,edl_create_tms desc) as dupnum
+from analytic_mart.fact_transaction_tax as ftf
+)
+select
+transaction_key
+,tax_line_num
+,tax_category_num
+,tax_jurisdiction_cd
+,tax_level_num
+,line_action_cd
+,line_object_type_cd
+,line_object_cd
+,cast(tax_rt as numeric) as tax_rt
+,cast(customer_paid_tax_amt as numeric) as customer_paid_tax_amt
+,cast(company_owed_tax_amt  as numeric) as company_owed_tax_amt
+,edl_create_tms
+,edl_create_job_nam
+,edl_last_update_tms
+,edl_last_update_job_nam
+,brand_cd
+from trans_taxCTE
+where dupnum = 1
+!
+rc_check $? "Fix dedup and columns from float to numeric"
+
+
+bq cp --force analytic_mart.fact_transaction_tax edl_archive.fact_transaction_tax
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_tax_dedup analytic_mart.fact_transaction_tax
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_tax_dedup
+rc_check $? "drop the temp table"
+
+

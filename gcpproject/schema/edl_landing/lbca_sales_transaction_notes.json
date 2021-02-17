@@ -1,0 +1,66 @@
+[
+	{
+		"name": "notes_seq_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "note_type_desc",
+		"type": "string"
+	},
+	{
+		"name": "free_form_note_desc",
+		"type": "string"
+	},
+	{
+		"name": "selling_chain_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "selling_store_nbr",
+		"type": "Numeric"
+	},
+	{
+		"name": "register_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "transaction_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "transaction_dt",
+		"type": "string"
+	},
+	{
+		"name": "transaction_tm",
+		"type": "String"
+	},
+	{
+		"name": "detail_fee_seq_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "detail_fee_ind",
+		"type": "string"
+	},
+	{
+		"name": "cashier_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "record_seq_nbr",
+		"type": "INTEGER"
+	},
+	{
+		"name": "note_type_cd",
+		"type": "string"
+	},
+	{
+		"name": "last_update_ts",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+]

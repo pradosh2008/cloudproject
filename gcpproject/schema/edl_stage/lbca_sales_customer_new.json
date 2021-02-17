@@ -1,0 +1,72 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "selling_chain_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "selling_store_nbr", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "register_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "transaction_dt", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_seq_nbr", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "apply_matching_logic_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "club_member_nbr", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_external_type_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "customer_external_nbr", 
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_update_ts", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ecommerce_customer_nbr", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "extract_ts", 
+    "type": "TIMESTAMP"
+  }
+]

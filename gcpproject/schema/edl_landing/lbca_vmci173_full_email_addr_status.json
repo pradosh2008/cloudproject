@@ -1,0 +1,50 @@
+[
+	{
+		"name": "DA_FIRST_HARD_BB",
+		"type": "string"
+	},
+	{
+		"name": "DA_FIRST_SOFT_BB",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_BB",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_HARD_BB",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_SOFT_BB",
+		"type": "string"
+	},
+	{
+		"name": "FL_EMAIL_BB_VALID",
+		"type": "string"
+	},
+	{
+		"name": "FL_HARD_BB_VALID",
+		"type": "string"
+	},
+	{
+		"name": "FL_SOFT_BB_VALID",
+		"type": "string"
+	},
+	{
+		"name": "ID_EMAIL",
+		"type": "string"
+	},
+	{
+		"name": "NU_BB_HARD",
+		"type": "string"
+	},
+	{
+		"name": "NU_BB_SOFT",
+		"type": "string"
+	},
+	{
+		"name": "EXTRACT_TS",
+		"type": "string"
+	}
+]

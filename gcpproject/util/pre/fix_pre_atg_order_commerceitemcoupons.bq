@@ -1,0 +1,23 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --use_legacy_sql=false \
+          --destination_table=edl_stage.pre_atg_order_commerceitemcoupons_fix <<!
+select orderid
+    ,commerceitemid
+    ,catalogrefid
+    ,commerceitemcouponscouponcode
+    ,commerceitemcouponsdiscountamt
+    ,batch_id
+    ,timestamp_add(lastmodifieddate, interval -1 hour) as lastmodifieddate
+from edl_stage.pre_atg_order_commerceitemcoupons
+!
+rc_check $? "build fix"
+
+bq cp --force edl_stage.pre_atg_order_commerceitemcoupons edl_archive.pre_atg_order_commerceitemcoupons
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_commerceitemcoupons_fix edl_stage.pre_atg_order_commerceitemcoupons
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_commerceitemcoupons_fix
+rc_check $? "drop the temp table"
+

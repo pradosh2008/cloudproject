@@ -1,0 +1,47 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+     SELECT count(*)
+     FROM (
+           SELECT 
+                   CHAIN_NBR
+                 , FISCAL_WEEK_NBR
+                 , SUBCLASS_NBR
+                 , MERCH_CHANNEL_TYPE_CD
+                 , PLAN_CHANNEL_TYPE_CD
+                 , PLAN_VERSION_NBR
+                 , MERCH_PLAN_TYPE_CD
+                 , count(*) 
+           FROM edl_stage.plus_merch_plan_week 
+           group by 1,2,3,4,5,6,7
+           having count(*)>1
+          )
+    '
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+     SELECT count(*) cnt
+     from edl_landing.lbca_merch_plan_week L
+     left join edl_stage.plus_merch_plan_week S 
+                        ON  S.CHAIN_NBR             = CAST(TRIM(L.CHAIN_NBR) AS INT64)
+                        AND S.FISCAL_WEEK_NBR       = CAST(TRIM(L.FISCAL_WEEK_NBR) AS INT64)
+                        AND S.SUBCLASS_NBR          = CAST(TRIM(L.SUBCLASS_NBR) AS NUMERIC)
+                        AND S.MERCH_CHANNEL_TYPE_CD = TRIM(L.MERCH_CHANNEL_TYPE_CD)
+                        AND S.PLAN_CHANNEL_TYPE_CD  = TRIM(L.PLAN_CHANNEL_TYPE_CD)
+                        AND S.PLAN_VERSION_NBR      = CAST(TRIM(L.PLAN_VERSION_NBR) AS NUMERIC)
+                        AND S.MERCH_PLAN_TYPE_CD    = TRIM(L.MERCH_PLAN_TYPE_CD)
+     WHERE S.CHAIN_NBR is null
+    '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+
+

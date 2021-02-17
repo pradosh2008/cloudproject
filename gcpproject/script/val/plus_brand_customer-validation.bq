@@ -1,0 +1,41 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='SELECT COUNT(*) FROM (
+SELECT brand_customer_key, count(*)
+FROM analytic_mart.plus_brand_customer
+GROUP BY 1
+HAVING COUNT(*)>1
+)'
+run_validation "$sql" "Unique key  Check"
+
+#Null Checks
+sql='SELECT COUNT(*) FROM (
+SELECT brand_customer_key
+FROM analytic_mart.plus_brand_customer
+WHERE brand_customer_key IS NULL
+OR brand_customer_id IS NULL
+OR brand_cd IS NULL
+)'
+run_validation "$sql" "Null Checks"
+
+#Completeness Check
+sql='SELECT COUNT(*) FROM (
+SELECT brand_customer_id
+FROM analytic_mart.plus_brand_customer a
+LEFT OUTER JOIN edl_stage.plus_vmci019_customer s
+ON a.brand_customer_id = CAST(s.ID_CUST AS STRING)
+WHERE s.ID_CUST IS NULL
+)'
+run_validation "$sql" "Completeness Check"
+
+#Foreign Key Check
+sql='SELECT COUNT(*) FROM (
+SELECT p.*
+FROM analytic_mart.plus_brand_customer p
+LEFT OUTER JOIN analytic_mart.dim_brand_customer d
+ON p.brand_customer_key = d.brand_customer_key
+WHERE d.brand_customer_key IS NULL
+)'
+run_validation "$sql" "Foreign Key Check"

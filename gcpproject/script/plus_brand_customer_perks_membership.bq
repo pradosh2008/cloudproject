@@ -1,0 +1,90 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --replace --destination_table analytic_mart.plus_brand_customer_perks_membership_new --use_legacy_sql=false <<!
+SELECT 
+		TO_HEX(MD5(CONCAT(CAST(case when c.id_chain = 7 
+									then 'LB' 
+									when c.id_chain = 4 
+									then 'CA' 
+									else NULL 
+								end as string)
+								,'|'
+								,cast(c.id_cust as string)))) 					as brand_customer_key
+		,c.id_cust 																as brand_customer_id
+		,c.id_club_memb  														as club_memb_id
+		,c.cd_club  															as club_cd
+		,case 	when trim(c.fl_needs_card)='Y' 
+				then 1
+				when trim(c.fl_needs_card)='N' 
+				then 0
+				else NULL 
+		 end 																	as need_card_ind
+		,case 	when trim(c.fl_card_ret_mail)='Y' 
+				then 1
+				when trim(c.fl_card_ret_mail)='N' 
+				then 0
+				else NULL 
+		 end 																	as card_ret_ind 
+		,c.da_ogin_signup 														as orig_signup_dt
+		,c.da_renewed  															as renewed_dt
+		,c.da_expiration 														as expiration_dt
+		,c.da_canceled  														as canceled_dt
+		,c.am_fee_paid  														as fee_paid_amt
+		,case 	when trim(c.fl_auto_enroll)='Y' 
+				then 1
+				when trim(c.fl_auto_enroll)='N' 
+				then 0
+				else NULL 
+		 end  																	as auto_enroll_ind
+		,case 	when trim(c.fl_canceled)='Y' 
+				then 1 
+				when trim(c.fl_canceled)='N' 
+				then 0
+				else NULL 
+		 end 																	as canceled_ind
+		,CURRENT_TIMESTAMP  													as edl_create_tms
+		,'CRMCUST'  																as edl_create_job_nam
+		,CURRENT_TIMESTAMP  													as edl_last_update_tms
+		,'CRMCUST' 																	as edl_last_update_job_nam
+				
+		,CASE 	WHEN c.id_chain = 4 
+				THEN 'CA'
+				WHEN c.id_chain = 7 
+				THEN 'LB'
+		 END																	AS brand_cd	
+		,FORMAT_TIMESTAMP('%E4Y%m%d',c.extract_ts) AS batch_id
+--FROM  (SELECT * FROM edl_stage.plus_vmci079_club_memb_curr  WHERE  id_chain IN (4,7) ) c
+FROM  edl_stage.plus_vmci079_club_memb_curr c
+INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc 
+	on c.id_Cust=cc.id_cust
+    and c.id_chain=cc.id_chain     
+INNER JOIN edl_stage.plus_vmci019_customer_curr cust  
+     ON c.ID_CUST = cust.ID_CUST 
+WHERE  c.id_chain IN (4,7)
+!
+rc_check $? "loading data into temporary table in the mart from stage layer"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_perks_membership_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_perks_membership c
+left join analytic_mart.plus_brand_customer_perks_membership_new w
+    on  w.brand_customer_key = c.brand_customer_key
+	 and w.club_memb_id=c.club_memb_id
+	 and w.club_cd=c.club_cd
+where w.brand_customer_key is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force analytic_mart.plus_brand_customer_perks_membership edl_archive.plus_brand_customer_perks_membership
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_perks_membership_new analytic_mart.plus_brand_customer_perks_membership
+rc_check $? "replace the temp table as the analytic_mart table"
+bq rm --force analytic_mart.plus_brand_customer_perks_membership_new
+rc_check $? "drop the temp table"
+

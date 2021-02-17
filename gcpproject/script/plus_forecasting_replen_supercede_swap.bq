@@ -1,0 +1,57 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=0 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lb_forecasting_replen_supercede_swap.json \
+        edl_landing.lb_forecasting_replen_supercede_swap \
+        " gs://${default_bucket}/plus/e3/lb_forecasting_replen_supercede_swap*.txt"
+rc_check $? "EDL_LANDING load for lb_forecasting_replen_supercede_swap Complete"
+
+#loading the temporary table in staging
+bq query  --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+    --destination_table edl_stage.plus_forecasting_replen_supercede_swap_new \
+<<!
+SELECT
+  cast(trim(d.chain_nbr) as int64)      as chain_nbr
+, trim(d.sku_to_nbr)                    as sku_to_nbr
+, trim(d.sku_from_nbr)                  as sku_from_nbr
+, cast(trim(d.store_nbr) as int64)      as store_nbr
+, trim(d.supercede_to_ref_nbr)          as supercede_to_ref_nbr
+, trim(d.supercede_from_ref_nbr)        as supercede_from_ref_nbr
+, trim(d.record_status_flg)             as record_status_flg
+, case when trim(d.last_update_ts) = '' then null else parse_timestamp("%Y%m%d%H%M%S.000",d.last_update_ts,"America/New_York") end as last_update_ts
+FROM edl_landing.lb_forecasting_replen_supercede_swap d
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --use_legacy_sql=false \
+    --destination_table edl_stage.plus_forecasting_replen_supercede_swap_new \
+<<!
+select stg.*
+from edl_stage.plus_forecasting_replen_supercede_swap stg
+WHERE stg.last_update_ts NOT IN (
+  SELECT
+  w.last_update_ts
+  FROM edl_stage.plus_forecasting_replen_supercede_swap_new w
+  group by w.last_update_ts
+)
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_forecasting_replen_supercede_swap edl_archive.plus_forecasting_replen_supercede_swap
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_forecasting_replen_supercede_swap_new edl_stage.plus_forecasting_replen_supercede_swap
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_forecasting_replen_supercede_swap_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/e3/lb_forecasting_replen_supercede_swap*.txt"
+
+

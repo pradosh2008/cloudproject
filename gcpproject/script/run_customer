@@ -1,0 +1,8 @@
+brand_customer_account.bq >$HOME/log/brand_customer_account.log 2>&1
+#brand_customer_addr.bq >$HOME/log/brand_customer_addr.log 2>&1
+#brand_customer.bq >$HOME/log/brand_customer.log 2>&1
+brand_customer_email.bq >$HOME/log/brand_customer_email.log 2>&1
+brand_customer_location.bq >$HOME/log/brand_customer_location.log 2>&1
+brand_customer_membership.bq >$HOME/log/brand_customer_membership.log 2>&1
+brand_customer_phone.bq >$HOME/log/brand_customer_phone.log 2>&1
+brand_customer_transaction_xref.bq >$HOME/log/brand_customer_transaction_xref.log 2>&1

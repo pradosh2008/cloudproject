@@ -1,0 +1,83 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "ID_CUST",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ID_BLOCK_GRP",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_STATE",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_COUNTY",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_TRACT",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_BG",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_MSA",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_MCDCCD",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_PLACE",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CUST_LAT",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CUST_LONG",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_BLOCK",
+    "type": "STRING"
+  },                      
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_CBSA",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "FL_CENSUS_CBSA_METRO",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CENSUS_CSA",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "EXTRACT_TS",
+    "type": "STRING"
+  }                      
+]
+ 

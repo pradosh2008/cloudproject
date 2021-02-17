@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (SELECT c.vendor_number, c.batch_id
+        , count(*)
+    FROM edl_stage.pre_sap_vendor c
+    group by 1,2
+    having count(*)>1
+)'
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.ann_sap_vendor l
+left join edl_stage.pre_sap_vendor s
+    on l.vendor_number = s.vendor_number
+    AND l.batch_id = s.batch_id
+where s.vendor_number is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+

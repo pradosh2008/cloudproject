@@ -1,0 +1,35 @@
+[
+     {"name":"chain_id"          ,"type":"integer"}
+    ,{"name":"dc_id"          ,"type":"integer"}
+    ,{"name":"selling_loc_id"          ,"type":"integer"}
+    ,{"name":"week_id"          ,"type":"integer"}
+    ,{"name":"style_id"          ,"type":"integer"}
+    ,{"name":"color_id"          ,"type":"integer"}
+    ,{"name":"bop_dc_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"bop_dc_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"bop_dc_inv_actual_cost_amt"          ,"type":"float"}
+    ,{"name":"bop_dc_inv_valued_cost_amt"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_unit_cnt"          ,"type":"integer"}
+    ,{"name":"bop_dc_to_dc_it_retail_cnt"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_actual_cost_amt"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_valued_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_receipt_unit_cnt"          ,"type":"integer"}
+    ,{"name":"dc_receipt_d_valued_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_receipt_actual_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_receipt_valued_cost_amt"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"bop_mkd_dc_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_actual_unit_cnt"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_value_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_dmos_uint_cnt"          ,"type":"integer"}
+    ,{"name":"dc_dmos_retail_cnt"          ,"type":"float"}
+    ,{"name":"dc_dmos_actual_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_dmos_valued_cost_amt"          ,"type":"float"}
+    ,{"name":"dc_mkd_unit_cnt"          ,"type":"integer"}
+    ,{"name":"dc_mkd_retail_cnt"          ,"type":"float"}
+    ,{"name":"dc_mkd_cost_amt"          ,"type":"float"}
+    ,{"name":"rtv_inv_unit_cnt"          ,"type":"integer"}
+    ,{"name":"rtv_inv_retail_cnt"          ,"type":"float"}
+    ,{"name":"rtv_inv_actual_cost_amt"          ,"type":"float"}
+    ,{"name":"rtv_inv_valued_cost_amt"          ,"type":"float"}
+]

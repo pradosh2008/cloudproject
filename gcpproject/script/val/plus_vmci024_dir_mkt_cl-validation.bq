@@ -1,0 +1,31 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*)
+from
+    (select id_dir_mkt_cell,count(*)
+    from edl_stage.plus_vmci024_dir_mkt_cl
+    group by id_dir_mkt_cell
+    having count(*)>1
+)'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT count(*)
+from edl_landing.lbca_vmci024_dir_mkt_cl l
+left join edl_stage.plus_vmci024_dir_mkt_cl p
+        on CAST(TRIM(l.id_dir_mkt_cell) AS INT64)=p.id_dir_mkt_cell
+        where p.id_dir_mkt_cell is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+

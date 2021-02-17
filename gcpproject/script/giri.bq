@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci995_esp_last_click_open*.txt.gz"

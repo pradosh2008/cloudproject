@@ -1,0 +1,59 @@
+[
+	{
+		"name": "id_cust",
+		"type": "string"
+	},
+	{
+		"name": "cd_club",
+		"type": "string"
+	},
+	{
+		"name": "id_chain",
+		"type": "string"
+    },
+	{
+		"name": "id_club_memb",
+		"type": "string"
+	},
+	{
+		"name": "fl_needs_card",
+		"type": "string"
+	},
+	{
+		"name": "fl_card_ret_mail",
+		"type": "string"
+	},
+	{
+		"name": "da_ogin_signup",
+		"type": "string"
+	},
+	{
+		"name": "da_renewed",
+		"type": "string"
+	},
+	{
+		"name": "da_expiration",
+		"type": "string"
+	},
+	{
+		"name": "da_canceled",
+		"type": "string"
+	},
+	{
+		"name": "am_fee_paid",
+		"type": "string"
+	},
+	{
+		"name": "fl_auto_enroll",
+		"type": "string"
+	},
+	{
+		"name": "fl_canceled",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+
+]

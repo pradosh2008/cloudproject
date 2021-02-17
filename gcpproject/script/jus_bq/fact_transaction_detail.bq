@@ -1,0 +1,25 @@
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.fact_transaction_detail --use_legacy_sql=false 2>&1 <<!
+select t.transaction_key
+    ,t.brand_customer_key
+    ,t.store_key
+    ,t.brand_customer_email_key
+    ,td.item_key 
+    ,td.line_num
+    ,t.transaction_dt
+    ,t.order_dt
+    ,td.gross_price_amt
+    ,td.net_price_amt
+    ,td.original_price_amt
+    ,td.actual_cost_amt
+    ,td.deflated_cost_amt
+    ,td.markdown_ind
+    ,td.ois_ind
+    ,td.sale_return_cd
+from jus_stage.fact_transaction t 
+join jus_stage.work_transaction_detail td
+    on td.transaction_id  = t.transaction_id
+left join jus_stage.fact_transaction_detail tgt
+    on tgt.transaction_key = t.transaction_key
+    and tgt.line_num = td.line_num
+where tgt.transaction_key is null
+!

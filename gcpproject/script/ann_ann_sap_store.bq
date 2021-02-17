@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_sap_store  'gs://p-asna-datasink-003/ann_ann_sap_store/*'
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging (it has both new and updated records)
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.ann_ann_sap_store_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.ann_ann_sap_store c
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_ann_sap_store_new --use_legacy_sql=false <<!
+SELECT c.* 
+FROM edl_stage.pre_sap_store c
+WHERE c.batch_id NOT IN (
+  SELECT
+    w.batch_id
+  FROM
+    edl_stage.ann_ann_sap_store_new w
+    group by w.batch_id
+)
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_sap_store edl_archive.pre_sap_store
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_ann_sap_store_new edl_stage.pre_sap_store
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_ann_sap_store_new
+rc_check $? "drop the temp table"
+

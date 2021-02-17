@@ -1,0 +1,123 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+       --schema=${schema_path}/edl_landing/lbca_vmci105_chain_cust.json \
+        edl_landing.lbca_vmci105_chain_cust \
+        "gs://${default_bucket}/plus/crm/vmci105_chain_cust*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci105_chain_cust_new --use_legacy_sql=false <<!
+#SELECT
+#stg.ID_CHAIN
+#,stg.ID_CUST
+#,stg.DA_LAST_TRNS
+#,stg.CD_MAIL
+#,stg.FL_DO_NOT_PROMOTE
+#,stg.FL_OK_TO_MAIL
+#,stg.ID_STORE
+#,stg.ID_EMP
+#,stg.DA_FIRST_TRNS
+#,stg.DA_MAIL_CODE
+#,stg.FL_ACTIVE_HOUSCARD
+#,stg.FL_HLDR_HOUSCARD
+#,stg.FL_DECLIN_HOUSCARD
+#,stg.DA_APPLY_HOUSCARD
+#,stg.FL_ACTIVE_COBRAND
+#,stg.FL_HLDR_COBRAND
+#,stg.FL_CLOSED_HOUSCARD
+#,stg.FL_CLOSED_COBRAND
+#,stg.CD_ACCOUNT_TERM
+#,stg.FL_SHOPS_JUNIORS
+#,stg.FL_SHOPS_MISSES
+#,stg.FL_SHOPS_PLUS
+#,stg.FL_OK_TO_PHONE
+#,stg.DA_CH_CUST_ADDED
+#,stg.FL_OK_TO_STMT_INS
+#,stg.IN_CUST_SOURCE_FIRST
+#,stg.IN_CUST_SOURCE_2ND_FIRST
+#,stg.IN_CUST_SOURCE_LAST
+#,stg.IN_CUST_SOURCE_2ND_LAST
+#,stg.CD_LBO_MIGRATION_STATUS
+#,stg.EXTRACT_TS
+#from
+#(SELECT lbca.*
+#,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN,lbca.ID_CUST
+#order by lbca.EXTRACT_TS desc) as row_num
+#from
+#(
+SELECT
+ CAST(TRIM(c.ID_CHAIN) AS INT64) as ID_CHAIN
+,CAST(TRIM(c.ID_CUST) AS INT64) as ID_CUST
+,case when TRIM(c.DA_LAST_TRNS)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_LAST_TRNS)) end as DA_LAST_TRNS
+,TRIM(c.CD_MAIL) AS CD_MAIL
+,TRIM(c.FL_DO_NOT_PROMOTE) AS FL_DO_NOT_PROMOTE
+,TRIM(c.FL_OK_TO_MAIL) AS FL_OK_TO_MAIL
+,case when TRIM(c.ID_STORE)='' then null
+else CAST(TRIM(c.ID_STORE) AS INT64) end as ID_STORE
+,case when TRIM(c.ID_EMP)='' then null
+else CAST(TRIM(c.ID_EMP) AS INT64) end as ID_EMP
+,case when TRIM(c.DA_FIRST_TRNS)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_FIRST_TRNS)) end as DA_FIRST_TRNS
+,case when TRIM(c.DA_MAIL_CODE)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_MAIL_CODE)) end as DA_MAIL_CODE
+,TRIM(c.FL_ACTIVE_HOUSCARD) AS FL_ACTIVE_HOUSCARD
+,TRIM(c.FL_HLDR_HOUSCARD) AS FL_HLDR_HOUSCARD
+,TRIM(c.FL_DECLIN_HOUSCARD) AS FL_DECLIN_HOUSCARD
+,case when TRIM(c.DA_APPLY_HOUSCARD)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_APPLY_HOUSCARD)) end as DA_APPLY_HOUSCARD
+,TRIM(c.FL_ACTIVE_COBRAND) AS FL_ACTIVE_COBRAND
+,TRIM(c.FL_HLDR_COBRAND) AS FL_HLDR_COBRAND
+,TRIM(c.FL_CLOSED_HOUSCARD) AS FL_CLOSED_HOUSCARD
+,TRIM(c.FL_CLOSED_COBRAND) AS FL_CLOSED_COBRAND
+,TRIM(c.CD_ACCOUNT_TERM) AS CD_ACCOUNT_TERM
+,TRIM(c.FL_SHOPS_JUNIORS) AS FL_SHOPS_JUNIORS
+,TRIM(c.FL_SHOPS_MISSES) AS FL_SHOPS_MISSES
+,TRIM(c.FL_SHOPS_PLUS) AS FL_SHOPS_PLUS
+,TRIM(c.FL_OK_TO_PHONE) AS FL_OK_TO_PHONE
+,case when TRIM(c.DA_CH_CUST_ADDED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_CH_CUST_ADDED)) end as DA_CH_CUST_ADDED
+,TRIM(c.FL_OK_TO_STMT_INS) AS FL_OK_TO_STMT_INS
+,TRIM(c.IN_CUST_SOURCE_FIRST) AS IN_CUST_SOURCE_FIRST
+,TRIM(c.IN_CUST_SOURCE_2ND_FIRST) AS IN_CUST_SOURCE_2ND_FIRST
+,TRIM(c.IN_CUST_SOURCE_LAST) AS IN_CUST_SOURCE_LAST
+,TRIM(c.IN_CUST_SOURCE_2ND_LAST) AS IN_CUST_SOURCE_2ND_LAST
+,case when TRIM(c.CD_LBO_MIGRATION_STATUS)='' then null
+else CAST(TRIM(c.CD_LBO_MIGRATION_STATUS) AS INT64) end as CD_LBO_MIGRATION_STATUS
+,case when TRIM(c.EXTRACT_TS)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.EXTRACT_TS,"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci105_chain_cust c
+#) lbca
+#) stg
+#where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci105_chain_cust_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci105_chain_cust c
+left join edl_stage.lbca_vmci105_chain_cust_new w
+    on w.ID_CHAIN=c.ID_CHAIN
+    and w.ID_CUST=c.ID_CUST
+    and EXTRACT(date from w.EXTRACT_TS)=EXTRACT(date from c.EXTRACT_TS)
+    where w.ID_CUST is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci105_chain_cust edl_archive.plus_vmci105_chain_cust
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci105_chain_cust_new edl_stage.plus_vmci105_chain_cust
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci105_chain_cust_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci105_chain_cust*.txt.gz"
+

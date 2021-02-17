@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#LOAD LATEST DATA FROM BUCKET TO EDL LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.brand_customer_account  'gs://p-asna-datasink-003/brand_customer_account/*'
+rc_check $? "Load edl_landing"
+
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.brand_customer_account_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.brand_customer_account c
+!
+rc_check $? "Build new table"
+
+Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.brand_customer_account_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.brand_customer_account c
+left join edl_landing.brand_customer_account w
+    on  w.brand_customer_key = c.brand_customer_key 
+    and w.account_id = c.account_id
+    where w.brand_customer_key is null
+!
+rc_check $? "Merge new table"
+
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.brand_customer_account edl_archive.brand_customer_account
+rc_check $? "Archive copy"
+bq cp --force=true edl_conform.brand_customer_account_new edl_conform.brand_customer_account
+rc_check $? "Copy new table"
+bq rm --force edl_conform.brand_customer_account_new
+rc_check $? "Remove new table"
+

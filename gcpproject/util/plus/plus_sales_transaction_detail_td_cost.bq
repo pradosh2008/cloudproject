@@ -1,0 +1,505 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+  
+#creating the CA landing table for 1 year data
+		
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail_hist  \
+        "gs://${default_bucket}/plus/edw/edl_issue_fix/ca_sales_transaction_detail20200424.txt.gz"
+rc_check $? "Load edl_landing CA Completed"
+
+#creating the LB landing table for 1 year 
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail_hist  \
+       "gs://${default_bucket}/plus/edw/edl_issue_fix/lb_sales_transaction_detail20200424.txt.gz"
+rc_check $? "Load edl_landing LB Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table edl_stage.plus_sales_transaction_detail_hist <<!
+         SELECT 
+         stg.selling_chain_nbr
+         ,stg.selling_store_nbr
+         ,stg.chain_nbr
+         ,stg.store_nbr
+         ,stg.transaction_dt
+         ,stg.register_nbr
+         ,stg.transaction_nbr
+         ,stg.record_seq_nbr
+         ,stg.detail_seq_nbr
+         ,stg.sku_nbr
+         ,stg.transaction_line_cst
+         ,stg.transaction_line_qty
+         ,stg.transaction_line_rtl 
+         ,stg.extract_ts
+         from (SELECT lbca.*
+         ,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.detail_seq_nbr
+         order by lbca.extract_ts desc) as row_num
+         from
+         (SELECT        
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl     
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.lb_sales_transaction_detail_hist c
+          UNION ALL
+          SELECT       
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl     
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.ca_sales_transaction_detail_hist c
+          ) lbca
+          )stg
+          where stg.row_num = 1
+!
+rc_check $? "Load edl_stage plus_sales_transaction_detail_hist Completed"
+
+#creating the CA landing table for 20200405
+		
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail_hist  \
+        "gs://${default_bucket}/plus/edw/edl_issue_fix/ca_sales_transaction_detail20200405.txt.gz"
+rc_check $? "Load edl_landing CA 20200405 Completed"
+
+#creating the LB landing table for 20200405 
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail_hist  \
+       "gs://${default_bucket}/plus/edw/edl_issue_fix/lb_sales_transaction_detail20200405.txt.gz"
+rc_check $? "Load edl_landing LB 20200405 Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table edl_stage.plus_sales_transaction_detail_hist_new <<!
+         SELECT
+         stg.selling_chain_nbr
+         ,stg.selling_store_nbr
+         ,stg.chain_nbr
+         ,stg.store_nbr
+         ,stg.transaction_dt
+         ,stg.register_nbr
+         ,stg.transaction_nbr
+         ,stg.record_seq_nbr
+         ,stg.detail_seq_nbr
+         ,stg.sku_nbr
+         ,stg.transaction_line_cst
+         ,stg.transaction_line_qty
+         ,stg.transaction_line_rtl 
+         ,stg.extract_ts
+         from (SELECT lbca.*
+         ,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.detail_seq_nbr
+         order by lbca.extract_ts desc) as row_num
+         from
+         (SELECT
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.lb_sales_transaction_detail_hist c
+          UNION ALL
+          SELECT 
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.ca_sales_transaction_detail_hist c
+          ) lbca
+          )stg
+          where stg.row_num = 1
+!
+rc_check $? "Load edl_stage plus_sales_transaction_detail_hist_new Completed"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_transaction_detail_hist_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_detail_hist c
+left join edl_stage.plus_sales_transaction_detail_hist_new w
+     on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.detail_seq_nbr=c.detail_seq_nbr
+where w.detail_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_detail_hist edl_archive.plus_sales_transaction_detail_hist
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_transaction_detail_hist_new edl_stage.plus_sales_transaction_detail_hist
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_transaction_detail_hist_new
+rc_check $? "drop the temp table"	   
+
+#creating the CA landing table for 20200406
+		
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail_hist  \
+        "gs://${default_bucket}/plus/edw/edl_issue_fix/ca_sales_transaction_detail20200406.txt.gz"
+rc_check $? "Load edl_landing CA 20200406 Completed"
+
+#creating the LB landing table for 20200406
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail_hist  \
+       "gs://${default_bucket}/plus/edw/edl_issue_fix/lb_sales_transaction_detail20200406.txt.gz"
+rc_check $? "Load edl_landing LB 20200406 Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table edl_stage.plus_sales_transaction_detail_hist_new <<!
+         SELECT
+         stg.selling_chain_nbr
+         ,stg.selling_store_nbr
+         ,stg.chain_nbr
+         ,stg.store_nbr
+         ,stg.transaction_dt
+         ,stg.register_nbr
+         ,stg.transaction_nbr
+         ,stg.record_seq_nbr
+         ,stg.detail_seq_nbr
+         ,stg.sku_nbr
+         ,stg.transaction_line_cst
+         ,stg.transaction_line_qty
+         ,stg.transaction_line_rtl 
+         ,stg.extract_ts
+         from (SELECT lbca.*
+         ,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.detail_seq_nbr
+         order by lbca.extract_ts desc) as row_num
+         from
+         (SELECT
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.lb_sales_transaction_detail_hist c
+          UNION ALL
+          SELECT 
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.ca_sales_transaction_detail_hist c
+          ) lbca
+          )stg
+          where stg.row_num = 1
+!
+rc_check $? "Load edl_stage plus_sales_transaction_detail_hist_new Completed"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_transaction_detail_hist_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_detail_hist c
+left join edl_stage.plus_sales_transaction_detail_hist_new w
+     on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.detail_seq_nbr=c.detail_seq_nbr
+where w.detail_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_detail_hist edl_archive.plus_sales_transaction_detail_hist
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_transaction_detail_hist_new edl_stage.plus_sales_transaction_detail_hist
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_transaction_detail_hist_new
+rc_check $? "drop the temp table"
+
+#creating the CA landing table for 20200407
+		
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail_hist  \
+        "gs://${default_bucket}/plus/edw/edl_issue_fix/ca_sales_transaction_detail20200407.txt.gz"
+rc_check $? "Load edl_landing CA 20200407 Completed"
+
+#creating the LB landing table for 20200407 
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail_hist  \
+       "gs://${default_bucket}/plus/edw/edl_issue_fix/lb_sales_transaction_detail20200407.txt.gz"
+rc_check $? "Load edl_landing LB 20200407 Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table edl_stage.plus_sales_transaction_detail_hist_new <<!
+         SELECT
+         stg.selling_chain_nbr
+         ,stg.selling_store_nbr
+         ,stg.chain_nbr
+         ,stg.store_nbr
+         ,stg.transaction_dt
+         ,stg.register_nbr
+         ,stg.transaction_nbr
+         ,stg.record_seq_nbr
+         ,stg.detail_seq_nbr
+         ,stg.sku_nbr
+         ,stg.transaction_line_cst
+         ,stg.transaction_line_qty
+         ,stg.transaction_line_rtl 
+         ,stg.extract_ts
+         from (SELECT lbca.*
+         ,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.detail_seq_nbr
+         order by lbca.extract_ts desc) as row_num
+         from
+         (SELECT
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.lb_sales_transaction_detail_hist c
+          UNION ALL
+          SELECT 
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.ca_sales_transaction_detail_hist c
+          ) lbca
+          )stg
+          where stg.row_num = 1
+!
+rc_check $? "Load edl_stage plus_sales_transaction_detail_hist_new Completed"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_transaction_detail_hist_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_detail_hist c
+left join edl_stage.plus_sales_transaction_detail_hist_new w
+     on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.detail_seq_nbr=c.detail_seq_nbr
+where w.detail_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_detail_hist edl_archive.plus_sales_transaction_detail_hist
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_transaction_detail_hist_new edl_stage.plus_sales_transaction_detail_hist
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_transaction_detail_hist_new
+rc_check $? "drop the temp table"
+
+
+#creating the CA landing table for 20200408
+		
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail_hist  \
+        "gs://${default_bucket}/plus/edw/edl_issue_fix/ca_sales_transaction_detail20200408.txt.gz"
+rc_check $? "Load edl_landing CA 20200408 Completed"
+
+#creating the LB landing table for 20200408 
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail_hist  \
+       "gs://${default_bucket}/plus/edw/edl_issue_fix/lb_sales_transaction_detail20200408.txt.gz"
+rc_check $? "Load edl_landing LB 20200408 Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table edl_stage.plus_sales_transaction_detail_hist_new <<!
+         SELECT
+         stg.selling_chain_nbr
+         ,stg.selling_store_nbr
+         ,stg.chain_nbr
+         ,stg.store_nbr
+         ,stg.transaction_dt
+         ,stg.register_nbr
+         ,stg.transaction_nbr
+         ,stg.record_seq_nbr
+         ,stg.detail_seq_nbr
+         ,stg.sku_nbr
+         ,stg.transaction_line_cst
+         ,stg.transaction_line_qty
+         ,stg.transaction_line_rtl 
+         ,stg.extract_ts
+         from (SELECT lbca.*
+         ,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr,lbca.detail_seq_nbr
+         order by lbca.extract_ts desc) as row_num
+         from
+         (SELECT
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.lb_sales_transaction_detail_hist c
+          UNION ALL
+          SELECT 
+         CAST(TRIM(c.selling_chain_nbr) AS INT64) AS selling_chain_nbr
+         ,CAST(TRIM(c.selling_store_nbr) AS NUMERIC) AS selling_store_nbr
+         ,CAST(TRIM(c.chain_nbr) AS INT64) AS chain_nbr
+         ,CAST(TRIM(c.store_nbr) AS NUMERIC) AS store_nbr
+         ,case when TRIM(c.transaction_dt)='' then null
+          else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) end as transaction_dt
+         ,CAST(TRIM(c.register_nbr) AS INT64) AS register_nbr
+         ,CAST(TRIM(c.transaction_nbr) AS INT64) AS transaction_nbr
+         ,CAST(TRIM(c.record_seq_nbr) AS INT64) AS record_seq_nbr
+         ,CAST(TRIM(c.detail_seq_nbr) AS INT64) AS detail_seq_nbr
+         ,c.sku_nbr
+         ,CAST(TRIM(c.transaction_line_cst) AS NUMERIC) AS transaction_line_cst
+         ,CAST(TRIM(c.transaction_line_qty) AS NUMERIC) AS transaction_line_qty
+         ,CAST(TRIM(c.transaction_line_rtl) AS NUMERIC) AS transaction_line_rtl 
+         ,case when TRIM(c.extract_ts)=''then null
+          else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+          from edl_landing.ca_sales_transaction_detail_hist c
+          ) lbca
+          )stg
+          where stg.row_num = 1
+!
+rc_check $? "Load edl_stage plus_sales_transaction_detail_hist_new Completed"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_transaction_detail_hist_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_detail_hist c
+left join edl_stage.plus_sales_transaction_detail_hist_new w
+     on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.detail_seq_nbr=c.detail_seq_nbr
+where w.detail_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_detail_hist edl_archive.plus_sales_transaction_detail_hist
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_transaction_detail_hist_new edl_stage.plus_sales_transaction_detail_hist
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_transaction_detail_hist_new
+rc_check $? "drop the temp table"
+
+
+	   

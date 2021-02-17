@@ -1,0 +1,148 @@
+Table Row Count
+
++-----------+
+| row_count |
++-----------+
+|        17 |
++-----------+
+Record Count Check succeeded
+Data Between Staging and Landing
+
++-------------+--------------+
+| match_count | orphan_count |
++-------------+--------------+
+|          17 |            0 |
++-------------+--------------+
+Missing Record Check succeeded
+Record Comparision Between the landing and staging
+Table Row Count
+
++-----------+
+| row_count |
++-----------+
+|        17 |
++-----------+
+Record Count Check succeeded
+Data Between Staging and Landing
+
++-------------+--------------+
+| match_count | orphan_count |
++-------------+--------------+
+|          17 |            0 |
++-------------+--------------+
+Missing Record Check succeeded
+Record Comparision Between the landing and staging
+Table Row Count
+
++-----------+
+| row_count |
++-----------+
+|        17 |
++-----------+
+Record Count Check succeeded
+Data Between Staging and Landing
+
++-------------+--------------+
+| match_count | orphan_count |
++-------------+--------------+
+|          17 |            0 |
++-------------+--------------+
+Missing Record Check succeeded
+Record Comparision Between the landing and staging
+
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+| CD_OPT_IN_OUT |                           TX_OPT_IN_OUT                           | DA_TMCI198_CREATED | IN_OPT_AGG_TYPE | FL_SEND_ECOMM |       IN_ADDTL_KEY1       |       IN_ADDTL_KEY2       | IN_ADDTL_KEY3 |       IN_ADDTL_KEY4       | FL_GENERIC_FEED | FL_ISM |
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+| CE            | Cacique                                                           |         2019-03-04 | CE              | C             | CE                        | Y                         | ?             | ?                         |            true | ?      |
+| CE            | Cacique                                                           |         2019-03-04 | CE              | C             | CE                        | Y                         | ?             | ?                         |            true | ?      |
+| DM            | Direct Mail                                                       |         2004-09-21 | CC              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| DM            | Direct Mail                                                       |         2004-09-21 | CC              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| DO            | Double Opt_in                                                     |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| DO            | Double Opt_in                                                     |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| DS            | DO NOT SELL                                                       |         2020-01-13 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | ?      |
+| DS            | DO NOT SELL                                                       |         2020-01-13 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | ?      |
+| EM            | Email                                                             |         2004-09-21 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | ?      |
+| EM            | Email                                                             |         2004-09-21 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  |            true | ?      |
+| HC            | Habeas Compliant                                                  |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| HC            | Habeas Compliant                                                  |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| IS            | Internal Sharing of Customer Information                          |         2009-06-15 | C               | N             | ?                         | ?                         | ?             | ?                         |            true | ?      |
+| IS            | Internal Sharing of Customer Information                          |         2009-06-15 | C               | N             | ?                         | ?                         | ?             | ?                         |            true | ?      |
+| MM            | DMA Do Not Mail                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| MM            | DMA Do Not Mail                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| MP            | DMA Do Not Call                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| MP            | DMA Do Not Call                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| OB            | Open to Buy                                                       |         2012-09-06 | CC              | Y             | ?                         | ?                         | ?             | ?                         |            true | ?      |
+| OB            | Open to Buy                                                       |         2012-09-06 | CC              | Y             | ?                         | ?                         | ?             | ?                         |            true | ?      |
+| OE            | LANEBRYANT OUTLET                                                 |         2019-03-04 | CE              | C             | OE                        | Y                         | ?             | ?                         |            true | ?      |
+| OE            | LANEBRYANT OUTLET                                                 |         2019-03-04 | CE              | C             | OE                        | Y                         | ?             | ?                         |            true | ?      |
+| PA            | Auto Phone                                                        |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| PA            | Auto Phone                                                        |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| PH            | Phone                                                             |         2004-09-21 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         |            true | ?      |
+| PH            | Phone                                                             |         2004-09-21 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         |            true | ?      |
+| SI            | Statement Insert                                                  |         2004-09-21 | CC              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| SI            | Statement Insert                                                  |         2004-09-21 | CC              | N             | ?                         | ?                         | ?             | ?                         |           false | ?      |
+| TD            | Text messaging Double opt in                                      |         2011-05-10 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         |            true | ?      |
+| TD            | Text messaging Double opt in                                      |         2011-05-10 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         |            true | ?      |
+| TM            | Text Messaging                                                    |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| TM            | Text Messaging                                                    |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  |            true | Y      |
+| TP            | Third Party                                                       |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |            true | ?      |
+| TP            | Third Party                                                       |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         |            true | ?      |
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+Data Comparision succeeded
+Table Row Count
+
++-----------+
+| row_count |
++-----------+
+|        17 |
++-----------+
+Record Count Check succeeded
+Data Between Staging and Landing
+
++-------------+--------------+
+| match_count | orphan_count |
++-------------+--------------+
+|          17 |            0 |
++-------------+--------------+
+Missing Record Check succeeded
+Record Comparision Between the landing and staging
+
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+| CD_OPT_IN_OUT |                           TX_OPT_IN_OUT                           | DA_TMCI198_CREATED | IN_OPT_AGG_TYPE | FL_SEND_ECOMM |       IN_ADDTL_KEY1       |       IN_ADDTL_KEY2       | IN_ADDTL_KEY3 |       IN_ADDTL_KEY4       | FL_GENERIC_FEED | FL_ISM |
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+| CE            | Cacique                                                           |         2019-03-04 | CE              | C             | CE                        | Y                         | ?             | ?                         | Y               | ?      |
+| CE            | Cacique                                                           |         2019-03-04 | CE              | C             | CE                        | Y                         | ?             | ?                         | Y               | ?      |
+| DM            | Direct Mail                                                       |         2004-09-21 | CC              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| DM            | Direct Mail                                                       |         2004-09-21 | CC              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| DO            | Double Opt_in                                                     |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| DO            | Double Opt_in                                                     |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| DS            | DO NOT SELL                                                       |         2020-01-13 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | ?      |
+| DS            | DO NOT SELL                                                       |         2020-01-13 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | ?      |
+| EM            | Email                                                             |         2004-09-21 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | ?      |
+| EM            | Email                                                             |         2004-09-21 | CE              | Y             | ?                         | ?                         | ?             | CUST_EXT                  | Y               | ?      |
+| HC            | Habeas Compliant                                                  |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| HC            | Habeas Compliant                                                  |         2004-09-21 | CE              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| IS            | Internal Sharing of Customer Information                          |         2009-06-15 | C               | N             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
+| IS            | Internal Sharing of Customer Information                          |         2009-06-15 | C               | N             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
+| MM            | DMA Do Not Mail                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| MM            | DMA Do Not Mail                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| MP            | DMA Do Not Call                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| MP            | DMA Do Not Call                                                   |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| OB            | Open to Buy                                                       |         2012-09-06 | CC              | Y             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
+| OB            | Open to Buy                                                       |         2012-09-06 | CC              | Y             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
+| OE            | LANEBRYANT OUTLET                                                 |         2019-03-04 | CE              | C             | OE                        | Y                         | ?             | ?                         | Y               | ?      |
+| OE            | LANEBRYANT OUTLET                                                 |         2019-03-04 | CE              | C             | OE                        | Y                         | ?             | ?                         | Y               | ?      |
+| PA            | Auto Phone                                                        |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| PA            | Auto Phone                                                        |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| PH            | Phone                                                             |         2004-09-21 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         | Y               | ?      |
+| PH            | Phone                                                             |         2004-09-21 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         | Y               | ?      |
+| SI            | Statement Insert                                                  |         2004-09-21 | CC              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| SI            | Statement Insert                                                  |         2004-09-21 | CC              | N             | ?                         | ?                         | ?             | ?                         | N               | ?      |
+| TD            | Text messaging Double opt in                                      |         2011-05-10 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         | Y               | ?      |
+| TD            | Text messaging Double opt in                                      |         2011-05-10 | CP              | N             | TE_CUST                   | ?                         | ?             | ?                         | Y               | ?      |
+| TM            | Text Messaging                                                    |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| TM            | Text Messaging                                                    |         2009-06-15 | CP              | Y             | TE_CUST                   | ?                         | ?             | CUST_EXT                  | Y               | Y      |
+| TP            | Third Party                                                       |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
+| TP            | Third Party                                                       |         2004-09-21 | C               | N             | ?                         | ?                         | ?             | ?                         | Y               | ?      |
++---------------+-------------------------------------------------------------------+--------------------+-----------------+---------------+---------------------------+---------------------------+---------------+---------------------------+-----------------+--------+
+Data Comparision succeeded

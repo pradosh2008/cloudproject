@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_transaction_item_fixed --use_legacy_sql=false <<!
+select
+transaction_item_key
+,transaction_key
+,transaction_num
+,line_num
+,transaction_source_cd
+,store_key
+,register_num
+,item_key
+,week_id
+,original_transaction_key
+,transaction_dt
+,transaction_tms
+,channel_cd
+,cast(item_cogs_amt as numeric) as item_cogs_amt
+,cast(list_price_amt as numeric) as list_price_amt
+,item_sold_qty
+,cast(item_sold_amt as numeric) as item_sold_amt
+,cast(item_gross_amt as numeric) as item_gross_amt
+,cast(item_disc_amt as numeric) as item_disc_amt
+,cast(item_net_amt as numeric) as item_net_amt
+,item_return_from_transaction_num
+,item_return_cd
+,item_return_dt
+,item_return_qty
+,cast(item_return_amt as numeric) as item_return_amt
+,full_price_ind
+,batch_id
+from analytic_mart.pre_transaction_item
+!
+
+bq cp --force analytic_mart.pre_transaction_item edl_archive.pre_transaction_item
+rc_check $? "archive copy"
+bq cp --force analytic_mart.pre_transaction_item_fixed analytic_mart.pre_transaction_item
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.pre_transaction_item_fixed
+rc_check $? "drop the temp table"

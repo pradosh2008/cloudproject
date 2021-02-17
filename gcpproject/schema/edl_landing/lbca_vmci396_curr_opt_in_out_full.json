@@ -1,0 +1,77 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "ID_CUST",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ID_CHAIN",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "IN_CUST_SOURCE",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "IN_CUST_SOURCE_2ND",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "TS_TMCI396_CREATED",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ID_CUST_ORIG",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ID_EMAIL",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "TE_CUST",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "ID_STORE",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "CD_OPT_IN_OUT",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "FL_OPT_IN",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "TS_OPT_IN_OUT",
+    "type": "STRING"
+  },                      
+  {
+    "mode": "NULLABLE",
+    "name": "CD_CUST_EXT_TYPE",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "DA_OPT_IN_OUT",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "EXTRACT_TS",
+    "type": "STRING"
+  }                      
+]

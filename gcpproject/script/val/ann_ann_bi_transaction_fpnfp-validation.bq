@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+    f.transaction_nbr
+    , f.item_sku
+    , f.batch_id
+    ,count(*) cnt
+    from edl_stage.pre_ann_ann_bi_transaction_fpnfp f
+    group by 1,2,3
+    having count(*) >1
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+select 
+    count(*) cnt
+from edl_landing.ann_ann_bi_transaction_fpnfp l
+left join edl_stage.pre_ann_ann_bi_transaction_fpnfp s
+    on l.transaction_nbr = s.transaction_nbr
+  and l.item_sku = s.item_sku
+  and l.batch_id = s.batch_id
+where l.transaction_nbr is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

@@ -1,0 +1,226 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Backup Existing Stage Table
+bq cp --force edl_stage.plus_item_sku edl_stage.plus_item_sku_bkup_20200807
+
+bq query --use_legacy_sql=false <<!
+create table edl_stage.plus_item_sku_dedup as
+(
+SELECT sku_id
+,chain_id
+,division_id
+,style_id
+,dept_id
+,class_id
+,subclass_id
+,group_no
+,item_status
+,standard_uom
+,regular_unit_retail
+,selling_unit_retail
+,item_diff_color
+,item_diff_size
+,inventory_ind
+,merchandise_ind
+,orderable_ind
+,sellable_ind
+,ship_alone_ind
+,item_desc
+,short_desc
+,create_datetime
+,last_updt_ts
+,season_id
+,season_desc
+,vendor_id
+,vendor_name
+,vendor_product_id
+,unit_cost
+,origin_country_id
+,style_desc
+,diff_color_desc
+,diff_size_desc
+,subclass_name
+,class_name
+,dept_name
+,group_name
+,division_name
+,record_status
+,ecom_exclusives
+,planned_md_date
+,batch_id
+FROM (
+SELECT T1.sku_id
+,T1.chain_id
+,T1.division_id
+,T1.style_id
+,T1.dept_id
+,T1.class_id
+,T1.subclass_id
+,T1.group_no
+,T1.item_status
+,T1.standard_uom
+,T1.regular_unit_retail
+,T1.selling_unit_retail
+,T1.item_diff_color
+,T1.item_diff_size
+,T1.inventory_ind
+,T1.merchandise_ind
+,T1.orderable_ind
+,T1.sellable_ind
+,T1.ship_alone_ind
+,T1.item_desc
+,T1.short_desc
+,T1.create_datetime
+,T1.last_updt_ts
+,T1.season_id
+,T1.season_desc
+,T1.vendor_id
+,T1.vendor_name
+,T1.vendor_product_id
+,T1.unit_cost
+,T1.origin_country_id
+,T1.style_desc
+,T1.diff_color_desc
+,T1.diff_size_desc
+,T1.subclass_name
+,T1.class_name
+,T1.dept_name
+,T1.group_name
+,T1.division_name
+,T1.record_status
+,T1.ecom_exclusives
+,T1.planned_md_date
+,T1.batch_id, 
+ROW_NUMBER() OVER (PARTITION BY T1.sku_id, T1.chain_id, T1.batch_id ORDER BY last_updt_ts DESC) as rn
+FROM edl_stage.plus_item_sku T1
+  INNER JOIN (
+              SELECT DISTINCT sku_id
+              FROM (SELECT sku_id, chain_id, batch_id, COUNT(*) cnt
+                    FROM edl_stage.plus_item_sku
+                    GROUP BY sku_id, chain_id, batch_id
+                    HAVING COUNT(*)>1)
+              WHERE cnt <=2
+              GROUP BY sku_id) T2
+ON T1.sku_id = T2.sku_id
+WHERE T1.batch_id > 20200624
+ORDER BY T1.sku_id
+) WHERE rn = 1
+UNION ALL
+--SET2 which has dups based on all columns except VENDOR
+SELECT T1.sku_id
+,T1.chain_id
+,T1.division_id
+,T1.style_id
+,T1.dept_id
+,T1.class_id
+,T1.subclass_id
+,T1.group_no
+,T1.item_status
+,T1.standard_uom
+,T1.regular_unit_retail
+,T1.selling_unit_retail
+,T1.item_diff_color
+,T1.item_diff_size
+,T1.inventory_ind
+,T1.merchandise_ind
+,T1.orderable_ind
+,T1.sellable_ind
+,T1.ship_alone_ind
+,T1.item_desc
+,T1.short_desc
+,T1.create_datetime
+,T1.last_updt_ts
+,T1.season_id
+,T1.season_desc
+,T1.vendor_id
+,T1.vendor_name
+,T1.vendor_product_id
+,T1.unit_cost
+,T1.origin_country_id
+,T1.style_desc
+,T1.diff_color_desc
+,T1.diff_size_desc
+,T1.subclass_name
+,T1.class_name
+,T1.dept_name
+,T1.group_name
+,T1.division_name
+,T1.record_status
+,T1.ecom_exclusives
+,T1.planned_md_date
+,T1.batch_id
+FROM edl_stage.plus_item_sku T1
+INNER JOIN (SELECT DISTINCT sku_id, chain_id, batch_id
+            FROM (SELECT sku_id, chain_id, batch_id, COUNT(*) cnt
+                  FROM edl_stage.plus_item_sku
+                  GROUP BY sku_id, chain_id, batch_id
+                  HAVING COUNT(*)>2)
+                  ) T2
+ON T1.sku_id = T2.sku_id AND T1.chain_id = T2.chain_id AND T1.batch_id = t2.batch_id
+WHERE UPPER(T1.VENDOR_NAME) = 'AQUA TRADING GLOBAL (PRIVATE) LIMITED'
+AND UPPER(T1.ORIGIN_COUNTRY_ID) = 'LK'
+UNION ALL
+--Data with No dups at all ever
+SELECT T1.sku_id
+,T1.chain_id
+,T1.division_id
+,T1.style_id
+,T1.dept_id
+,T1.class_id
+,T1.subclass_id
+,T1.group_no
+,T1.item_status
+,T1.standard_uom
+,T1.regular_unit_retail
+,T1.selling_unit_retail
+,T1.item_diff_color
+,T1.item_diff_size
+,T1.inventory_ind
+,T1.merchandise_ind
+,T1.orderable_ind
+,T1.sellable_ind
+,T1.ship_alone_ind
+,T1.item_desc
+,T1.short_desc
+,T1.create_datetime
+,T1.last_updt_ts
+,T1.season_id
+,T1.season_desc
+,T1.vendor_id
+,T1.vendor_name
+,T1.vendor_product_id
+,T1.unit_cost
+,T1.origin_country_id
+,T1.style_desc
+,T1.diff_color_desc
+,T1.diff_size_desc
+,T1.subclass_name
+,T1.class_name
+,T1.dept_name
+,T1.group_name
+,T1.division_name
+,T1.record_status
+,T1.ecom_exclusives
+,T1.planned_md_date
+,T1.batch_id
+FROM edl_stage.plus_item_sku T1
+INNER JOIN (SELECT DISTINCT SKU_ID, CHAIN_ID, batch_id FROM (
+                  SELECT sku_id, chain_id, batch_id, COUNT(*) cnt
+                  FROM edl_stage.plus_item_sku
+                  GROUP BY sku_id, chain_id, batch_id
+                  HAVING COUNT(*)=1) --128688280 - 128690422 = 2142
+                  ) T2
+ON T1.sku_id = T2.sku_id AND T1.chain_id = T2.chain_id AND T1.batch_id = T2.batch_id)
+!
+
+bq cp --force edl_stage.plus_item_sku edl_archive.plus_item_sku
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_item_sku_dedup edl_stage.plus_item_sku
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_item_sku_dedup
+rc_check $? "drop the temp table"
+
+

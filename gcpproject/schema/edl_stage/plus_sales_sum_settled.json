@@ -1,0 +1,23 @@
+[
+			 {"name":"chain_id"            ,"type":"integer"}
+			,{"name":"store_id"            ,"type":"integer"}
+			,{"name":"week_id"            ,"type":"integer"}
+			,{"name":"style_id"            ,"type":"integer"}
+			,{"name":"color_id"            ,"type":"integer"}
+			,{"name":"net_sales_unit_cnt"            ,"type":"integer"}
+			,{"name":"net_sales_amt"            ,"type":"float"}
+			,{"name":"net_sales_cogs_amt"            ,"type":"float"}
+			,{"name":"return_sales_unit_cnt"            ,"type":"integer"}
+			,{"name":"return_sales_dollars_amt"            ,"type":"float"}
+			,{"name":"return_sales_cogs_amt"            ,"type":"float"}
+			,{"name":"promotion_net_sales_unit_cnt"            ,"type":"integer"}
+			,{"name":"promotion_net_sales_dollars_amt"            ,"type":"float"}
+			,{"name":"promotion_net_sales_cogs_amt"            ,"type":"float"}
+			,{"name":"markdown_net_sales_unit_cnt"            ,"type":"integer"}
+			,{"name":"markdown_net_sales_dollars_amt"            ,"type":"float"}
+			,{"name":"markdown_net_sales_cogs_amt"            ,"type":"float"}
+			,{"name":"return_markdown_sales_unit_cnt"            ,"type":"integer"}
+			,{"name":"return_markdown_sales_dollars_amt"            ,"type":"float"}
+			,{"name":"return_markdown_sales_cogs_amt"            ,"type":"float"}
+]
+

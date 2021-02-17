@@ -1,0 +1,6 @@
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true jus_stage.work_transaction 'gs://p-asna-datasink-003/work_transaction/*'
+#bq load --replace=true --source_format=AVRO --use_avro_logical_types=true jus_stage.work_dim_transaction 'gs://p-asna-datasink-003/dim_transaction/*'
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true jus_stage.work_transaction_discount 'gs://p-asna-datasink-003/work_transaction_discount/*'
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true jus_stage.work_transaction_detail 'gs://p-asna-datasink-003/work_transaction_detail/*'
+#bq load --replace=true --source_format=AVRO --use_avro_logical_types=true jus_stage.work_promo_cust_reference 'gs://p-asna-datasink-003/promo_cust_reference/*'
+

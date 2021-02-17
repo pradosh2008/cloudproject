@@ -1,0 +1,38 @@
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded
+Unique Key Check succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r645b8d9c26a9ceac_00000170b191c2d6_1':: integer expression expected
+No succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r1c39aa12b1de2db1_00000170b191c6cc_1':: integer expression expected
+Unrecognized succeeded
+Unique Key Check succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r6b8cae831e2dc708_00000170b1943661_1':: integer expression expected
+No succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r2092216831b311b_00000170b1943acb_1':: integer expression expected
+Unrecognized succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r4655470ba049e74c_00000170b199739e_1':: integer expression expected
+Unrecognized succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+/home/svc_gcpintegnp/lib/common.sh: line 5: [: 'p-ascn-da-aadp-001:bqjob_r1d9ea266edadde4d_00000170b19a768a_1':: integer expression expected
+Unrecognized succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded
+Unique Key Check failed with return value: 123064139
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Unique Key Check succeeded
+Completeness Check for LB succeeded
+Completeness Check for CA succeeded

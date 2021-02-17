@@ -1,0 +1,54 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --skip_leading_rows=1 --source_format=CSV --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/ann_dom_bopis_transactions.json \
+        edl_landing.ann_dom_bopis_transactions \
+        "gs://${default_bucket}/pre/dom/ANN_DOM_BOPIS_*.dat"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_ann_dom_bopis_transactions_new --use_legacy_sql=false <<!
+SELECT
+  order_id,
+  item_sku,
+  store_nbr,
+  pickup_type,
+  qty_pickedup,
+  qty_cancel,
+  order_status,
+  cancellation_reason,
+  PARSE_TIMESTAMP("%m/%d/%Y %H:%M:%S",pickup_date,"America/New_York") AS pickup_date,
+  batch_id
+FROM
+(select c.*
+        ,max(c.batch_id) over (partition by c.order_id, c.item_sku,c.store_nbr) as max_batch_id
+    from edl_landing.ann_dom_bopis_transactions c
+) curr
+where curr.max_batch_id = curr.batch_id
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_ann_dom_bopis_transactions_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_ann_dom_bopis_transactions c
+left join edl_landing.ann_dom_bopis_transactions w
+    on  w.order_id = c.order_id
+    and w.item_sku = c.item_sku
+    and w.store_nbr = c.store_nbr
+where w.order_id is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_ann_dom_bopis_transactions edl_archive.pre_ann_dom_bopis_transactions
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_ann_dom_bopis_transactions_new edl_stage.pre_ann_dom_bopis_transactions
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_ann_dom_bopis_transactions_new
+rc_check $? "drop the temp table"
+
+# Following function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/pre/dom/ANN_DOM_BOPIS_*.dat"

@@ -1,0 +1,59 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --replace=true --allow_large_results --destination_table analytic_mart.fact_transaction_tender_new --use_legacy_sql=false <<!
+SELECT
+TO_HEX(md5(concat(CASE WHEN stt.selling_chain_nbr = 4 THEN 'CA|'
+                       WHEN stt.selling_chain_nbr = 7 THEN 'LB|' END,
+                        CAST(stt.selling_store_nbr AS STRING),"|",
+                        CAST(stt.register_nbr AS STRING),"|",
+                        CAST(stt.transaction_dt AS STRING),"|",
+                        CAST(stt.transaction_nbr AS STRING)
+                        )))AS transaction_key
+,stt.tender_seq_nbr AS tender_line_num 
+,case when cast(stt.line_action_cd as INT64) in (11,25,28) then stt.tender_amt  else stt.tender_amt*(-1)  end as tender_amt
+,cast(null as DATE) AS tender_expiration_dt
+,CASE WHEN stt.tender_cd IS NULL THEN NULL ELSE stt.tender_cd END AS tender_cd
+,CASE WHEN stt.tender_reference_nbr IS NULL THEN NULL ELSE stt.tender_reference_nbr END  AS tender_reference_num
+,cast(stt.tender_void_ind as INT64) as tender_void_ind
+,cast(null as DATE) AS deferred_billing_dt
+,CASE WHEN stt.paypal_order_nbr IS NULL THEN NULL ELSE stt.paypal_order_nbr END AS paypal_order_id
+,cast(stt.tender_salesperson_nbr as string) AS tender_salesperson_key
+,CASE WHEN stt.authorization_nbr = '' THEN NULL ELSE stt.authorization_nbr END AS authorization_id
+,CASE WHEN stt.authorize_key_flg ='' THEN NULL
+when stt.authorize_key_flg = 'N' THEN 0
+when stt.authorize_key_flg = 'Y' THEN 1 END AS authorize_key_ind
+,cast(null as string) as deferred_billing_plan_id
+,cast(stt.open_charge_ind as INT64) open_charge_ind
+,CASE WHEN stt.charge_application_status_cd ='' THEN NULL ELSE stt.charge_application_status_cd END AS charge_application_status_cd
+,CASE WHEN stt.state_cd ='' THEN NULL ELSE stt.state_cd END AS state_cd
+,cast(stt.create_dt as TIMESTAMP) AS record_create_tm
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'TRANS' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'TRANS' AS edl_last_update_job_nam
+, CASE WHEN stt.selling_chain_nbr = 4 THEN 'CA'
+       WHEN stt.selling_chain_nbr = 7 THEN 'LB' END AS brand_cd
+FROM edl_stage.plus_sales_transaction_tender stt
+!
+rc_check $? "Insert new data from stage"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_tender_new --use_legacy_sql=false <<!
+SELECT c.*
+FROM analytic_mart.fact_transaction_tender c
+LEFT JOIN analytic_mart.fact_transaction_tender_new m 
+ON c.transaction_key = m.transaction_key
+AND c.tender_line_num = m.tender_line_num
+WHERE m.transaction_key IS NULL
+!
+rc_check $? "Append table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.fact_transaction_tender edl_archive.fact_transaction_tender
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.fact_transaction_tender_new analytic_mart.fact_transaction_tender
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.fact_transaction_tender_new
+rc_check $? "Remove new table "
+

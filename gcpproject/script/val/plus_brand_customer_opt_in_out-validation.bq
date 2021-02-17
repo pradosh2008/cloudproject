@@ -1,0 +1,44 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+# 'primary and duplicate check'
+sql='select count(*)as cnt from 
+(select brand_customer_key,opt_in_out_key,customer,customer_original_id,count(*)
+from analytic_mart.plus_brand_customer_opt_in_out
+group by brand_customer_key,opt_in_out_key,customer_original_id
+having count(*) > 1)'
+run_validation "$sql" "Primary Key Check"
+
+#'FK Check for brand_customer_key'
+sql='
+select sum(case when a.brand_customer_key is null then 0 else 1 end)   as match_count
+      ,sum(case when a.brand_customer_key is null then 1 else 0 end)   as orphan_count
+from analytic_mart.plus_brand_customer_opt_in_out a
+left join analytic_mart.dim_brand_customer b
+    on a.brand_customer_key = b.brand_customer_key
+'
+run_validation "$sql" "FK Check for brand_customer_key"
+
+
+# 'FK Check for store_key'
+sql='
+select sum(case when a.store_key is null then 0 else 1 end)   as match_count
+      ,sum(case when a.store_key is null then 1 else 0 end)   as orphan_count
+from analytic_mart.plus_brand_customer_opt_in_out a
+left join analytic_mart.dim_store b
+    on a.store_key = b.store_key
+where a.store_id is not null
+and a.store_id <> 0'
+run_validation "$sql" "FK Check for brand_customer_key"
+
+# 'null check'
+sql='
+select count(*)
+from analytic_mart.plus_brand_customer_opt_in_out
+where brand_customer_key is null
+   or opt_in_out_key is null
+'
+run_validation "$sql" "Null Check"
+

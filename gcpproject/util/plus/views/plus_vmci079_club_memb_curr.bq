@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci079_club_memb_curr as 
+SELECT
+stgn.id_cust
+,stgn.cd_club
+,stgn.id_chain
+,stgn.id_club_memb
+,stgn.fl_needs_card
+,stgn.fl_card_ret_mail
+,stgn.da_ogin_signup
+,stgn.da_renewed
+,stgn.da_expiration
+,stgn.da_canceled
+,stgn.am_fee_paid
+,stgn.fl_auto_enroll
+,stgn.fl_canceled
+,stgn.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_chain,lbca.id_cust,lbca.id_club_memb
+order by lbca.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_vmci079_club_memb\` as lbca
+)  as stgn where row_num=1
+!

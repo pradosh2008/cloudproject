@@ -1,0 +1,121 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" --schema=${schema_path}/edl_landing/lbca_sales_transaction_tender.json edl_landing.lb_sales_transaction_tender "gs://${default_bucket}/plus/edw/lb_sales_transaction_tender*.txt.gz"
+rc_check $? "Load edl_landing for LB Complete"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query  --replace=true --max_rows 1 --allow_large_results \
+    --destination_table edl_stage.plus_sales_transaction_tender_new --use_legacy_sql=false <<!
+SELECT stg.tender_seq_nbr
+    ,stg.tender_amt
+    ,stg.tender_cd
+    ,stg.tender_reference_nbr
+    ,stg.tender_void_ind
+    ,stg.paypal_order_nbr
+    ,stg.tender_salesperson_nbr
+    ,stg.authorization_nbr
+    ,stg.authorize_key_flg
+    ,stg.selling_chain_nbr
+    ,stg.selling_store_nbr
+    ,stg.transaction_nbr
+    ,stg.transaction_dt
+    ,stg.register_nbr
+    ,stg.open_charge_ind
+    ,stg.charge_application_status_cd
+    ,stg.scanned_ind
+    ,stg.state_cd
+    ,stg.line_object_type_cd
+    ,stg.line_object_cd
+    ,stg.line_action_cd
+    ,stg.tender_primary_group_cd
+    ,stg.gift_card_type
+    ,stg.gift_card_type_cd
+    ,stg.create_dt
+    ,stg.last_update_ts
+    ,stg.record_seq_nbr
+    ,stg.tender_reference_nbr_crm
+    ,stg.extract_ts
+from (SELECT tender_seq_nbr
+        ,tender_amt
+        ,tender_cd
+        ,tender_reference_nbr
+        ,tender_void_ind
+        ,paypal_order_nbr
+        ,tender_salesperson_nbr
+        ,authorization_nbr
+        ,authorize_key_flg
+        ,selling_chain_nbr
+        ,cast(selling_store_nbr as numeric )                                as selling_store_nbr
+        ,transaction_nbr
+        ,case when TRIM(transaction_dt)='' 
+            then null else PARSE_DATE("%Y-%m-%d",transaction_dt)
+         end                                                                as transaction_dt
+        ,register_nbr
+        ,open_charge_ind
+        ,charge_application_status_cd
+        ,scanned_ind
+        ,state_cd
+        ,line_object_type_cd
+        ,line_object_cd
+        ,line_action_cd
+        ,tender_primary_group_cd
+        ,gift_card_type
+        ,gift_card_type_cd
+        ,case when TRIM(create_dt)='' 
+            then null else PARSE_DATE("%Y-%m-%d",create_dt)
+         end                                                                as create_dt
+        ,case when last_update_ts='' 
+            then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",last_update_ts,"America/New_York")
+         end                                                                as last_update_ts
+        ,record_seq_nbr
+        ,tender_reference_nbr_crm
+        ,case when extract_ts='' 
+            then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") 
+         end                                                                as extract_ts
+        ,ROW_NUMBER() OVER (partition by selling_chain_nbr
+                                        ,selling_store_nbr
+                                        ,register_nbr
+                                        ,transaction_dt
+                                        ,transaction_nbr
+                                        ,tender_seq_nbr
+                            order by case when extract_ts='' 
+                                        then null 
+                                        else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") 
+                                     end desc
+                        )   as row_num
+    from edl_landing.lb_sales_transaction_tender
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sales_transaction_tender_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_tender c
+left join edl_stage.plus_sales_transaction_tender_new w
+    on  w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.tender_seq_nbr = c.tender_seq_nbr
+    where w.tender_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_tender edl_archive.plus_sales_transaction_tender
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sales_transaction_tender_new edl_stage.plus_sales_transaction_tender
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sales_transaction_tender_new
+rc_check $? "drop the temp table"
+
+# Following function is only stubbed in it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_tender*.txt.gz"
+

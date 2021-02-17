@@ -1,0 +1,7 @@
+transaction.bq >$HOME/log/transaction.log 2>&1
+transaction_detail.bq >$HOME/log/transaction_detail.log 2>&1
+transaction_discount.bq >$HOME/log/transaction_discount.log 2>&1
+transaction_fee.bq >$HOME/log/transaction_fee.log 2>&1
+transaction_notes.bq >$HOME/log/transaction_notes.log 2>&1
+transaction_tax.bq >$HOME/log/transaction_tax.log 2>&1
+transaction_tender.bq >$HOME/log/transaction_tender.log 2>&1

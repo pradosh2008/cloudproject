@@ -1,0 +1,31 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_sap_product_curr
+as
+SELECT
+datetime
+, sku
+, article
+, dept
+, dept_desc
+, class
+, class_desc
+, color
+, color_desc
+, size
+, size_desc
+, retail_price
+, landed_cost
+, currency
+, original_retail
+, batch_id
+FROM (
+SELECT *, row_number() OVER (PARTITION BY sku ORDER BY batch_id desc) rn
+FROM \`${project}.edl_stage.pre_sap_product\`
+) 
+WHERE rn = 1
+!

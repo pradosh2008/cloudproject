@@ -1,0 +1,2 @@
+bq cp --force  p-asna-analytics-002:analytic_mart.plus_brand_customer_email p-ascn-da-aadp-001:analytic_mart.plus_brand_customer_email
+

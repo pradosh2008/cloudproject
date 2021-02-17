@@ -1,0 +1,37 @@
+bq query --allow_large_results --append_table --destination_table jus_stage.fact_transaction_fix --use_legacy_sql=false <<!
+SELECT
+  t.transaction_key,
+  t.transaction_id, 
+  t.brand_customer_key, 
+  t.store_key,
+  t.brand_customer_email_key,
+  t.transaction_dt,
+  t.order_dt,
+  t.transaction_num,
+  t.register_num,
+  t.purchase_gross_amt,
+  t.purchase_mktg_discount_amt,
+  t.purchase_mrch_discount_amt,
+  t.purchase_net_amt,
+  t.purchase_item_cnt,
+  t.departments_shopped_cnt,
+  t.return_gross_amt,
+  t.return_mktg_discount_amt,
+  t.return_mrch_discount_amt,
+  t.return_net_amt,
+  t.return_item_cnt,
+  t.purchase_other_discount_amt,
+  t.return_other_discount_amt,
+  t.total_deflated_cost_amt,
+  t.total_actual_cost_amt,
+  t.batch_id
+  from (select row_number() over (partition by d.transaction_key
+                                , d.transaction_dt
+                  ) as row_num,
+        d.*
+FROM
+  jus_stage.fact_transaction_main d) t
+where t.row_num = 1
+!
+bq cp jus_stage.fact_transaction_main jus_stage.fact_transaction_bad
+bq cp jus_stage.fact_transaction_fix jus_stage.fact_transaction_main

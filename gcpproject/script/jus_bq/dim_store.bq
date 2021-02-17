@@ -1,0 +1,17 @@
+#Load new and updated into new table
+bq cp --force jus_stage.dim_store jus_stage.dim_store_bkp_2209
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_store_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_store c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_store_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_store_bkp_2209 c
+left join jus_stage.work_dim_store w
+    on  w.store_key = c.store_key
+where w.store_key is null
+!
+bq cp --force jus_stage.dim_store_bkp_2209 edl_archive.dim_store_arc
+bq cp --force jus_stage.dim_store_new jus_stage.dim_store_bkp_2209
+bq rm --force jus_stage.dim_store_new

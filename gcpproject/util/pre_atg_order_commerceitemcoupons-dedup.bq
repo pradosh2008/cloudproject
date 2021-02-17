@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Backup Existing Stage Table
+bq cp --force edl_stage.pre_atg_order_commerceitemcoupons work.pre_atg_order_commerceitemcoupons_0516
+
+
+#dedup the stage table
+bq query --max_rows 1 --replace --allow_large_results --destination_table edl_stage.pre_atg_order_commerceitemcoupons --use_legacy_sql=false <<!
+select * from 
+(
+select
+cc.orderid
+, cc.commerceitemid
+, cc.catalogrefid
+, cc.commerceitemcouponscouponcode
+, cc.commerceitemcouponsdiscountamt
+, cc.batch_id
+, cc.lastmodifieddate
+,row_number() over (partition by  cc.orderid,cc.commerceitemid,cc.catalogrefid,cc.commerceitemcouponscouponcode,cc.commerceitemcouponsdiscountamt,cc.batch_id,cc.lastmodifieddate) as rank
+from edl_stage.pre_atg_order_commerceitemcoupons cc
+) where rank=1
+!
+

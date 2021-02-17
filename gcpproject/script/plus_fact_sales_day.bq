@@ -1,0 +1,86 @@
+
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_sales_day_new --use_legacy_sql=false <<!
+select 
+  TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PSSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PSSSD.CHAIN_NBR = 7 THEN 'LB' 
+                      END
+                    , '|'
+                    , CAST(CAST(PSSSD.SKU_NBR as INT64) as STRING))))  as ITEM_KEY
+, TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PSSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PSSSD.CHAIN_NBR = 7 THEN 'LB' 
+                           END
+                    , '|'
+                    , CAST(PSSSD.STORE_NBR as STRING))))               as STORE_KEY
+, CAST(CASE 
+            WHEN PSSSD.CHAIN_NBR = 4 THEN 'CA' 
+            WHEN PSSSD.CHAIN_NBR = 7 THEN 'LB' 
+            END as STRING
+      )                                                                as BRAND_CD
+, CAST(CAST(PSSSD.SKU_NBR as INT64) as STRING)                         as SKU_ID
+, CAST(PSSSD.STORE_NBR as STRING)                                      as STORE_ID
+, PSSSD.TRANSACTION_DT                                                 as TRANSACTION_DT
+, PSSSD.SALES_CHANNEL_TYPE_CD                                          as SALES_CHANNEL_TYPE_CD
+, PSSSD.PRICE_TYPE_CD                                                  as PRICE_TYPE_CD
+, PSSSD.RETURN_QTY                                                     as RETURN_QTY
+, PSSSD.RETURN_CST                                                     as RETURN_CST_AMT
+, PSSSD.RETURN_RTL                                                     as RETURN_RTL_AMT
+, PSSSD.ECOMM_CREDIT_RETURN_QTY                                        as ECOMM_CREDIT_RETURN_QTY
+, PSSSD.ECOMM_CREDIT_RETURN_RTL                                        as ECOMM_CREDIT_RETURN_RTL_AMT
+, PSSSD.ECOMM_CREDIT_RETURN_CST                                        as ECOMM_CREDIT_RETURN_CST_AMT
+, PSSSD.SALES_QTY                                                      as SALES_QTY
+, PSSSD.SALES_RTL                                                      as SALES_RTL_AMT
+, PSSSD.SALES_CST                                                      as SALES_CST_AMT
+, PSSSD.SALES_ORDER_QTY                                                as SALES_ORDER_QTY
+, PSSSD.SALES_ORDER_RTL                                                as SALES_ORDER_RTL_AMT
+, PSSSD.SALES_ORDER_CST                                                as SALES_ORDER_CST_AMT
+, PSSSD.DISCOUNT_MARKDOWN_RTL                                          as DISCOUNT_MARKDOWN_RTL_AMT
+, PSSSD.SALES_DISCOUNT_MARKDOWN_RTL                                    as SALES_DISCOUNT_MARKDOWN_RTL_AMT
+, PSSSD.RETURN_DISCOUNT_MARKDOWN_RTL                                   as RETURN_DISCOUNT_MARKDOWN_RTL_AMT
+, PSSSD.PRODUCTIVE_SALES_QTY                                           as PRODUCTIVE_SALES_QTY
+, PSSSD.PRODUCTIVE_SALES_RTL                                           as PRODUCTIVE_SALES_RTL_AMT
+, PSSSD.PRODUCTIVE_SALES_CST                                           as PRODUCTIVE_SALES_CST_AMT
+, PSSSD.GROSS_SALES_QTY                                                as GROSS_SALES_QTY
+, PSSSD.GROSS_SALES_RTL                                                as GROSS_SALES_RTL_AMT
+, PSSSD.GROSS_SALES_CST                                                as GROSS_SALES_CST_AMT
+, PSSSD.NET_SALES_QTY                                                  as NET_SALES_QTY
+, PSSSD.NET_SALES_RTL                                                  as NET_SALES_RTL_AMT
+, PSSSD.NET_SALES_CST                                                  as NET_SALES_CST_AMT
+, PSSSD.GROSS_PROFIT_PRODTV_SLS_RTL                                    as GROSS_PROFIT_PRODUCTIVE_SALES_RTL_AMT
+, PSSSD.GROSS_PROFIT_RETURN_RTL                                        as GROSS_PROFIT_RETURN_RTL_AMT
+, PSSSD.GROSS_PROFIT_NET_SALES_RTL                                     as GROSS_PROFIT_NET_SALES_RTL_AMT
+, PSSSD.STYLE_LOCATOR_QTY                                              as STYLE_LOCATOR_QTY
+, PSSSD.STYLE_LOCATOR_RTL                                              as STYLE_LOCATOR_RTL_AMT
+, PSSSD.STYLE_LOCATOR_CST                                              as STYLE_LOCATOR_CST_AMT
+, PSSSD.MERCH_DISCOUNT_AMT                                             as MERCH_DISCOUNT_AMT
+, PSSSD.NON_MERCH_DISCOUNT_AMT                                         as NON_MERCH_DISCOUNT_AMT
+, PSSSD.COMMISSION_AMT                                                 as COMMISSION_AMT
+, PSSSD.FEE_AMT                                                        as FEE_AMT
+, PSSSD.CUSTOMER_PAID_TAX_AMT                                          as CUSTOMER_PAID_TAX_AMT
+, PSSSD.COMPANY_OWED_TAX_AMT                                           as COMPANY_OWED_TAX_AMT
+, PSSSD.TAX_AMT                                                        as TAX_AMT
+, CURRENT_TIMESTAMP                                                    as EDL_CREATE_TMS
+, 'PLUS_FACT_SALES_DAY'                                                as EDL_CREATE_JOB_NAM
+, CURRENT_TIMESTAMP                                                    as EDL_LAST_UPDATE_TMS
+, 'PLUS_FACT_SALES_DAY'                                                as EDL_LAST_UPDATE_JOB_NAM
+from edl_stage.plus_sales_sku_store_day PSSSD
+!
+rc_check $? "Load stage data into the new mart table"
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_sales_day edl_archive.plus_fact_sales_day
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_sales_day_new analytic_mart.plus_fact_sales_day
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_sales_day_new
+rc_check $? "drop the temp table"
+
+

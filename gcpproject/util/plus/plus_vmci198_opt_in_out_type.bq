@@ -1,0 +1,33 @@
+#This is a one time load script to populate OPT_IN_OUT_TYPE values.
+#Data from teradata source table was extracted and uploaded go gcp storage bucket
+#Then initiate the execution of this script so the tabes respective tables are created as per the script
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/plus_vmci198_opt_in_out_type.json \
+        edl_landing.plus_vmci198_opt_in_out_type   \
+        "gs://${default_bucket}/plus/crm/VMCI198_OPT_IN_OUT_TYPE.txt"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci198_opt_in_out_type --use_legacy_sql=false <<!
+select c.CD_OPT_IN_OUT as cd_opt_in_out
+,c.TX_OPT_IN_OUT as tx_opt_in_out
+,c.DA_TMCI198_CREATED as da_tmci198_created
+,c.IN_OPT_AGG_TYPE as in_opt_agg_type
+,c.FL_SEND_ECOMM as fl_send_ecomm
+,c.IN_ADDTL_KEY1 as in_addtl_key1
+,c.IN_ADDTL_KEY2 as in_addtl_key2
+,c.IN_ADDTL_KEY3 as in_addtl_key3
+,c.IN_ADDTL_KEY4 as in_addtl_key4
+,c.FL_GENERIC_FEED as fl_generic_feed
+,c.FL_ISM as fl_ism
+from edl_landing.plus_vmci198_opt_in_out_type c
+!
+rc_check $? "One time load of data from edl_landing to staging"
+

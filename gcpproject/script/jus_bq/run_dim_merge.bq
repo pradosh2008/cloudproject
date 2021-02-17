@@ -1,0 +1,16 @@
+dim_brand_customer_address.bq >~/log/dim_brand_customer_address.out 2>&1
+dim_brand_customer.bq >~/log/dim_brand_customer.out 2>&1
+dim_brand_customer_email.bq >~/log/dim_brand_customer_email.out 2>&1
+dim_brand_customer_email_division.bq >~/log/dim_brand_customer_email_division.out 2>&1
+dim_brand_customer_phone.bq >~/log/dim_brand_customer_phone.out 2>&1
+dim_customer_bankcards.bq >~/log/dim_customer_bankcards.out 2>&1
+dim_customer_list.bq >~/log/dim_customer_list.out 2>&1
+dim_item.bq >~/log/dim_item.out 2>&1
+dim_list.bq >~/log/dim_list.out 2>&1
+#dim_offer.bq >~/log/dim_offer.out 2>&1
+dim_offer_treatment.bq >~/log/dim_offer_treatment.out 2>&1
+dim_package_treatment.bq >~/log/dim_package_treatment.out 2>&1
+dim_program.bq >~/log/dim_program.out 2>&1
+dim_promo_execution_hierarchy.bq >~/log/dim_promo_execution_hierarchy.out 2>&1
+dim_promotion.bq >~/log/dim_promotion.out 2>&1
+dim_transaction.bq >~/log/dim_transaction.out 2>&1

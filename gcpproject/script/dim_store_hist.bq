@@ -1,0 +1,100 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load ALL PROD (p-asna-analytics-002) DATA FROM analytic_mart.dim_store to NON-PROD(p-ascn-da-aadp-001) analytic_mart.dim_store
+bq cp -f p-asna-analytics-002:analytic_mart.dim_store p-ascn-da-aadp-001:analytic_mart.dim_store
+rc_check $? "Successfully copied dim_store from prod project to non-prod project"
+
+#To fix the datatypes of dim_item table
+/home/svc_gcpintegnp/util/plus/fix_dim_store.bq
+rc_check $? "dim_store table fixed"
+
+#Load Data from staging table into analytic_mart
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_store_new --use_legacy_sql=false <<!
+SELECT
+		TO_HEX(md5(concat(case 	when a.chain_id = 4 
+								then 'CA|' 
+								when a.chain_id = 7 
+								then 'LB|' 
+							end
+							, CAST(a.store_id AS STRING)
+                    ))) 										AS store_key
+		, CAST(a.store_id AS STRING) 							AS store_id
+		, a.store_name 											AS store_nam
+		, CAST(a.region_id AS STRING) 							AS region_cd
+		, a.region_name 										AS region_nam
+		, a.region_mgr_name 									AS region_manager_nam
+		, CAST(a.district_id AS STRING) 						AS district_cd
+		, a.district_name 										AS district_nam
+		, a.district_mgr_name 									AS district_manager_nam
+		, CAST(a.area_id AS STRING) 							AS area_cd
+		, a.area_name 											AS area_nam
+		, CAST(a.dc_id AS STRING) 								AS dc_id
+		, CAST(a.company_id AS STRING) 							AS company_cd
+		, a.store_remodel_date 									AS remodel_dt
+		, a.store_open_date 									AS open_dt
+		, a.store_close_date 									AS close_dt
+		, a.store_type 											AS store_type_cd
+		, a.store_manager_name 									AS store_manager_nam
+		, a.store_opr_status 									AS store_operating_status_cd
+		, a.store_ots_status 									AS store_open_to_ship_status_cd
+		, CAST(a.total_square_ft AS NUMERIC) 					AS total_square_feet_num
+		, CAST(a.selling_square_ft AS NUMERIC) 					AS selling_square_feet_num
+		, a.store_addr_line1 									AS line_1_addr
+		, a.store_addr_line2 									AS line_2_addr
+		, a.store_addr_line3 									AS line_3_addr
+		, a.store_city 											AS city_nam
+		, a.store_state 										AS state_nam
+		, a.store_state_cd 										AS state_cd
+		, CAST(a.store_zip_cd AS STRING) 						AS postal_cd
+		, CAST(a.store_zip_cd AS STRING) 						AS zip4_cd
+		, a.store_addr_country_cd								AS country_cd
+		, a.store_addr_country_name 							AS country_nam
+		, a.store_addr_county 									AS county_nam
+		, a.store_primary_phone_nbr 							AS store_phone_num
+		, a.lease_expire_date 									AS lease_end_dt
+		, a.store_hours 										AS store_hours_des
+		, a.site_type_group 									AS site_type_cd
+		, a.mall_name 											AS store_mall_nam
+		, CAST(NULL AS STRING) 									AS store_time_zone_des
+		, CAST(NULL AS INT64) 									AS ship_to_store_ind
+		, CAST(NULL AS INT64) 									AS ship_from_store_ind
+		, CAST(NULL AS INT64) 									AS outlet_ind
+		, CAST(a.latitude AS STRING) 							AS latitude
+		, CAST(a.longitude AS STRING) 							AS longitude
+		, CAST(a.store_cbsa AS STRING) 							AS store_cbsa
+		, current_timestamp 									as edl_create_tms
+		, "STORE" 												as edl_create_job_nam
+		, current_timestamp 									as edl_last_update_tms
+		, case 	when a.Chain_id = 4 
+				then "CA" 
+				when a.Chain_id =7 
+				then "LB" 
+		  end 													AS brand_code
+FROM 
+    (SELECT *
+    , ROW_NUMBER() OVER (PARTITION BY store_id, chain_id ORDER BY batch_id DESC) as rn 
+    FROM edl_stage.plus_store) a
+WHERE rn = 1
+!
+rc_check $? "Temp Dim_Store Created"
+
+#Add legacy records from old table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.dim_store_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.dim_store c
+left join analytic_mart.dim_store_new w
+    on  w.store_key = c.store_key
+where w.store_key is null
+!
+rc_check $? "Merge new table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.dim_store edl_archive.dim_store
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.dim_store_new analytic_mart.dim_store
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.dim_store_new
+rc_check $? "Remove new table "

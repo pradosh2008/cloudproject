@@ -1,0 +1,22 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "date_time",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "vendor_number",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "vendor_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "batch_id",
+    "type": "INTEGER"
+  }
+]

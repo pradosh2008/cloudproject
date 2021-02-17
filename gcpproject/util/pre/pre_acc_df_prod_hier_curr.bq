@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_acc_df_prod_hier_curr
+as
+  SELECT br.brand_cd 	
+  ,h.style_id		
+  ,h.style_desc		
+  ,h.color_id		
+  ,h.color_desc	
+  ,h.class_id		
+  ,h.class_name		
+  ,h.dept_id			
+  ,h.dept_name		
+  ,h.div_id			
+  ,h.div_name		
+  ,h.store_set_1
+  ,h.store_set_2
+  ,h.ecomm_exclusive
+  ,h.fashion_pyramid
+  ,h.test_ind
+  FROM
+  (select *, dense_rank() over (PARTITION BY brand_id, style_id, color_id order by batch_id desc) rn
+        from  \`${project}.edl_stage.pre_acc_df_prod_hier\`
+  ) h
+  join  \`${project}.analytic_mart.pre_brand\` br
+     on br.brand_short_cd = h.brand_id
+  where rn = 1
+!

@@ -1,0 +1,17 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_customer_bankcards_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_customer_bankcards c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_customer_bankcards_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_customer_bankcards c
+left join jus_stage.work_dim_customer_bankcards w
+    on  w.brand_customer_key = c.brand_customer_key
+    and w.bankcard_key = c.bankcard_key
+where w.bankcard_key is null
+!
+bq cp --force jus_stage.dim_customer_bankcards edl_archive.dim_customer_bankcards
+bq cp --force jus_stage.dim_customer_bankcards_new jus_stage.dim_customer_bankcards
+bq rm --force jus_stage.dim_customer_bankcards_new

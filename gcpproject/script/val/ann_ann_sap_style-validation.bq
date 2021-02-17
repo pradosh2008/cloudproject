@@ -1,0 +1,34 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+SELECT count(*) cnt 
+FROM (
+      SELECT style_number
+      , date_time
+      , batch_id
+      , count(*)
+      FROM edl_stage.pre_sap_style
+      group by 1,2,3
+      having count(*) > 1
+)'	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.ann_ann_sap_style l
+left join edl_stage.pre_sap_style s
+    on l.style_number = s.style_number
+where s.style_number is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

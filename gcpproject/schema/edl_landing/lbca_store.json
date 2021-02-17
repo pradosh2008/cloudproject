@@ -1,0 +1,247 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "chain_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "region_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "district_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "dc_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "company_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "area_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_remodel_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_open_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_close_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_type",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "mall_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_manager_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "district_mgr_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "region_mgr_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_opr_status",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_ots_status",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "total_square_ft",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "selling_square_ft",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_cbsa",
+    "type": "STRING"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "store_city",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_state",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_state_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_line1",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_line2",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_line3",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_zip_cd",
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_country_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_county",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_addr_country_name",
+    "type": "STRING"
+  },
+  { "mode": "NULLABLE",
+    "name": "store_primary_phone_nbr",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "lease_expire_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "region_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "area_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "chain_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "district_name",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "store_hours",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "site_type_group",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "depth",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "frontage",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "open_inv_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "close_inv_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "gob_start_date",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "latitude",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "longitude",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "da_comp_open",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "comp_ind",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "batch_id",
+    "type": "STRING"
+  }
+]
+

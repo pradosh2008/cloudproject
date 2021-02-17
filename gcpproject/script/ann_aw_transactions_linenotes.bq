@@ -1,0 +1,47 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --quote='' --field_delimiter="|" --schema=${schema_path}/edl_landing/ann_aw_transactions_linenotes.json edl_landing.ann_aw_transactions_linenotes  "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_*.dat"
+rc_check $? "Load edl_landing"
+
+
+#loading the temporary table in staging (it has both new and updated records)
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.ann_aw_transactions_linenotes_new --use_legacy_sql=false <<!
+SELECT if_entry_no
+   ,interface_control_flag
+   ,record_type
+   ,line_id
+   ,line_note_type
+   ,line_note
+   ,batch_id
+   from (select c.*
+        ,max(c.batch_id) over (partition by c.if_entry_no) as max_batch_id
+    from edl_landing.ann_aw_transactions_linenotes c
+) curr
+where curr.max_batch_id = curr.batch_id 
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_aw_transactions_linenotes_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_aw_transaction_linenotes c
+left join edl_stage.ann_aw_transactions_linenotes_new w
+    on  w.if_entry_no = c.if_entry_no
+    AND w.line_id = c.line_id
+    AND w.line_note_type = c.line_note_type
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_aw_transaction_linenotes edl_archive.pre_aw_transaction_linenotes
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_aw_transactions_linenotes_new edl_stage.pre_aw_transaction_linenotes
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_aw_transactions_linenotes_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_*.dat"

@@ -1,0 +1,11 @@
+bq cp --force jus_stage.promo_cust_reference edl_archive.promo_cust_reference
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.promo_cust_reference --use_legacy_sql=false <<!
+select w.*
+from jus_stage.work_promo_cust_reference w
+left join (select distinct promo_cust_reference_key 
+    from jus_stage.promo_cust_reference 
+) c
+    on  c.promo_cust_reference_key = w.promo_cust_reference_key
+where c.promo_cust_reference_key is null
+!

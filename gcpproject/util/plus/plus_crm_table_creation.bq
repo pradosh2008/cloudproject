@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_account AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_account WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_demographics AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_demographics WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_email AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_email WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_opt_in_out AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_opt_in_out WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_phone AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_phone WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_email_outbound AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_email_outbound WHERE 1 =2
+!
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_perks_membership AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_perks_membership WHERE 1 =2
+!

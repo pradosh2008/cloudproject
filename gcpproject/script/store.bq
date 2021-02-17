@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#LOAD DATA FROM BUCKET TO EDL LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.store  'gs://p-asna-datasink-003/store/*'
+rc_check $? "Load edl_landing"
+
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.store_new --use_legacy_sql=false <<!
+SELECT l.* from edl_landing.store l
+!
+rc_check $? "Build new table "
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.store_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.store c
+left join edl_landing.store l
+    on  l.store_key = c.store_key
+    where l.store_key is null
+!
+rc_check $? "Merge new table "
+
+
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.store edl_archive.store
+rc_check $? "Archive copy"
+bq cp --force edl_conform.store_new edl_conform.store
+rc_check $? "Copy new table "
+bq rm --force edl_conform.store_new
+rc_check $? "Remove new table "
+
+

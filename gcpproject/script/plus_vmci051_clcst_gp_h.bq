@@ -1,0 +1,68 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci051_clcst_gp_h.json \
+        edl_landing.lbca_vmci051_clcst_gp_h  \
+        "gs://${default_bucket}/plus/crm/vmci051_clcst_gp_h*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging (it has both new and updated records)
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci051_clcst_gp_h_new --use_legacy_sql=false <<!
+select
+ stg.id_cust
+,stg.id_dir_mkt_cell
+,stg.cd_cell_cust_type
+,stg.id_cell_version
+,stg.fl_responded
+,stg.cd_interaction
+,stg.id_package
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_cust,lbca.id_dir_mkt_cell,lbca.cd_cell_cust_type,lbca.fl_responded,lbca.id_package order by lbca.extract_ts desc) as row_num
+from
+(
+SELECT
+CAST(TRIM(id_cust) AS INT64) AS id_cust
+,CAST(TRIM(id_dir_mkt_cell) AS INT64) AS id_dir_mkt_cell
+,TRIM(cd_cell_cust_type) AS cd_cell_cust_type
+,CAST(TRIM(id_cell_version) AS INT64) AS id_cell_version
+,TRIM(fl_responded) AS fl_responded
+,TRIM(cd_interaction) AS cd_interaction
+,CAST(TRIM(id_package) AS INT64) AS id_package
+,case when TRIM(extract_ts)='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci051_clcst_gp_h
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci051_clcst_gp_h_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci051_clcst_gp_h c
+left join edl_stage.plus_vmci051_clcst_gp_h_new w
+    on  w.id_cust=c.id_cust
+    and w.id_dir_mkt_cell=c.id_dir_mkt_cell
+    and coalesce(w.cd_cell_cust_type,'')=coalesce(c.cd_cell_cust_type,'')
+    and coalesce(w.fl_responded,'')=coalesce(c.fl_responded,'')
+    and coalesce(w.id_package,0)=coalesce(c.id_package,0)
+    where w.id_cust is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci051_clcst_gp_h edl_archive.plus_vmci051_clcst_gp_h
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci051_clcst_gp_h_new edl_stage.plus_vmci051_clcst_gp_h
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci051_clcst_gp_h_new
+rc_check $? "drop the temp table"
+
+# Following function archives your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci051_clcst_gp_h*.txt.gz"

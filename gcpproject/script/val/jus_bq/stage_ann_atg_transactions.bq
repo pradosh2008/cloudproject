@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_offer_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_offer c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_offer_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_offer c
+left join jus_stage.work_dim_offer w
+    on  w.offer_key = c.offer_key
+where w.offer_key is null
+!
+bq cp --force jus_stage.dim_offer edl_archive.dim_offer
+bq cp --force jus_stage.dim_offer_new jus_stage.dim_offer
+bq rm --force jus_stage.dim_offer_new

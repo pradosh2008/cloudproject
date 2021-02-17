@@ -1,0 +1,12 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/vmci396_curr_opt_in_out_full.json \
+        edl_landing.vmci396_curr_opt_in_out_full  \
+        "gs://${default_bucket}/plus/crm/vmci396_curr_opt_in_out_full_YYYYMMDD*.txt.gz"
+rc_check $? "Load edl_landing"

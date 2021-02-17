@@ -1,0 +1,66 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_store_fixed --use_legacy_sql=false <<!
+select
+store_key
+,store_id
+,store_nam
+,region_cd
+,region_nam
+,region_manager_nam
+,district_cd
+,district_nam
+,district_manager_nam
+,area_cd
+,area_nam
+,dc_id
+,company_cd
+,remodel_dt
+,open_dt
+,close_dt
+,store_type_cd
+,store_manager_nam
+,store_operating_status_cd
+,store_open_to_ship_status_cd
+,cast(total_square_feet_num as numeric) as total_square_feet_num
+,cast(selling_square_feet_num as numeric) as selling_square_feet_num
+,line_1_addr
+,line_2_addr
+,line_3_addr
+,city_nam
+,state_nam
+,state_cd
+,postal_cd
+,zip4_cd
+,country_cd
+,country_nam
+,county_nam
+,store_phone_num
+,lease_end_dt
+,store_hours_des
+,site_type_cd
+,store_mall_nam
+,store_time_zone_des
+,ship_to_store_ind
+,ship_from_store_ind
+,outlet_ind
+,latitude
+,longitude
+,store_cbsa
+,edl_create_tms
+,edl_create_job_nam
+,edl_last_update_tms
+,brand_code
+from analytic_mart.dim_store
+!
+rc_check $? "Create fix table"
+ 
+ 
+bq cp --force analytic_mart.dim_store edl_archive.dim_store
+rc_check $? "archive copy"
+bq cp --force analytic_mart.dim_store_fixed analytic_mart.dim_store
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.dim_store_fixed
+rc_check $? "drop the temp table"

@@ -1,0 +1,55 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_calendar  'gs://p-asna-datasink-003/ann_calendar/*'
+rc_check $? "creating landing table"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_calendar --use_legacy_sql=false <<!
+select
+cast(day_dt as date) as day_dt
+,day_of_week
+,fiscal_day_of_week
+,day_of_month
+,day_of_year
+,julian_day
+,day_nm
+,day_abbr
+,cast(prev_day_dt as date) as prev_day_dt
+,cast(lw_day_dt as date) as lw_day_dt
+,cast(lm_day_dt as date) as lm_day_dt
+,cast(lq_day_dt as date) as lq_day_dt
+,cast(ly_day_dt as date) as ly_day_dt
+,week_id
+,week_of_year
+,week_of_month
+,fiscal_week_id
+,fiscal_week_of_year
+,month_id
+,month_of_year
+,month_nm
+,month_abbr
+,fiscal_month_id
+,fiscal_month_of_year
+,fiscal_month_nm
+,month_duration
+,prev_month_id
+,lq_month_id
+,ly_month_id
+,quarter_id
+,quarter_nbr
+,quarter_nm
+,fiscal_quarter_id
+,fiscal_quarter_nbr
+,quarter_duration
+,prev_quarter_id
+,ly_quarter_id
+,year_id
+,fiscal_year_id
+,year_duration
+,prev_year_id
+,batch_id
+from edl_landing.ann_calendar
+!
+rc_check $? "creating mart calendar table"

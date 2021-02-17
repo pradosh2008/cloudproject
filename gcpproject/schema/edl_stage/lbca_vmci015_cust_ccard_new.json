@@ -1,0 +1,82 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "ID_CUST", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "ID_ACCOUNT", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CD_CCARD_PROCESS_STATUS", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CD_BANK_CARD_TYPE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_BANK_CARD_SRCE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "DA_BANK_CARD_ADDED", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_FB_ACCT_TYPE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "FL_ACCOUNT_CLOSED", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "FL_ACCOUNT_ACTIVE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CD_ACCOUNT_TERM", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "DA_APPLY_HOUSCARD", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_CUST_SOURCE_2ND", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "CD_BNK_CRD_SUBTYPE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "DA_CARD_ISSUED", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "DA_TMCI015_ROW_UPDATED", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "extract_ts", 
+    "type": "TIMESTAMP"
+  }
+]

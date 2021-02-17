@@ -1,0 +1,32 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+select
+mailing_key,
+count(1)
+from
+analytic_mart.plus_brand_customer_mailing
+group by 1 having count(1)>1 )'
+
+run_validation "$sql" "Unique key  Check"
+
+
+#Null Check
+sql='SELECT COUNT(*) AS cnt
+FROM analytic_mart.plus_brand_customer_mailing
+WHERE mailing_id is NULL or mailing_key IS NULL'
+
+run_validation "$sql" "Null check"
+
+
+
+#Completeness Check
+sql='select count(1)
+FROM edl_stage.plus_vmci025_mailing_curr c
+LEFT JOIN analytic_mart.plus_brand_customer_mailing pm
+on c.id_mailing = pm.mailing_id
+where pm.mailing_id IS NULL'
+
+run_validation "$sql" "Completeness check"

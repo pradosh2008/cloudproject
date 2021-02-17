@@ -1,0 +1,135 @@
+#!/usr/bin/bash
+
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.plus_brand_customer_direct_marketing_cell_new --use_legacy_sql=false <<!
+select
+ o.direct_marketing_cell_key
+,o.direct_marketing_cell_id
+,o.cell_short_desc
+,o.record_created_dt
+,o.record_updated_dt
+,o.query_updated_cd
+,o.cell_type_ind
+,o.control_type_ind
+,o.cell_long_desc
+,o.mailing_key
+,o.mailing_id
+,o.version_num
+,o.query_id
+,o.priority_num
+,o.raw_customer_num
+,o.selected_customer_num
+,o.deduped_customer_num
+,o.control_customer_num
+,o.control_custmer_pct
+,o.not_mailed_num
+,o.output_num
+,o.run_query_cd
+,o.status_dt
+,o.status_ind
+,o.status_desc
+,o.job_nam
+,o.group_cd
+,o.user_created_id
+,o.cell_cd
+,o.control_cell_id
+,o.offer_list_id
+,o.promo_start_dt
+,o.promo_expire_dt
+,o.creative_type_desc
+,o.ad_unit_cost_amt
+,o.flowchart_id
+,o.batch_id
+,o.edl_create_tms
+,o.edl_create_job_nam
+,o.edl_last_update_tms
+,o.edl_last_update_job_nam
+,o.brand_cd
+from 
+(
+SELECT
+  TO_HEX( MD5( CONCAT(CASE
+          WHEN m.id_chain = 4 THEN 'CA'
+          WHEN m.id_chain = 7 THEN 'LB' END ,"|"
+        ,m.id_dir_mkt_cell))) AS direct_marketing_cell_key
+,m.id_dir_mkt_cell     AS   direct_marketing_cell_id
+,m.tx_cell_desc_short     AS   cell_short_desc
+,cast(m.da_rcd_created as DATE)    AS   record_created_dt
+,cast(m.da_rcd_updated as DATE)    AS   record_updated_dt
+,m.fl_qry_updated     AS   query_updated_cd
+,m.in_cell_type     AS   cell_type_ind
+,m.in_control_type     AS   control_type_ind
+,m.tx_cell_desc_long     AS   cell_long_desc
+,TO_HEX( MD5( CONCAT(CASE
+          WHEN m.id_chain = 4 THEN 'CA'
+          WHEN m.id_chain = 7 THEN 'LB' END ,"|"
+        ,m.id_mailing))) AS mailing_key
+,m.id_mailing     AS   mailing_id
+,m.nu_versions     AS   version_num
+,m.id_qry     AS   query_id
+,m.nu_priority     AS   priority_num
+,m.nu_raw_custs     AS   raw_customer_num
+,m.nu_selected_custs     AS   selected_customer_num
+,m.nu_deduped_custs     AS   deduped_customer_num
+,m.nu_control_custs     AS   control_customer_num
+,m.pc_control_custs     AS   control_custmer_pct
+,m.nu_not_mailed     AS   not_mailed_num
+,m.nu_output     AS   output_num
+,m.fl_run_query     AS   run_query_cd
+,cast(m.da_status as DATE)    AS   status_dt
+,m.ti_status     AS   status_ind
+,m.tx_status     AS   status_desc
+,m.na_job     AS   job_nam
+,m.cd_group     AS   group_cd
+,m.id_user_created     AS   user_created_id
+,m.cd_cell     AS   cell_cd
+,m.id_control_cell     AS   control_cell_id
+,m.id_offer_list     AS   offer_list_id
+,cast(m.da_promo_start as DATE)    AS   promo_start_dt
+,cast(m.da_promo_expire as DATE)    AS   promo_expire_dt
+,m.tx_creative_type     AS   creative_type_desc
+,m.am_ad_unit_cost     AS   ad_unit_cost_amt
+,m.id_flowchart     AS   flowchart_id
+,FORMAT_TIMESTAMP('%E4Y%m%d',m.extract_ts) AS batch_id
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'CRMCUST' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'CRMCUST' AS edl_last_update_job_nam
+, CASE
+    WHEN m.id_chain = 4 THEN 'CA'
+    WHEN m.id_chain = 7 THEN 'LB'
+END
+  AS brand_cd
+FROM
+  edl_stage.plus_vmci024_dir_mkt_cl_curr m
+  where m.id_chain in (4,7)
+) as o
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_direct_marketing_cell_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_direct_marketing_cell c
+left join analytic_mart.plus_brand_customer_direct_marketing_cell_new w
+    on w.direct_marketing_cell_key =c.direct_marketing_cell_key
+    where w.direct_marketing_cell_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_brand_customer_direct_marketing_cell edl_archive.plus_brand_customer_direct_marketing_cell
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_direct_marketing_cell_new analytic_mart.plus_brand_customer_direct_marketing_cell
+rc_check $? "replace the temp table as the stage table"
+bq rm --force analytic_mart.plus_brand_customer_direct_marketing_cell_new
+rc_check $? "drop the temp table"
+
+

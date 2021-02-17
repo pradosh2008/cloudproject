@@ -1,0 +1,20 @@
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_discount p-ascn-da-aadp-001:edl_conform_backup.transaction_discount &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_phone p-ascn-da-aadp-001:edl_conform_backup.brand_customer_phone &
+bq cp --force  p-asna-analytics-002:edl_conform.plus_calendar p-ascn-da-aadp-001:edl_conform_backup.plus_calendar &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_email p-ascn-da-aadp-001:edl_conform_backup.brand_customer_email &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_tender p-ascn-da-aadp-001:edl_conform_backup.transaction_tender &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer p-ascn-da-aadp-001:edl_conform_backup.brand_customer &
+bq cp --force  p-asna-analytics-002:edl_conform.item p-ascn-da-aadp-001:edl_conform_backup.item &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_addr p-ascn-da-aadp-001:edl_conform_backup.brand_customer_addr &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_fee p-ascn-da-aadp-001:edl_conform_backup.transaction_fee &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_tax p-ascn-da-aadp-001:edl_conform_backup.transaction_tax &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction p-ascn-da-aadp-001:edl_conform_backup.transaction &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_detail p-ascn-da-aadp-001:edl_conform_backup.transaction_detail &
+bq cp --force  p-asna-analytics-002:edl_conform.store p-ascn-da-aadp-001:edl_conform_backup.store &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_transaction_xref p-ascn-da-aadp-001:edl_conform_backup.brand_customer_transaction_xref &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_account p-ascn-da-aadp-001:edl_conform_backup.brand_customer_account &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_membership p-ascn-da-aadp-001:edl_conform_backup.brand_customer_membership &
+bq cp --force  p-asna-analytics-002:edl_conform.brand_customer_location p-ascn-da-aadp-001:edl_conform_backup.brand_customer_location &
+bq cp --force  p-asna-analytics-002:edl_conform.transaction_notes p-ascn-da-aadp-001:edl_conform_backup.transaction_notes &
+
+wait

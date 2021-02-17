@@ -1,0 +1,30 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+                SELECT brand_customer_key
+                FROM analytic_mart.plus_brand_customer_demographics a
+                GROUP BY 1
+                HAVING COUNT(*)>1
+)'
+run_validation "$sql" "Unique key  Check"
+
+#Null Key Check
+sql='select count(*)  FROM(
+                SELECT brand_customer_key
+                FROM analytic_mart.plus_brand_customer_demographics a
+                WHERE brand_customer_key IS NULL
+)'
+run_validation "$sql" "Null key Check"
+
+#Completeness Check
+sql='select count(*) from (
+                select dm.brand_customer_key FROM analytic_mart.plus_brand_customer_demographics dm
+                LEFT JOIN analytic_mart.dim_brand_customer c
+                on dm.brand_customer_key = c.brand_customer_key
+                where dm.brand_customer_key is null
+)'
+run_validation "$sql" "Completeness Check"
+
+

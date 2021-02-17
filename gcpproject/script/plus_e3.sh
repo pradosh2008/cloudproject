@@ -1,0 +1,1 @@
+run_bq_job -e plus_forecasting_replen_supercede_swap.bq

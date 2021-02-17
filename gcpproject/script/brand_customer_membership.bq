@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.brand_customer_membership  'gs://p-asna-datasink-003/brand_customer_membership/*'
+rc_check $? "Load edl_landing"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.brand_customer_membership_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.brand_customer_membership c
+!
+rc_check $? "Build new table"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.brand_customer_membership_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.brand_customer_membership c
+left join edl_landing.brand_customer_membership w
+    on  w.brand_customer_key = c.brand_customer_key
+    and w.membership_key = c.membership_key	    
+where w.brand_customer_key is null
+!
+rc_check $? "Merge new table"
+
+bq cp --force edl_conform.brand_customer_membership edl_archive.brand_customer_membership
+rc_check $? "Archive copy"
+bq cp --force edl_conform.brand_customer_membership_new edl_conform.brand_customer_membership
+rc_check $? "Copy new table"
+bq rm --force edl_conform.brand_customer_membership_new
+rc_check $? "Remove new table"

@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+    ID_CUST, ID_BLOCK_GRP, count(*)
+    from edl_stage.plus_vmci067_cust_block
+    group by 1,2
+    having count(*)>1 )'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT count(*) cnt
+from edl_landing.lbca_vmci067_cust_block l
+left join edl_stage.plus_vmci067_cust_block p
+    on CAST(TRIM(l.ID_CUST) AS INT64) = p.ID_CUST
+    and CAST(TRIM(l.ID_BLOCK_GRP) AS NUMERIC) = p.ID_BLOCK_GRP
+where p.ID_BLOCK_GRP is null'
+
+run_validation "$sql" "Completeness Check"
+
+exit ${ERROR_CD:-0}
+

@@ -1,0 +1,61 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (
+    SELECT transaction_item_key
+    , COUNT(*)
+    FROM analytic_mart.pre_transaction_item
+    GROUP BY 1
+    HAVING COUNT(*)>1
+    )
+'
+
+run_validation "$sql" "Unique Key Check"
+
+#Historical Completeness CHECK
+
+sql='
+SELECT COUNT(*) cnt
+      FROM edl_stage.pre_hst_transaction_item sh
+      LEFT OUTER JOIN analytic_mart.pre_transaction_item ah ON (ah.transaction_num = sh.txn_nbr AND ah.line_num = sh.txn_item_nbr)
+      WHERE ah.batch_id = 20160101
+      AND ah.transaction_num IS NULL
+'
+
+run_validation "$sql" "Historical Completeness Check"
+
+#Integrity CHECK
+
+sql='
+SELECT cnt
+FROM (
+      SELECT
+      COUNT(distinct ti.transaction_key) - COUNT(distinct t.transaction_key) as cnt
+      FROM analytic_mart.pre_transaction_item ti
+      LEFT OUTER JOIN analytic_mart.pre_transaction_header t
+      ON (t.transaction_num = ti.transaction_num)
+)'
+
+run_validation "$sql" "Integrity Check"
+
+#Orphan Count Check
+
+sql='
+SELECT orphan_count FROM (
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count,
+       sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.pre_transaction_item a
+left join analytic_mart.pre_transaction_header b
+    on a.transaction_key = b.transaction_key
+where a.transaction_key is not null
+)
+'
+run_validation "$sql" "Orphan Check"
+
+exit ${ERROR_CD:-0}

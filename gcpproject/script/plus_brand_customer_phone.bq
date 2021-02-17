@@ -1,0 +1,83 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --replace --destination_table analytic_mart.plus_brand_customer_phone_new --use_legacy_sql=false <<!
+select o.brand_customer_key
+,o.brand_customer_id
+,o.customer_phone_id
+,o.phone_source_cd
+,o.phone_unlisted_cd       
+,o.phone_added_dt         
+,o.phone_type_cd      
+,o.phone_extension_id       
+,o.phone_verified_cd     
+,o.phone_verified_dt         
+,o.phone_category_cd         
+,o.edl_create_tms
+,o.edl_create_job_nam
+,o.edl_last_update_tms
+,o.edl_last_update_job_nam
+,o.brand_cd
+,o.batch_id
+from
+(
+SELECT
+  TO_HEX( MD5( CONCAT(CASE
+          WHEN cc.id_chain = 4 THEN 'CA'
+          WHEN cc.id_chain = 7 THEN 'LB' END ,"|"
+        ,c.id_cust))) AS brand_customer_key 
+,c.ID_CUST as brand_customer_id
+,c.TE_CUST as customer_phone_id
+,c.IN_PHONE_SRCE as phone_source_cd 
+,c.FL_PHONE_UNLISTED as phone_unlisted_cd   
+,c.DA_PHONE_ADDED as phone_added_dt 
+,c.IN_PHONE_TYPE as phone_type_cd   
+,c.TE_PHONE_EXT as phone_extension_id   
+,c.CD_PHONE_VERIFIED as phone_verified_cd   
+,c.DA_PHONE_VERIFIED as phone_verified_dt   
+,c.CD_PHONE_CATEGORY as phone_category_cd   
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'CRMCUST' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'CRMCUST' AS edl_last_update_job_nam
+, CASE
+    WHEN cc.id_chain = 4 THEN 'CA'
+    WHEN cc.id_chain = 7 THEN 'LB'
+END
+  AS brand_cd
+,FORMAT_TIMESTAMP('%E4Y%m%d',c.extract_ts) AS batch_id  
+FROM edl_stage.plus_vmci021_cust_phone_curr c
+inner join edl_stage.plus_vmci105_chain_cust_curr cc
+on c.id_cust = cc.id_cust
+where cc.id_chain in (4,7)
+) as o
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_phone_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_phone c
+left join analytic_mart.plus_brand_customer_phone_new w
+    on w.brand_customer_id =c.brand_customer_id
+    and w.customer_phone_id = c.customer_phone_id
+    and w.brand_cd = c.brand_cd
+    where w.brand_customer_id is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_brand_customer_phone edl_archive.plus_brand_customer_phone
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_phone_new analytic_mart.plus_brand_customer_phone
+rc_check $? "replace the temp table as the stage table"
+bq rm --force analytic_mart.plus_brand_customer_phone_new
+rc_check $? "drop the temp table"
+
+

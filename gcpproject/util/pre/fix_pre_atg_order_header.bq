@@ -1,0 +1,53 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --use_legacy_sql=false \
+          --destination_table=edl_stage.pre_atg_order_header_fix <<!
+select orderid
+    ,profileid
+    ,orderstate
+    ,createdbyorder
+    ,originoforder
+    ,timestamp_add(createddate, interval -1 hour)       as createddate
+    ,timestamp_add(submitteddate, interval -1 hour)     as submitteddate
+    ,timestamp_add(lastmodifieddate, interval -1 hour)  as lastmodifieddate
+    ,completeddate
+    ,agentid
+    ,saleschannel
+    ,siteid
+    ,isassociateuser
+    ,associatenumber
+    ,ipaddress
+    ,couponcode
+    ,useremailaddress
+    ,international
+    ,storeassoclogin
+    ,storeassocstoreid
+    ,storeassocreason
+    ,itempriceoverridden
+    ,shippriceoverridden
+    ,priceinfotype
+    ,rawsubtotal
+    ,orderpriceinfotax
+    ,shipping
+    ,priceinfocurrencycode
+    ,priceinfoamount
+    ,priceinfodiscounted
+    ,priceinfoamountisfinal
+    ,priceinfofullprice
+    ,priceinfononfullprice
+    ,partnerid
+    ,loyaltyid
+    ,mask_identifier
+    ,batch_id
+from edl_stage.pre_atg_order_header
+!
+rc_check $? "build fix"
+
+bq cp --force edl_stage.pre_atg_order_header edl_archive.pre_atg_order_header
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_header_fix edl_stage.pre_atg_order_header
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_header_fix
+rc_check $? "drop the temp table"
+

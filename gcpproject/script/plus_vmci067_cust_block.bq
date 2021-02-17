@@ -1,0 +1,101 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci067_cust_block.json \
+        edl_landing.lbca_vmci067_cust_block \
+        "gs://${default_bucket}/plus/crm/vmci067_cust_block*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci067_cust_block_new --use_legacy_sql=false <<!
+#SELECT
+#stg.ID_CUST                       
+#,stg.ID_BLOCK_GRP                  
+#,stg.CD_CENSUS_STATE               
+#,stg.CD_CENSUS_COUNTY              
+#,stg.CD_CENSUS_TRACT               
+#,stg.CD_CENSUS_BG                  
+#,stg.CD_CENSUS_MSA                 
+#,stg.CD_CENSUS_MCDCCD              
+#,stg.CD_CENSUS_PLACE               
+#,stg.CD_CUST_LAT                   
+#,stg.CD_CUST_LONG                  
+#,stg.CD_CENSUS_BLOCK               
+#,stg.CD_CENSUS_CBSA                
+#,stg.FL_CENSUS_CBSA_METRO          
+#,stg.CD_CENSUS_CSA                 
+#,stg.EXTRACT_TS
+#from
+#(
+#SELECT lbca.*
+#,ROW_NUMBER() OVER (partition by lbca.ID_CUST, lbca.ID_BLOCK_GRP
+#order by lbca.EXTRACT_TS desc) as row_num
+#from
+#(
+SELECT
+CAST(TRIM(c.ID_CUST) AS INT64) as ID_CUST
+,case when TRIM(c.ID_BLOCK_GRP)='' then null
+else CAST(TRIM(c.ID_BLOCK_GRP) AS NUMERIC) end as ID_BLOCK_GRP                  
+,case when TRIM(c.CD_CENSUS_STATE)='' then null
+else CAST(TRIM(c.CD_CENSUS_STATE) AS INT64) end as CD_CENSUS_STATE
+,case when TRIM(c.CD_CENSUS_COUNTY)='' then null
+else CAST(TRIM(c.CD_CENSUS_COUNTY) AS INT64) end as CD_CENSUS_COUNTY
+,case when TRIM(c.CD_CENSUS_TRACT)='' then null
+else CAST(TRIM(c.CD_CENSUS_TRACT) AS INT64) end as CD_CENSUS_TRACT               
+,case when TRIM(c.CD_CENSUS_BG)='' then null
+else CAST(TRIM(c.CD_CENSUS_BG) AS INT64) end as CD_CENSUS_BG                  
+,case when TRIM(c.CD_CENSUS_MSA)='' then null
+else CAST(TRIM(c.CD_CENSUS_MSA) AS INT64) end as CD_CENSUS_MSA                 
+,case when TRIM(c.CD_CENSUS_MCDCCD)='' then null
+else CAST(TRIM(c.CD_CENSUS_MCDCCD) AS INT64) end as CD_CENSUS_MCDCCD              
+,case when TRIM(c.CD_CENSUS_PLACE)='' then null
+else CAST(TRIM(c.CD_CENSUS_PLACE) AS INT64) end as CD_CENSUS_PLACE               
+,case when TRIM(c.CD_CUST_LAT)='' then null
+else CAST(TRIM(c.CD_CUST_LAT) AS NUMERIC) end as CD_CUST_LAT                   
+,case when TRIM(c.CD_CUST_LONG)='' then null
+else CAST(TRIM(c.CD_CUST_LONG) AS NUMERIC) end as CD_CUST_LONG                  
+,case when TRIM(c.CD_CENSUS_BLOCK)='' then null
+else CAST(TRIM(c.CD_CENSUS_BLOCK) AS INT64) end as CD_CENSUS_BLOCK               
+,case when TRIM(c.CD_CENSUS_CBSA)='' then null
+else CAST(TRIM(c.CD_CENSUS_CBSA) AS INT64) end as CD_CENSUS_CBSA                
+,case when TRIM(c.FL_CENSUS_CBSA_METRO)='' then null
+else TRIM(c.FL_CENSUS_CBSA_METRO) end as FL_CENSUS_CBSA_METRO     
+,case when TRIM(c.CD_CENSUS_CSA)='' then null
+else CAST(TRIM(c.CD_CENSUS_CSA) AS INT64) end as CD_CENSUS_CSA                
+,case when TRIM(c.EXTRACT_TS)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",TRIM(c.EXTRACT_TS),"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci067_cust_block c
+#)lbca
+#)stg
+#where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci067_cust_block_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci067_cust_block c
+left join edl_stage.plus_vmci067_cust_block_new w
+    on w.ID_CUST=c.ID_CUST
+    #and w.ID_BLOCK_GRP=c.ID_BLOCK_GRP
+    and EXTRACT(date from w.EXTRACT_TS)=EXTRACT(date from c.EXTRACT_TS)
+    where w.ID_CUST is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci067_cust_block edl_archive.plus_vmci067_cust_block
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci067_cust_block_new edl_stage.plus_vmci067_cust_block
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci067_cust_block_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci067_cust_block*.txt.gz"
+

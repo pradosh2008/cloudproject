@@ -1,0 +1,67 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sku_attr_channel.json \
+        edl_landing.lb_sku_attr_channel  \
+        "gs://${default_bucket}/plus/edw/lb_sku_attr_channel*.txt.gz"
+rc_check $? "Load edl_landing"
+
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sku_attr_channel.json \
+        edl_landing.ca_sku_attr_channel  \
+        "gs://${default_bucket}/plus/edw/ca_sku_attr_channel*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_sku_attr_channel_new --use_legacy_sql=false <<!
+SELECT 
+c.chain_nbr, 
+c.sku_nbr, 
+c.uda_nbr, 
+c.uda_value_nbr, 
+c.uda_value_desc, 
+c.attribute_nbr, 
+c.attribute_nm, 
+c.uda_desc, 
+cast(c.extract_ts as timestamp) extract_ts
+ from edl_landing.lb_sku_attr_channel c
+ UNION ALL
+SELECT 
+d.chain_nbr, 
+d.sku_nbr, 
+d.uda_nbr, 
+d.uda_value_nbr, 
+d.uda_value_desc, 
+d.attribute_nbr, 
+d.attribute_nm, 
+d.uda_desc, 
+cast(d.extract_ts as timestamp) extract_ts
+ from edl_landing.ca_sku_attr_channel d
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sku_attr_channel_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_lbca_sku_attr_channel c
+left join edl_stage.lbca_sku_attr_channel_new w
+    on  w.chain_nbr = c.chain_nbr
+    AND w.sku_nbr = c.sku_nbr
+    where w.chain_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_lbca_sku_attr_channel edl_archive.pre_lbca_sku_attr_channel
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sku_attr_channel_new edl_stage.pre_lbca_sku_attr_channel
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sku_attr_channel_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sku_attr_channel*.txt.gz"
+archive_bucket_files "gs://${default_bucket}/plus/edw/ca_sku_attr_channel*.txt.gz"

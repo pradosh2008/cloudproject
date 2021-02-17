@@ -1,0 +1,188 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_item_new --use_legacy_sql=false <<!
+SELECT
+di.item_key
+, di.sku_id
+, di.vendor_key
+, di.item_des
+, di.item_short_des
+, di.style_id
+, di.style_des
+, di.different_color_cd
+, di.different_color_des
+, di.different_size_cd
+, di.different_size_des
+, di.department_id
+, di.department_nam
+, di.class_id
+, di.class_nam
+, di.subclass_id
+, di.subclass_nam
+, di.division_id
+, di.division_nam
+, di.group_num
+, di.group_nam
+, di.item_status_cd
+, di.standard_uom_des
+, di.regular_unit_retail_amt
+, di.selling_unit_retail_amt
+, di.inventory_ind
+, di.merchandise_ind
+, di.orderable_ind
+, di.sellable_ind
+, di.ship_alone_ind
+, di.item_create_tms
+, di.last_update_tms
+, di.unit_cost_amt
+, di.origin_country_cd
+, di.item_record_status_cd
+, di.season_id
+, di.season_des
+, di.edl_create_tms
+, di.edl_create_job_nam
+, di.edl_last_update_tms
+, di.edl_last_update_job_nam
+, di.brand_cd
+FROM edl_conform.item di
+--TO INSERT HISTORICAL SKU's FROM TERADATA FEED ONE TIME
+UNION DISTINCT
+SELECT
+di.item_key
+, di.sku_id
+, di.vendor_key
+, di.item_des
+, di.item_short_des
+, di.style_id
+, di.style_des
+, di.different_color_cd
+, di.different_color_des
+, di.different_size_cd
+, di.different_size_des
+, di.department_id
+, di.department_nam
+, di.class_id
+, di.class_nam
+, di.subclass_id
+, di.subclass_nam
+, di.division_id
+, di.division_nam
+, di.group_num
+, di.group_nam
+, di.item_status_cd
+, di.standard_uom_des
+, di.regular_unit_retail_amt
+, di.selling_unit_retail_amt
+, di.inventory_ind
+, di.merchandise_ind
+, di.orderable_ind
+, di.sellable_ind
+, di.ship_alone_ind
+, di.item_create_tms
+, di.last_update_tms
+, di.unit_cost_amt
+, di.origin_country_cd
+, di.item_record_status_cd
+, di.season_id
+, di.season_des
+, di.edl_create_tms
+, di.edl_create_job_nam
+, di.edl_last_update_tms
+, di.edl_last_update_job_nam
+, di.brand_cd
+FROM edl_stage.plus_item_hist di
+WHERE item_key NOT IN (SELECT item_key FROM edl_conform.item)
+!
+rc_check $? "Build table with latest hierarchy"
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.dim_item_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.dim_item c
+left join analytic_mart.dim_item_new w
+    on  w.item_key = c.item_key
+    where w.item_key is null
+!
+rc_check $? "Merge new table"
+
+#correct hierarchy
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_item_new1 --use_legacy_sql=false <<!
+SELECT
+di.item_key
+, di.sku_id
+, di.vendor_key
+, di.item_des
+, di.item_short_des
+, di.style_id
+, si.style_des
+, di.different_color_cd
+, di.different_color_des
+, di.different_size_cd
+, di.different_size_des
+, si.department_id
+, si.department_nam
+, si.class_id
+, si.class_nam
+, si.subclass_id
+, si.subclass_nam
+, si.division_id
+, si.division_nam
+, si.group_num
+, si.group_nam
+, di.item_status_cd
+, di.standard_uom_des
+, di.regular_unit_retail_amt
+, di.selling_unit_retail_amt
+, di.inventory_ind
+, di.merchandise_ind
+, di.orderable_ind
+, di.sellable_ind
+, di.ship_alone_ind
+, di.item_create_tms
+, di.last_update_tms
+, di.unit_cost_amt
+, di.origin_country_cd
+, di.item_record_status_cd
+, di.season_id
+, di.season_des
+, di.edl_create_tms
+, di.edl_create_job_nam
+, di.edl_last_update_tms
+, di.edl_last_update_job_nam
+, di.brand_cd
+FROM analytic_mart.dim_item di
+     INNER JOIN (
+                        SELECT style_id
+                        , style_des
+                        , class_id
+                        , class_nam
+                        , CASE WHEN style_id = '1031439' THEN '5582' ELSE subclass_id END as subclass_id
+                        , subclass_nam
+                        , department_id
+                        , department_nam
+                        , group_num
+                        , group_nam
+                        , division_id
+                        , division_nam
+                        , last_update_tms
+                        , brand_cd
+                        , ROW_NUMBER() OVER (PARTITION BY style_id, brand_cd ORDER BY last_update_tms desc) as rn
+                        FROM analytic_mart.dim_item
+                        ) si
+                  ON di.style_id = si.style_id AND si.rn = 1 AND si.brand_cd = di.brand_cd
+!
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.dim_item edl_archive.dim_item
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.dim_item_new1 analytic_mart.dim_item
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.dim_item_new
+rc_check $? "Remove new table "
+bq rm --force analytic_mart.dim_item_new1
+rc_check $? "Remove new table "

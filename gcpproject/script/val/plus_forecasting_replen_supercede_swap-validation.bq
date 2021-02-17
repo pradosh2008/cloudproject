@@ -1,0 +1,42 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+     SELECT count(*)
+     FROM (
+           SELECT 
+                   chain_nbr
+                 , sku_to_nbr
+                 , sku_from_nbr
+                 , store_nbr
+                 , last_update_ts
+                 , count(*) 
+           FROM edl_stage.plus_forecasting_replen_supercede_swap
+           group by 1,2,3,4,5
+           having count(*)>1
+          )
+    '
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+     SELECT count(*) cnt
+     from edl_landing.lb_forecasting_replen_supercede_swap L
+     left join edl_stage.plus_forecasting_replen_supercede_swap S 
+                        ON  S.chain_nbr    = cast(trim(L.chain_nbr) as int64)
+                        AND S.sku_to_nbr   = trim(L.sku_to_nbr)
+                        AND S.sku_from_nbr = trim(L.sku_from_nbr)
+                        AND S.store_nbr    = cast(trim(L.store_nbr) as int64)
+     WHERE S.chain_nbr is null
+    '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+
+

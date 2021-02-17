@@ -1,0 +1,44 @@
+select 
+trans_item.transaction_item_key         
+,trans_item.transaction_key                 
+,trans_item.transaction_num                 
+,trans_item.line_num                        
+,trans_item.transaction_source_cd           
+,trans_item.store_key                       
+,trans_item.register_num                    
+,trans_item.item_key                        
+,trans_item.week_id     
+--,fiscal_month_id
+,trans_item.original_transaction_key        
+,trans_item.transaction_dt                  
+,trans_item.transaction_tms                 
+--,trans_item.transaction_type_cd               
+,trans_item.channel_cd                      
+,trans_item.item_cogs_amt                   
+,trans_item.list_price_amt                  
+,trans_item.item_sold_qty                   
+,trans_item.item_sold_amt                   
+,trans_item.item_gross_amt                  
+,trans_item.item_disc_amt                   
+,trans_item.item_net_amt                    
+,trans_item.item_return_from_transaction_num
+,trans_item.item_return_cd                  
+,trans_item.item_return_dt                  
+,trans_item.item_return_qty                 
+,trans_item.item_return_amt     
+--,case when trans_item.transaction_dt > '2018-08-31' then( case when coalesce(bi_vw.full_price_flg,'F') = 'F' then 1 else 0 end) else trans_item.full_price_ind end as   full_price_ind
+--, CASE WHEN trans_item.transaction_dt BETWEEN '2018-02-01' AND '2018-08-31' THEN trans_item.full_price_ind ELSE (case when coalesce(bi_vw.full_price_flg,'F') = 'F' then 1 else 0 end) END as full_price_ind
+,trans_item.full_price_ind
+,trans_item.batch_id                        
+--FROM `p-asna-analytics-002.analytic_mart.pre_transaction_item_new` trans_item
+FROM `p-asna-analytics-002.analytic_mart.pre_transaction_item` trans_item
+JOIN  (select distinct store_key
+                    ,brand_cd
+                    ,store_id
+    from   `p-asna-analytics-002.analytic_mart.pre_store`         
+  --  where distribution_channel_cd = '05'   
+) store 
+    ON trans_item.store_key=store.store_key  
+    AND store.store_id NOT IN ('4000','4001','4002','4003','4100','4101','4102','4103','4104','4105','4106','4107','4108')
+join `p-asna-analytics-002.analytic_mart.pre_item` it
+   on it.item_key = trans_item.item_key

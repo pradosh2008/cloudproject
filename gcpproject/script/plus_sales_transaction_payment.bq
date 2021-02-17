@@ -1,0 +1,107 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the LB payment landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_payment.json \
+        edl_landing.lb_sales_transaction_payment  \
+        "gs://${default_bucket}/plus/edw/lb_sales_transaction_payment*.txt.gz"
+rc_check $? "Load edl_landing LB payment Completed"
+
+
+#Loading in single temporary stage table from Landing tables
+bq query --replace=true --max_rows 1 --allow_large_results \
+        --destination_table edl_stage.lbca_sales_transaction_payment_new --use_legacy_sql=false <<!
+SELECT cast(stg.selling_chain_nbr as INT64)         as selling_chain_nbr
+    ,cast(stg.selling_store_nbr as NUMERIC)         as selling_store_nbr
+    ,cast(stg.register_nbr as INT64)                as register_nbr
+    ,cast(stg.transaction_nbr as INT64)             as transaction_nbr
+    ,stg.transaction_dt
+    ,cast(stg.payment_seq_nbr as INT64)             as payment_seq_nbr
+    ,cast(stg.record_seq_nbr as NUMERIC)            as record_seq_nbr
+    ,stg.line_object_type_cd
+    ,stg.line_object_cd
+    ,stg.line_action_cd
+    ,stg.note_type_cd
+    ,stg.transaction_type_cd
+    ,stg.register_type_cd
+    ,cast(stg.employee_nbr as NUMERIC)              as employee_nbr
+    ,stg.payment_type_cd
+    ,cast(stg.payment_reference_nbr as NUMERIC)     as payment_reference_nbr
+    ,cast(stg.payment_amt as NUMERIC)               as payment_amt
+    ,stg.last_update_ts
+    ,cast(stg.payment_reference_nbr_crm as NUMERIC) as payment_reference_nbr_crm
+    ,stg.extract_ts
+from (SELECT trim(c.selling_chain_nbr) as selling_chain_nbr
+        ,trim(c.selling_store_nbr) as selling_store_nbr
+        ,trim(c.register_nbr) as register_nbr
+        ,trim(c.transaction_nbr) as transaction_nbr
+        ,case when TRIM(c.transaction_dt)='' 
+                then null else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) 
+         end                                                as transaction_dt
+        ,trim(c.payment_seq_nbr) as payment_seq_nbr
+        ,trim(c.record_seq_nbr) as record_seq_nbr
+        ,trim(c.line_object_type_cd) as line_object_type_cd
+        ,trim(c.line_object_cd) as line_object_cd
+        ,trim(c.line_action_cd) as line_action_cd
+        ,trim(c.note_type_cd) as note_type_cd
+        ,trim(c.transaction_type_cd) as transaction_type_cd
+        ,trim(c.register_type_cd) as register_type_cd
+        ,trim(c.employee_nbr) as employee_nbr
+        ,trim(c.payment_type_cd) as payment_type_cd
+        ,trim(c.payment_reference_nbr) as payment_reference_nbr
+        ,trim(c.payment_amt) as payment_amt
+        ,case when TRIM(c.last_update_ts)='' 
+            then null
+            else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.last_update_ts,"America/New_York") 
+         end                                                                as last_update_ts
+        ,trim(c.payment_reference_nbr_crm) as payment_reference_nbr_crm
+        ,case when TRIM(c.extract_ts)='' 
+                then null 
+                else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") 
+         end                                                                as extract_ts
+        ,ROW_NUMBER() OVER (partition by trim(c.selling_chain_nbr)
+                                        ,trim(c.selling_store_nbr) 
+                                        ,trim(c.register_nbr) 
+                                        ,case when TRIM(c.transaction_dt)='' 
+                                            then null 
+                                            else PARSE_DATE("%Y-%m-%d",TRIM(c.transaction_dt)) 
+                                         end
+                                        ,trim(c.transaction_nbr) 
+                            order by case when TRIM(c.extract_ts)='' 
+                                        then null 
+                                        else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") 
+                                     end desc
+                        ) as row_num
+    from edl_landing.lb_sales_transaction_payment c
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_payment_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_payment c
+left join edl_stage.lbca_sales_transaction_payment_new w
+    on  w.selling_chain_nbr=c.selling_chain_nbr
+    AND w.selling_store_nbr=c.selling_store_nbr
+    AND w.register_nbr=c.register_nbr
+    AND w.transaction_nbr=c.transaction_nbr
+    AND w.transaction_dt=c.transaction_dt
+    where w.transaction_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_payment edl_archive.plus_sales_transaction_payment
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_payment_new edl_stage.plus_sales_transaction_payment
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_payment_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_payment*.txt.gz*"
+

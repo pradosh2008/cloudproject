@@ -1,0 +1,62 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+# 'primary and duplicate check'
+sql='select
+brand_customer_key,
+customer_phone_id,
+brand_cd,
+count(*)
+from analytic_mart.plus_brand_customer_phone
+group by brand_customer_key,
+customer_phone_id,
+brand_cd
+having count(*)>1'
+run_validation "$sql" "Primary Key Check"
+
+
+# 'FK Check for brand_customer_key'
+sql='select sum(case when a.brand_customer_key is null then 0 else 1 end)   as match_count
+      ,sum(case when a.brand_customer_key is null then 1 else 0 end)   as orphan_count
+from analytic_mart.plus_brand_customer_phone a
+left join analytic_mart.dim_brand_customer b
+    on a.brand_customer_key = b.brand_customer_key'
+
+run_validation "$sql" "FK Check for brand_customer_key"
+
+
+# 'null check'
+sql='select count(*)
+from analytic_mart.plus_brand_customer_phone
+where brand_customer_key is null'
+run_validation "$sql" "Null Check"
+
+
+#alternate key check
+sql='
+select
+brand_customer_id,
+customer_phone_id,
+brand_cd,
+count(*)
+from analytic_mart.plus_brand_customer_phone
+group by brand_customer_id,
+customer_phone_id,
+brand_cd
+having count(*)>1'
+run_validation "$sql" "alternet key check"
+
+# 'completeness check'
+sql='
+select count(1)
+FROM edl_stage.plus_vmci021_cust_phone_curr c
+        INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc
+             on c.id_Cust=cc.id_cust
+         AND cc.id_chain IN (4,7)
+LEFT JOIN analytic_mart.plus_brand_customer_phone pm
+on c.id_cust=pm.brand_Customer_id
+where pm.brand_Customer_id is null
+'
+run_validation "$sql" "completeness check"
+

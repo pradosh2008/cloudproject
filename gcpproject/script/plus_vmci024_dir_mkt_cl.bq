@@ -1,0 +1,146 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci024_dir_mkt_cl.json \
+        edl_landing.lbca_vmci024_dir_mkt_cl \
+        "gs://${default_bucket}/plus/crm/vmci024_dir_mkt_cl*.txt.gz"
+rc_check $? "Load edl_landing"
+
+
+#loading the temporary table in staging
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci024_dir_mkt_cl_new --use_legacy_sql=false <<!
+Select 
+stg.id_dir_mkt_cell as id_dir_mkt_cell,
+stg.tx_cell_desc_short as tx_cell_desc_short,
+stg.da_rcd_created as da_rcd_created,
+stg.da_rcd_updated as da_rcd_updated,
+stg.fl_qry_updated as fl_qry_updated,
+stg.in_cell_type as in_cell_type,
+stg.in_control_type as in_control_type,
+stg.tx_cell_desc_long as tx_cell_desc_long,
+stg.id_mailing as id_mailing,
+stg.nu_versions as nu_versions,
+stg.id_qry as id_qry,
+stg.nu_priority as nu_priority,
+stg.nu_raw_custs as nu_raw_custs,
+stg.nu_selected_custs as nu_selected_custs,
+stg.nu_deduped_custs as nu_deduped_custs,
+stg.nu_control_custs as nu_control_custs,
+stg.pc_control_custs as pc_control_custs,
+stg.nu_not_mailed as nu_not_mailed,
+stg.nu_output as nu_output,
+stg.fl_run_query as fl_run_query,
+stg.da_status as da_status,
+stg.ti_status as ti_status,
+stg.tx_status as tx_status,
+stg.na_job as na_job,
+stg.id_chain as id_chain,
+stg.cd_group as cd_group,
+stg.id_user_created as id_user_created,
+stg.cd_cell as cd_cell,
+stg.id_control_cell as id_control_cell,
+stg.id_offer_list as id_offer_list,
+stg.da_promo_start as da_promo_start,
+stg.da_promo_expire as da_promo_expire,
+stg.tx_creative_type as tx_creative_type,
+stg.am_ad_unit_cost as am_ad_unit_cost,
+stg.id_flowchart as id_flowchart,
+stg.extract_ts as extract_ts
+from
+(Select lbca.*,
+row_number() over(partition by lbca.id_dir_mkt_cell order by lbca.extract_ts desc) as row_num
+from
+(select
+cast(trim(c.id_dir_mkt_cell) as int64) as id_dir_mkt_cell
+,trim(c.tx_cell_desc_short) as tx_cell_desc_short
+,case when trim(c.da_rcd_created)='' then null
+ else parse_date("%Y-%m-%d",TRIM(c.da_rcd_created)) end as da_rcd_created
+,case when trim(c.da_rcd_updated)='' then null
+ else parse_date("%Y-%m-%d",TRIM(c.da_rcd_updated)) end as da_rcd_updated
+,case when trim(c.fl_qry_updated)='' then null
+else cast(trim(c.fl_qry_updated) as int64) end as fl_qry_updated
+,trim(c.in_cell_type) as in_cell_type
+,trim(c.in_control_type) as in_control_type
+,trim(c.tx_cell_desc_lon) as tx_cell_desc_long
+,cast(trim(c.id_mailing) as int64) as id_mailing
+,case when trim(c.nu_versions)='' then null
+else cast(trim(c.nu_versions) as int64) end as nu_versions
+,case when trim(c.id_qry)='' then null
+else cast(trim(c.id_qry) as int64) end as id_qry
+,case when trim(c.nu_priority)='' then null
+else cast(trim(c.nu_priority) as int64) end as nu_priority
+,case when trim(c.nu_raw_custs)='' then null
+else cast(trim(c.nu_raw_custs) as int64) end as nu_raw_custs
+,case when trim(c.nu_selected_custs)='' then null
+else cast(trim(c.nu_selected_custs) as int64) end as nu_selected_custs
+,case when trim(c.nu_deduped_custs)='' then null
+else cast(trim(c.nu_deduped_custs) as int64) end as nu_deduped_custs
+,case when trim(c.nu_control_custs)='' then null
+else cast(trim(c.nu_control_custs) as int64) end as nu_control_custs
+,case when trim(c.pc_control_custs)='' then null
+else cast(trim(c.pc_control_custs) as int64) end as pc_control_custs
+,case when trim(c.nu_not_mailed)='' then null
+else cast(trim(c.nu_not_mailed) as int64) end as nu_not_mailed
+,case when trim(c.nu_output)='' then null
+else cast(trim(c.nu_output) as int64) end as nu_output
+,case when trim(c.fl_run_query)='' then null
+else cast(trim(c.fl_run_query) as int64) end as fl_run_query
+,case when trim(c.da_status)='' then null
+else parse_date("%y/%m/%d",TRIM(c.da_status)) end as da_status
+,case when trim(c.ti_status)='' then null
+else cast(trim(c.ti_status) as numeric) end as ti_status
+,trim(c.tx_status) as tx_status
+,trim(c.na_job) as na_job
+,case when trim(c.id_chain)='' then null
+else cast(trim(c.id_chain) as int64) end as id_chain
+,trim(c.cd_group) as cd_group
+,trim(c.id_user_created) as id_user_created
+,trim(c.cd_cell) as cd_cell
+,case when trim(c.id_control_cell)='' then null
+else cast(trim(c.id_control_cell) as int64) end as id_control_cell
+,case when trim(c.id_offer_list)='' then null
+else cast(trim(c.id_offer_list) as int64) end as id_offer_list
+,case when trim(c.da_promo_start)='' then null
+ else parse_date("%Y-%m-%d",TRIM(c.da_promo_start)) end as da_promo_start
+,case when trim(c.da_promo_expire)='' then null
+ else parse_date("%Y-%m-%d",TRIM(c.da_promo_expire)) end as da_promo_expire
+,trim(c.tx_creative_type) as tx_creative_type
+,case when trim(c.am_ad_unit_cost)='' then null
+else cast(trim(c.am_ad_unit_cost) as numeric) end as am_ad_unit_cost
+,case when trim(c.id_flowchart)='' then null
+ else cast(trim(c.id_flowchart) as int64) end as id_flowchart
+,case when TRIM(extract_ts)='' then null 
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci024_dir_mkt_cl c
+)lbca
+)stg
+where stg.row_num=1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci024_dir_mkt_cl_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci024_dir_mkt_cl c
+left join edl_stage.plus_vmci024_dir_mkt_cl_new w
+    on w.id_dir_mkt_cell=c.id_dir_mkt_cell
+    where w.id_dir_mkt_cell is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci024_dir_mkt_cl edl_archive.plus_vmci024_dir_mkt_cl
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci024_dir_mkt_cl_new edl_stage.plus_vmci024_dir_mkt_cl
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci024_dir_mkt_cl_new
+rc_check $? "drop the temp table"
+
+# This function archives your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci024_dir_mkt_cl*.txt.gz"
+

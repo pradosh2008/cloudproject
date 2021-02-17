@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_direct_marketing_cell AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_direct_marketing_cell WHERE 1 =2
+
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_mailing AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_mailing WHERE 1 =2
+
+CREATE OR REPLACE TABLE p-ascn-da-aadp-001.analytic_mart.plus_brand_customer_clcst_gp AS SELECT * FROM p-asna-analytics-002.analytic_mart.plus_brand_customer_clcst_gp WHERE 1 =2
+
+!
+
+

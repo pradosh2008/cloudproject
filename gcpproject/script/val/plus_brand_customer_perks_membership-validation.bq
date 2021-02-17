@@ -1,0 +1,54 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+select 
+brand_customer_key,
+club_memb_id,
+club_cd,
+count(1)
+from 
+analytic_mart.plus_brand_customer_perks_membership
+group by 1,2,3 having count(1)>1 )'
+
+run_validation "$sql" "Unique key  Check"
+
+
+#Orphan brand customer key check 
+sql='select  count(pm.brand_customer_key) from
+analytic_mart.plus_brand_customer_perks_membership  PM  LEFT  JOIN
+`p-ascn-da-aadp-001.analytic_mart.dim_brand_customer`  CUST
+ON PM.BRAND_CUSTOMER_KEY=CUST.BRAND_CUSTOMER_KEY 
+WHERE  CUST.BRAND_CUSTOMER_KEY IS NULL'
+
+run_validation "$sql" "Orphan brand customer key check"
+
+#Null Check
+sql='SELECT COUNT(*) AS cnt 
+FROM analytic_mart.plus_brand_customer_perks_membership
+WHERE club_memb_id is NULL or brand_customer_key IS NULL OR club_cd IS NULL'
+
+run_validation "$sql" "Null check"
+
+
+#Completeness Check
+sql='select count(1) 
+FROM edl_stage.plus_vmci079_club_memb_curr c
+        INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc 
+             on c.id_Cust=cc.id_cust
+          and c.id_chain=cc.id_chain
+INNER JOIN edl_stage.plus_vmci019_customer_curr cust  
+     ON c.ID_CUST = cust.ID_CUST 
+            AND c.id_chain IN (4,7)
+LEFT JOIN analytic_mart.plus_brand_customer_perks_membership pm
+on c.id_Cust=pm.brand_Customer_id
+and c.id_club_memb=pm.club_memb_id
+and c.cd_club=pm.club_cd
+where pm.brand_Customer_id is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+
+

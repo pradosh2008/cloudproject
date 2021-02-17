@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --field_delimiter="\t"  --skip_leading_rows=1 --quote='' --schema=${schema_path}/edl_landing/ann_atg_transactions.json edl_landing.ann_ann_atg_transactions  "gs://${default_bucket}/pre/atg/ANN_ATG_TRANSACTIONS*.txt"
+rc_check $? "Load edl_landing"
+
+
+
+echo "pre_atg_order_header.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_commerceitem.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_commerceitemadjustments.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_commerceitemcoupons.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_shipment.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_payment.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_shipment_tracking.bq" >/${env_data_root}/ctl/${RANDOM}-`date +%m%d%H%M%S`.ctl
+
+# Following function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/pre/atg/ANN_ATG_TRANSACTIONS_*.txt"

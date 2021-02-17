@@ -1,0 +1,6 @@
+#model_score.bq >~/log/model_score.out 2>&1
+promo_cust_reference.bq >~/log/promo_cust_reference.out 2>&1
+promo_offer_linkage.bq >~/log/promo_offer_linkage.out 2>&1
+fact_transaction.bq >~/log/fact_transaction.out 2>&1
+fact_transaction_detail.bq >~/log/fact_transaction_detail.out 2>&1
+fact_transaction_discount.bq >~/log/fact_transaction_discount.out 2>&1

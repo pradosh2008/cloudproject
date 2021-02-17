@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|"  --quote="" \
+        --schema=${schema_path}/edl_landing/lb_item_sku.json \
+        edl_landing.lb_item_sku  \
+        "gs://${default_bucket}/plus/item/LB_PRODUCT_*.txt"
+rc_check $? "Load edl_landing for LB complete"
+
+
+#loading the temporary table in staging
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_item_sku_new --use_legacy_sql=false <<!
+SELECT
+      CAST(TRIM(l.sku_id) AS INT64) AS sku_id
+    , CAST(TRIM(l.chain_id) AS INT64) AS chain_id
+    , CAST(TRIM(l.division_id) AS INT64) AS division_id
+    , CAST(TRIM(l.style_id) AS INT64) AS style_id
+    , CAST(TRIM(l.dept_id) AS INT64) AS dept_id
+    , CAST(TRIM(l.class_id) AS INT64) AS class_id
+    , CAST(TRIM(l.subclass_id) AS INT64) AS subclass_id
+    , CAST(TRIM(l.group_no) AS INT64) AS group_no
+    , l.item_status
+    , l.standard_uom
+    , CAST(TRIM(l.regular_unit_retail) AS NUMERIC) AS regular_unit_retail
+    , CAST(TRIM(l.selling_unit_retail) AS NUMERIC) AS selling_unit_retail
+    , l.item_diff_color
+    , l.item_diff_size
+    , l.inventory_ind
+    , l.merchandise_ind
+    , l.orderable_ind
+    , l.sellable_ind
+    , l.ship_alone_ind
+    , l.item_desc
+    , l.short_desc
+    , parse_timestamp("%Y-%m-%d %H:%M:%S.0",l.create_datetime,"America/New_York") as create_datetime
+    , parse_timestamp("%Y-%m-%d %H:%M:%S.0",l.last_updt_ts,"America/New_York")  as last_updt_ts
+    , CAST(TRIM(l.season_id) AS INT64) AS season_id
+    , l.season_desc
+    , CAST(TRIM(l.vendor_id) AS INT64) AS vendor_id
+    , l.vendor_name
+    , l.vendor_product_id
+    , CAST(TRIM(l.unit_cost) AS NUMERIC) AS unit_cost
+    , l.origin_country_id
+    , l.style_desc
+    , l.diff_color_desc
+    , l.diff_size_desc
+    , l.subclass_name
+    , l.class_name
+    , l.dept_name
+    , l.group_name
+    , l.division_name
+    , l.record_status
+    , l.ecom_exclusives
+    , case when TRIM(l.planned_md_date)='' then null
+        else parse_date("%d-%b-%y",TRIM(l.planned_md_date)) end as planned_md_date
+    , CAST(TRIM(l.batch_id) AS INT64) AS batch_id
+from edl_landing.lb_item_sku l where l.sku_id IS NOT NULL
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_item_sku_new --use_legacy_sql=false <<!
+SELECT c.*
+FROM edl_stage.plus_item_sku c
+WHERE c.batch_id NOT IN (
+  SELECT
+    w.batch_id
+  FROM
+    edl_stage.lbca_item_sku_new w
+    group by w.batch_id
+)
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_item_sku edl_archive.plus_item_sku
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_item_sku_new edl_stage.plus_item_sku
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_item_sku_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/item/LB_PRODUCT_*.txt"

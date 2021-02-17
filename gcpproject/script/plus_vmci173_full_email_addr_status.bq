@@ -1,0 +1,73 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_vmci173_full_email_addr_status.json \
+        edl_landing.lbca_vmci173_full_email_addr_status  \
+        "gs://${default_bucket}/plus/crm/vmci173_full_email_addr_status*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging (it has both new and updated records)
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci173_full_email_addr_status_new --use_legacy_sql=false <<!
+#select 
+# stg.da_first_hard_bb
+#,stg.da_first_soft_bb
+#,stg.da_last_bb
+#,stg.da_last_hard_bb
+#,stg.da_last_soft_bb
+#,stg.fl_email_bb_valid
+#,stg.fl_hard_bb_valid
+#,stg.fl_soft_bb_valid
+#,stg.id_email 
+#,stg.nu_bb_hard
+#,stg.nu_bb_soft 
+#,stg.extract_ts
+#from
+#(SELECT lbca.*
+#,ROW_NUMBER() OVER (partition by lbca.id_email order by lbca.extract_ts desc) as row_num
+#from
+#(
+SELECT
+ case when TRIM(da_first_hard_bb)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(da_first_hard_bb)) end as da_first_hard_bb
+,case when TRIM(da_first_soft_bb)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(da_first_soft_bb)) end as da_first_soft_bb
+,case when TRIM(da_last_bb)='' then null else PARSE_DATE("%y/%m/%d",TRIM(da_last_bb)) end as da_last_bb
+,case when TRIM(da_last_hard_bb)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(da_last_hard_bb)) end as da_last_hard_bb
+,case when TRIM(da_last_soft_bb)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(da_last_soft_bb)) end as da_last_soft_bb
+,TRIM(fl_email_bb_valid) AS fl_email_bb_valid
+,TRIM(fl_hard_bb_valid) AS fl_hard_bb_valid
+,TRIM(fl_soft_bb_valid) AS fl_soft_bb_valid
+,CAST(TRIM(id_email) AS INT64) AS id_email
+,CAST(TRIM(nu_bb_hard) AS INT64) AS nu_bb_hard
+,CAST(TRIM(nu_bb_soft) AS INT64) AS nu_bb_soft
+,case when TRIM(extract_ts)='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci173_full_email_addr_status
+#) lbca
+#) stg
+#where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci173_full_email_addr_status_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci173_full_email_addr_status c
+left join edl_stage.plus_vmci173_full_email_addr_status_new w
+    on  w.id_email=c.id_email
+    and EXTRACT(date from w.extract_ts)=EXTRACT(date from c.extract_ts)
+    where w.id_email is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci173_full_email_addr_status edl_archive.plus_vmci173_full_email_addr_status
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci173_full_email_addr_status_new edl_stage.plus_vmci173_full_email_addr_status
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci173_full_email_addr_status_new
+rc_check $? "drop the temp table"
+
+# Following function is only stubbed in it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci173_full_email_addr_status*.txt.gz"

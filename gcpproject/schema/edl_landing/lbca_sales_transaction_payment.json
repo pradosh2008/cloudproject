@@ -1,0 +1,82 @@
+[
+	{
+		"name": "selling_chain_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "selling_store_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "register_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "transaction_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "transaction_dt",
+		"type": "STRING"
+	},
+	{
+		"name": "payment_seq_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "record_seq_nbr",
+		"type": "STRING"
+	},
+	{
+		"name": "line_object_type_cd",
+		"type": "STRING"
+	},
+	{
+		"name": "line_object_cd",
+		"type": "STRING"
+	},
+	{
+		"name": "line_action_cd",
+		"type": "STRING"
+	},
+	{
+        	"name": "note_type_cd",
+        	"type": "STRING"
+	},
+	{
+		"name": "transaction_type_cd",
+		"type": "STRING"
+	},
+	{
+  	       "name": "register_type_cd",
+               "type": "STRING"
+	},
+	{
+               "name": "employee_nbr",
+               "type": "STRING"
+	},
+	{
+        	"name": "payment_type_cd",
+        	"type": "STRING"
+    	},
+    	{
+        	"name": "payment_reference_nbr",
+        	"type": "STRING"
+    	},
+    	{
+        	"name": "payment_amt",
+        	"type": "STRING"
+    	},
+    	{
+        	"name": "last_update_ts",
+        	"type": "STRING"
+    	},
+	{
+		"name": "payment_reference_nbr_crm",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+]

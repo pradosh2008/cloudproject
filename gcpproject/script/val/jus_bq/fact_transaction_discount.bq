@@ -1,0 +1,42 @@
+bq query --allow_large_results --append_table --max_rows 1 --destination_table jus_stage.fact_transaction_discount --use_legacy_sql=false <<!
+SELECT t.TRANSACTION_KEY
+    ,t.brand_customer_key
+    ,t.store_key
+    ,t.brand_customer_email_key
+    ,td.item_key
+    ,tds.line_num
+    ,t.TRANSACTION_DT
+    ,t.ORDER_DT
+    ,tds.OFFER_KEY
+    ,tds.OFFER_TYPE_CD
+    ,tds.DISCOUNT_AMT
+    ,tds.COUPON_CNT
+    ,tds.SALE_RETURN_CD
+    ,tds.COUPON_NUM
+FROM (select transaction_id
+            ,line_num
+            ,OFFER_KEY
+            ,OFFER_TYPE_CD
+            ,DISCOUNT_AMT
+            ,COUPON_CNT
+            ,SALE_RETURN_CD
+            ,COUPON_NUM
+            ,row_number() over (partition by transaction_id
+                                        ,line_num
+                                        ,OFFER_KEY
+                                order by batch_id desc
+                            ) rank_num
+    from jus_stage.work_transaction_discount 
+) tds
+join jus_stage.work_transaction_detail td
+    on td.transaction_id  = tds.transaction_id
+    and td.line_num = tds.line_num
+join jus_stage.fact_transaction t
+    on t.transaction_id  = td.transaction_id
+left join jus_stage.fact_transaction_discount tgt
+    on tgt.transaction_key  = t.transaction_key
+    and tgt.line_num = tds.line_num
+    and tgt.OFFER_KEY = tds.OFFER_KEY
+where tgt.transaction_key  is null
+and tds.rank_num = 1
+!

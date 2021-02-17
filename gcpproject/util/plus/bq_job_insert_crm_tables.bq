@@ -1,0 +1,16 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+INSERT edl_stage.bq_job_defn (job_def_id, brand_cd, bq_name, table_name, job_type, load_type) VALUES
+( 'M219','PLUS', 'plus_brand_customer.bq', 'plus_brand_customer', 'Mart', 'Daily' ), 
+( 'M220','PLUS', 'plus_brand_customer_account.bq', 'plus_brand_customer_account', 'Mart', 'Daily' ), 
+( 'M221','PLUS', 'plus_brand_customer_demographics.bq', 'plus_brand_customer_demographics', 'Mart', 'Daily' ), 
+( 'M222','PLUS', 'plus_brand_customer_email.bq', 'plus_brand_customer_email', 'Mart', 'Daily' ), 
+( 'M223','PLUS', 'plus_brand_customer_email_outbound.bq', 'plus_brand_customer_email_outbound', 'Mart', 'Daily' ), 
+( 'M224','PLUS', 'plus_brand_customer_opt_in_out.bq', 'plus_brand_customer_opt_in_out', 'Mart', 'Daily' ), 
+( 'M225','PLUS', 'plus_brand_customer_perks_membership.bq', 'plus_brand_customer_perks_membership', 'Mart', 'Daily' ), 
+( 'M226','PLUS', 'plus_brand_customer_phone.bq', 'plus_brand_customer_phone', 'Mart', 'Daily' );
+!

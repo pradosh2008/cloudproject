@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_commerceitemadjustments_curr
+as
+  SELECT
+  orderid
+  , commerceitemid
+  , catalogrefid
+  , adjustmentdescription
+  , totaladjustment
+  , quantityadjusted
+  , batch_id
+  , lastmodifieddate
+  FROM(select *, dense_rank() over (PARTITION BY orderid, commerceitemid, catalogrefid, adjustmentdescription,cast(totaladjustment as string), quantityadjusted order by batch_id desc, lastmodifieddate desc) rn
+  from  \`${project}.edl_stage.pre_atg_order_commerceitemadjustments\`
+  ) where rn = 1
+!

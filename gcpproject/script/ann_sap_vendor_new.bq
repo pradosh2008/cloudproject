@@ -1,0 +1,53 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Creating table in landing dataset
+bq load --replace=true --source_format=CSV --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/ann_sap_vendor.json \
+        edl_landing.ann_sap_vendor \
+        "gs://${default_bucket}/pre/sapwm/ANN_SAP_VENDOR_*.dat"
+rc_check $? "Load edl_landing"
+
+#Loading edl_stage table from edl_landing dataset
+#Loading all batch_ids from GCP Bucket
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sap_vendor_new --use_legacy_sql=false <<!
+SELECT
+ #parse_DATE("%Y%m%d",date_time) as date_time,
+  parse_DATETIME("%Y%m%d %H%M%S",date_time) as date_time,
+  vendor_number,
+  vendor_name,
+  batch_id
+FROM
+(select c.*
+        ,max(c.batch_id) over (partition by c.vendor_number) as max_batch_id
+    from edl_landing.ann_sap_vendor c
+) curr
+where curr.max_batch_id = curr.batch_id
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+##MERGE or UPSERT new edl_stage table from existing table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_sap_vendor_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_sap_vendor_new c
+left join edl_landing.ann_sap_vendor w
+    on  w.vendor_number = c.vendor_number
+where w.vendor_number is null
+!
+rc_check $? "append legacy records into the temp table"
+
+
+##cleansing and archival
+bq cp --force edl_stage.pre_sap_vendor edl_archive.pre_sap_vendor
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_sap_vendor_new edl_stage.pre_sap_vendor
+rc_check $? "replace the staging table with the new table"
+bq rm --force edl_stage.pre_sap_vendor_new
+rc_check $? "drop the deduped temp table"
+
+# Following function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/pre/sapwm/ANN_SAP_VENDOR_*.dat"
+
+

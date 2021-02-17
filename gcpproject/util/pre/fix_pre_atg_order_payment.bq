@@ -1,0 +1,93 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --use_legacy_sql=false \
+          --destination_table=edl_stage.pre_atg_order_payment_fix <<!
+
+select orderid
+    ,timestamp_add(lastmodifieddate, interval -1 hour)  as lastmodifieddate
+    ,paymentgroupid
+    ,paymentmethod
+    ,encryptedcreditcardnumber
+    ,creditcardtype
+    ,digitalwalletid
+    ,digitalwallettype
+    ,creditcardbillingaddressprefix
+    ,creditcardbillingaddressfirstname
+    ,creditcardbillingaddressmiddlename
+    ,creditcardbillingaddresslastname
+    ,creditcardbillingaddresssuffix
+    ,creditcardbillingaddresscompanyname
+    ,creditcardbillingaddressjobtitle
+    ,creditcardbillingaddresspobox
+    ,creditcardbillingaddressaddress1
+    ,creditcardbillingaddressaddress2
+    ,creditcardbillingaddressaddress3
+    ,creditcardbillingaddresscity
+    ,creditcardbillingaddresscountry
+    ,creditcardbillingaddresspostalcode
+    ,creditcardbillingaddressemail
+    ,creditcardbillingaddressphonenumber
+    ,creditcardbillingaddressstateaddress
+    ,creditcardbillingaddresscounty
+    ,creditcardbillingaddressfaxnumber
+    ,creditcardnumber
+    ,expirationmonth
+    ,expirationdayofmonth
+    ,expirationyear
+    ,amountcredited
+    ,paymentgroupamount
+    ,timestamp_add(paymentgroupsubmitteddate, interval -1 hour) as paymentgroupsubmitteddate
+    ,paymentgroupcurrencycode
+    ,paymentgroupstate
+    ,paymentgroupclasstype
+    ,amountauthorized
+    ,amountdebited
+    ,paymentgroupstatedetail
+    ,paymentgroupspecialinstructions
+    ,authorizationstatus
+    ,debitstatus
+    ,creditstatus
+    ,preauthcompletecalls
+    ,tendertype
+    ,tendersubtype
+    ,payerid
+    ,paypaltransactionid
+    ,paypalbillingaddressprefix
+    ,paypalbillingaddressfirstname
+    ,paypalbillingaddressmiddlename
+    ,paypalbillingaddresslastname
+    ,paypalbillingaddresssuffix
+    ,paypalbillingaddresscompanyname
+    ,paypalbillingaddressjobtitle
+    ,paypalbillingaddresspobox
+    ,paypalbillingaddressaddress1
+    ,paypalbillingaddressaddress2
+    ,paypalbillingaddressaddress3
+    ,paypalbillingaddresscity
+    ,paypalbillingaddresscountry
+    ,paypalbillingaddresspostalcode
+    ,paypalbillingaddressemail
+    ,paypalbillingaddressphonenumber
+    ,paypalbillingaddressstateaddress
+    ,paypalbillingaddresscounty
+    ,paypalbillingaddressfaxnumber
+    ,giftcardtransactionid
+    ,giftcertificateprofileid
+    ,storecreditprofileid
+    ,storecreditnumber
+    ,payorderrelpaymentgroupid
+    ,orderref
+    ,relationshippayorderrelamount
+    ,batch_id
+from edl_stage.pre_atg_order_payment
+!
+rc_check $? "build fix"
+
+bq cp --force edl_stage.pre_atg_order_payment edl_archive.pre_atg_order_payment
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_payment_fix edl_stage.pre_atg_order_payment
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_payment_fix
+rc_check $? "drop the temp table"
+

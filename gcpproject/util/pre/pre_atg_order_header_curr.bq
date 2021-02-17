@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_header_curr
+as
+  select
+  orderid
+          ,profileid
+          ,orderstate
+          ,createdbyorder
+          ,originoforder
+          ,createddate
+          ,submitteddate
+          ,lastmodifieddate
+          ,completeddate
+          ,agentid
+          ,saleschannel
+          ,siteid
+          ,isassociateuser
+          ,associatenumber
+          ,ipaddress
+          ,couponcode
+          ,useremailaddress
+          ,international
+          ,storeassoclogin
+          ,storeassocstoreid
+          ,storeassocreason
+          ,itempriceoverridden
+          ,shippriceoverridden
+          ,priceinfotype
+          ,rawsubtotal
+          ,orderpriceinfotax
+          ,shipping
+          ,priceinfocurrencycode
+          ,priceinfoamount
+          ,priceinfodiscounted
+          ,priceinfoamountisfinal
+          ,priceinfofullprice
+          ,priceinfononfullprice
+          ,partnerid
+          ,loyaltyid
+          ,mask_identifier
+          ,batch_id
+  from
+  (select *
+  ,dense_rank() over (PARTITION BY orderid order by batch_id desc,lastmodifieddate desc) rn
+  from \`${project}.edl_stage.pre_atg_order_header\`
+  ) where rn = 1
+!

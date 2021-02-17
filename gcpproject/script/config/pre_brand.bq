@@ -1,0 +1,31 @@
+bq query --project_id='p-asna-analytics-002' --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_brand --use_legacy_sql=false <<!
+select 
+	63 as chain_id
+	,'ATS' as brand_cd
+	, 'A' as brand_short_cd
+	, 'Ann Taylor Stores' as brand_nm
+union distinct
+select 
+	64 as chain_id
+	,'LOS' as brand_cd
+	, 'O' as brand_short_cd
+	, 'Loft Stores' as brand_nm
+union distinct
+select 
+	65 as chain_id
+	,'LOFT' as brand_cd
+	, 'L' as brand_short_cd
+	, 'LOFT.com' as brand_nm
+union distinct
+select 
+	66 as chain_id
+	,'ATF' as brand_cd
+	, 'F' as brand_short_cd
+	, 'Ann Taylor Factory' as brand_nm
+union distinct
+select 
+	0 as chain_id
+	,'ENT' as brand_cd
+	, '0' as brand_short_cd
+	, 'Ascena Enterprise' as brand_nm
+!

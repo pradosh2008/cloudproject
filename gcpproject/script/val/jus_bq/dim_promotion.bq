@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_promotion_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_promotion c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_promotion_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_promotion c
+left join jus_stage.work_dim_promotion w
+    on  w.promotion_key = c.promotion_key
+where w.promotion_key is null
+!
+bq cp --force jus_stage.dim_promotion edl_archive.dim_promotion
+bq cp --force jus_stage.dim_promotion_new jus_stage.dim_promotion
+bq rm --force jus_stage.dim_promotion_new

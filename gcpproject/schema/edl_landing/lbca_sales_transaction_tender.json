@@ -1,0 +1,118 @@
+[
+	{
+		"name": "tender_seq_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "tender_amt",
+		"type": "Numeric"
+	},
+	{
+		"name": "tender_cd",
+		"type": "string"
+	},
+	{
+		"name": "tender_reference_nbr",
+		"type": "string"
+	},
+	{
+		"name": "tender_void_ind",
+		"type": "string"
+	},
+	{
+		"name": "paypal_order_nbr",
+		"type": "string"
+	},
+	{
+		"name": "tender_salesperson_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "authorization_nbr",
+		"type": "string"
+	},
+	{
+		"name": "authorize_key_flg",
+		"type": "string"
+	},
+	{
+		"name": "selling_chain_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "selling_store_nbr",
+		"type": "string"
+	},
+	{
+		"name": "transaction_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "transaction_dt",
+		"type": "string"
+	},
+	{
+		"name": "register_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "open_charge_ind",
+		"type": "string"
+	},
+	{
+		"name": "charge_application_status_cd",
+		"type": "string"
+	},
+	{
+		"name": "scanned_ind",
+		"type": "string"
+	},
+	{
+		"name": "state_cd",
+		"type": "string"
+	},
+	{
+		"name": "line_object_type_cd",
+		"type": "string"
+	},
+	{
+		"name": "line_object_cd",
+		"type": "string"
+	},
+	{
+		"name": "line_action_cd",
+		"type": "string"
+	},
+	{
+		"name": "tender_primary_group_cd",
+		"type": "integer"
+	},
+	{
+		"name": "gift_card_type",
+		"type": "string"
+	},
+	{
+		"name": "gift_card_type_cd",
+		"type": "string"
+	},
+	{
+		"name": "create_dt",
+		"type": "string"
+	},
+	{
+		"name": "last_update_ts",
+		"type": "string"
+	},
+	{
+		"name": "record_seq_nbr",
+		"type": "integer"
+	},
+	{
+		"name": "tender_reference_nbr_crm",
+		"type": "Numeric"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+]

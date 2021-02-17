@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=CSV --field_delimiter="|" --quote='' --schema=${schema_path}/edl_landing/ann_aw_transactions_discountdtl.json edl_landing.ann_aw_transactions_discountdtl  "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL*"
+rc_check $? "Load edl_landing"
+
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.ann_aw_transactions_discountdtl_new --use_legacy_sql=false <<!
+SELECT if_entry_no
+,interface_control_flag
+,record_type
+,line_id
+,applied_by_line_id
+,pos_discount_level
+,pos_discount_type
+,cast(pos_discount_amount/100 as numeric) pos_discount_amount
+,applied_flag
+,pos_discount_serial_no
+,batch_id
+ from (select c.*
+        ,max(c.batch_id) over (partition by c.if_entry_no) as max_batch_id
+    from edl_landing.ann_aw_transactions_discountdtl c
+) curr
+where curr.max_batch_id = curr.batch_id 
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_aw_transactions_discountdtl_new --use_legacy_sql=false <<!
+select c.if_entry_no
+,c.interface_control_flag
+,c.record_type
+,c.line_id
+,c.applied_by_line_id
+,c.pos_discount_level
+,c.pos_discount_type
+,cast(c.pos_discount_amount as numeric) pos_discount_amount
+,c.applied_flag
+,c.pos_discount_serial_no
+,c.batch_id
+from edl_stage.pre_aw_transaction_discount_detail c
+left join edl_stage.ann_aw_transactions_discountdtl_new w
+    ON  w.if_entry_no = c.if_entry_no
+    AND w.line_id = c.line_id AND w.applied_by_line_id = c.applied_by_line_id
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_aw_transaction_discount_detail edl_archive.pre_aw_transaction_discount_detail
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_aw_transactions_discountdtl_new edl_stage.pre_aw_transaction_discount_detail
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_aw_transactions_discountdtl_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL*"

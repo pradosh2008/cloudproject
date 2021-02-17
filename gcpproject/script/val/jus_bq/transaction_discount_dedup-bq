@@ -1,0 +1,28 @@
+#!/usr/bin/sh
+bq query --allow_large_results --append_table --destination_table jus_stage.fact_transaction_discount_fix --use_legacy_sql=false <<!
+SELECT TRANSACTION_KEY
+    ,t.brand_customer_key
+    ,t.store_key
+    ,t.brand_customer_email_key
+    ,t.item_key
+    ,t.line_num
+    ,t.TRANSACTION_DT
+    ,t.ORDER_DT
+    ,t.OFFER_KEY
+    ,t.OFFER_TYPE_CD
+    ,t.DISCOUNT_AMT
+    ,t.COUPON_CNT
+    ,t.SALE_RETURN_CD
+    ,t.COUPON_NUM
+from (select row_number() over (partition by d.transaction_key
+                                , d.line_num 
+				, d.offer_key
+                  ) as row_num
+	,d.*
+from jus_stage.fact_transaction_discount d
+) t
+where t.row_num = 1
+!
+bq cp jus_stage.fact_transaction_discount jus_stage.fact_transaction_discount_bad
+bq cp jus_stage.fact_transaction_discount_fix jus_stage.fact_transaction_discount
+

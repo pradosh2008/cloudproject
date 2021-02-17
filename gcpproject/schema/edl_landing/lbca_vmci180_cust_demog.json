@@ -1,0 +1,566 @@
+[
+	{
+		"name": "ID_CUST",
+		"type": "string"
+	},
+	{
+		"name": "DA_TMCI180_ADDED",
+		"type": "string"
+	},
+	{
+		"name": "DA_TMCI180_UPDATE",
+		"type": "string"
+	},
+	{
+		"name": "FL_MERGED",
+		"type": "string"
+	},
+	{
+		"name": "DA_MERGED",
+		"type": "string"
+	},
+	{
+		"name": "CD_ETHNIC",
+		"type": "string"
+	},
+	{
+		"name": "CD_RELIGION",
+		"type": "string"
+	},
+	{
+		"name": "CD_ROLLUP",
+		"type": "string"
+	},
+	{
+		"name": "CD_LANGUAGE_PREF",
+		"type": "string"
+	},
+	{
+		"name": "CD_COUNTRY_OF_ORIGIN",
+		"type": "string"
+	},
+	{
+		"name": "CD_INCOME_EST_HH",
+		"type": "string"
+	},
+    {
+        "name": "CD_INC_EST_HH_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE18_24_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE18_24_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN18_24_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE25_34_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE25_34_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN25_34_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE35_44_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE35_44_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN35_44_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE45_54_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE45_54_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN45_54_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE55_64_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE55_64_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN55_64_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE65_74_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE65_74_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN65_74_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE_75PLUS_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE_75PLUS_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN_75PLUS_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "CD_ADULT_AGE_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "CD_1ST_IND_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "FL_CC_GOLD_PREMIUM",
+        "type": "string"
+    },
+    {
+        "name": "FL_CC_REGULAR",
+        "type": "string"
+    },
+    {
+        "name": "CD_1ST_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_2ND_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_3RD_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_4TH_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_5TH_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_IP_INDIVIDUAL_OCCUPATION",
+        "type": "string"
+    },
+    {
+        "name": "CD_IP_INDIVIDUAL_EDUCATION",
+        "type": "string"
+    },
+    {
+        "name": "CD_IP_INDIVIDUAL_RACE",
+        "type": "string"
+    },
+    {
+        "name": "CD_MARITAL_STATUS_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "CD_MARITAL_STATUS_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE00_02_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE00_02_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN00_02_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE03_05_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE03_05_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN03_05_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE06_10_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE06_10_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN06_10_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE11_15_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE11_15_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN11_15_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MALE16_17_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_FEMALE16_17_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "FL_UNKNOWN16_17_IN_HH",
+        "type": "string"
+    },
+    {
+        "name": "CD_NUM_OF_CHILDREN",
+        "type": "string"
+    },
+    {
+        "name": "CD_1ST_INDIVIDUAL_OCCU",
+        "type": "string"
+    },
+    {
+        "name": "NA_FIRST_1ST_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_MIDDLE_1ST_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_GENDER_1ST_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_FIRST_2ND_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_MIDDLE_2ND_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_GENDER_2ND_IND",
+        "type": "string"
+    },
+    {
+        "name": "FL_WORKING_WOMAN",
+        "type": "string"
+    },
+    {
+        "name": "NA_FIRST_3RD_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_MIDDLE_3RD_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_GENDER_3RD_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_FIRST_4TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_MIDDLE_4TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_GENDER_4TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_FIRST_5TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "NA_MIDDLE_5TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_GENDER_5TH_IND",
+        "type": "string"
+    },
+    {
+        "name": "CD_HOME_OWNER_RENTER",
+        "type": "string"
+    },
+    {
+        "name": "CD_HOME_OWN_RENT_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "NU_LENGTH_OF_RESIDENCE",
+        "type": "string"
+    },
+    {
+        "name": "CD_LEN_OF_RESIDENCE_MTCH_LVL",
+        "type": "string"
+    },
+    {
+        "name": "CD_HOME_MARKET_VAL_RANGE",
+        "type": "string"
+    },
+    {
+        "name": "CD_HOME_ASSESSED_VAL_RANGE",
+        "type": "string"
+    },
+    {
+        "name": "CD_HOME_MARKET_VAL_RANGE_PREM",
+        "type": "string"
+    },
+    {
+        "name": "CD_DWELLING_TYPE",
+        "type": "string"
+    },
+    {
+        "name": "CD_PROPERTY_TYPE",
+        "type": "string"
+    },
+    {
+        "name": "TX_APT_NUM",
+        "type": "string"
+    },
+    {
+        "name": "FL_WOMAN_PLUS_SIZES",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_ACCESSORIES",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_ACTIVEWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_BUSINESS",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_CASUAL",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_EVENINGWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_FOOTWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_LOUNGEWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_MATERNITY",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_OUTERWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_SWIMWEAR",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_UNDERWEAR_HOSIERY",
+        "type": "string"
+    },
+    {
+        "name": "FL_WPS_UNIFORMS",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_FEMALE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_JEWLERY",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_MALE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_PLUS_WOMEN",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_TEEN",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_APPAREL_UNKNOWN",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_ART_ANTIQUE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_ARTS_CREAFTS",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_ART_SUPPLIES",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_BEAUTY",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_BOOKS",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_CHILD_MDSE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_COLLECTABLE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_COMPUTER_SOFTWARE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_ELECTRONICS",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_EQUESTRIAN",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_FOOD",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_GENERAL_GIFTS_MDSE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_GIFT",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_HEALTH",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_HOME_FURNISH_DECOR",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_HIGH_TICKET_MDSE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_LOW_TICKET_MDSE",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_MUSIC",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_OUTDOOR_GARDENING",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_HUNTING_FISHING",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_PET_SUPPLIES",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_SPORTS_GOLF",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_SPORTS",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_TRAVEL",
+        "type": "string"
+    },
+    {
+        "name": "FL_MOB_VIDEO_DVD",
+        "type": "string"
+    },
+    {
+        "name": "CD_MAIL_ORDER_BUYER",
+        "type": "string"
+    },
+    {
+        "name": "CD_MAIL_ORDER_RESPONDER",
+        "type": "string"
+    },
+    {
+        "name": "FL_ONLINE_PURCHASING",
+        "type": "string"
+    },
+    {
+        "name": "FL_INFOBASE_POSITIVE_MTCH",
+        "type": "string"
+    },
+    {
+        "name": "NU_SOURCES",
+        "type": "string"
+    },
+    {
+        "name": "FL_DMA_MAIL_SUPPRESS",
+        "type": "string"
+    },
+	{
+		"name": "EXTRACT_TS",
+		"type": "string"
+	}
+]

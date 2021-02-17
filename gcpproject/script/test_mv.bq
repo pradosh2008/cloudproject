@@ -1,0 +1,1 @@
+gsutil mv gs://p-asna-datasink-003/work/test_promo.xml gs://p-asna-datasink-003/work/archive/test_promo.xml

@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci015_cust_ccard.json \
+        edl_landing.lbca_vmci015_cust_ccard \
+        "gs://${default_bucket}/plus/crm/vmci015_cust_ccard*.txt.gz"
+rc_check $? "edl_landing Load for vmci015_cust_ccard Complete"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci015_cust_ccard_new --use_legacy_sql=false <<!
+SELECT
+stg.ID_CUST
+,stg.ID_ACCOUNT
+,stg.CD_CCARD_PROCESS_STATUS
+,stg.CD_BANK_CARD_TYPE
+,stg.IN_BANK_CARD_SRCE
+,stg.DA_BANK_CARD_ADDED
+,stg.IN_FB_ACCT_TYPE
+,stg.FL_ACCOUNT_CLOSED
+,stg.FL_ACCOUNT_ACTIVE
+,stg.CD_ACCOUNT_TERM
+,stg.DA_APPLY_HOUSCARD
+,stg.IN_CUST_SOURCE_2ND
+,stg.CD_BNK_CRD_SUBTYPE
+,stg.DA_CARD_ISSUED
+,stg.DA_TMCI015_ROW_UPDATED
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST,lbca.ID_ACCOUNT,lbca.CD_CCARD_PROCESS_STATUS order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+cast(trim(ID_CUST) as int64) ID_CUST
+,trim(ID_ACCOUNT) as ID_ACCOUNT
+,trim(CD_CCARD_PROCESS_STATUS) as CD_CCARD_PROCESS_STATUS
+,trim(CD_BANK_CARD_TYPE) as CD_BANK_CARD_TYPE
+,trim(IN_BANK_CARD_SRCE) as IN_BANK_CARD_SRCE
+,case when TRIM(DA_BANK_CARD_ADDED)='' then null
+        else PARSE_DATE("%Y-%m-%d",TRIM(DA_BANK_CARD_ADDED)) end as DA_BANK_CARD_ADDED
+,trim(IN_FB_ACCT_TYPE) as IN_FB_ACCT_TYPE
+,trim(FL_ACCOUNT_CLOSED) as FL_ACCOUNT_CLOSED
+,trim(FL_ACCOUNT_ACTIVE) as FL_ACCOUNT_ACTIVE
+,trim(CD_ACCOUNT_TERM) as CD_ACCOUNT_TERM
+,case when TRIM(DA_APPLY_HOUSCARD)='' then null
+        else PARSE_DATE("%Y-%m-%d",TRIM(DA_APPLY_HOUSCARD)) end as DA_APPLY_HOUSCARD
+,trim(IN_CUST_SOURCE_2ND) as IN_CUST_SOURCE_2ND
+,trim(CD_BNK_CRD_SUBTYPE) as CD_BNK_CRD_SUBTYPE
+,case when TRIM(DA_CARD_ISSUED)='' then null
+        else PARSE_DATE("%Y-%m-%d",TRIM(DA_CARD_ISSUED)) end as DA_CARD_ISSUED
+,case when TRIM(DA_TMCI015_ROW_UPDATED)='' then null
+        else PARSE_DATE("%Y-%m-%d",TRIM(DA_TMCI015_ROW_UPDATED)) end as DA_TMCI015_ROW_UPDATED
+,case when TRIM(extract_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci015_cust_ccard
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci015_cust_ccard_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci015_cust_ccard c
+left join edl_stage.lbca_vmci015_cust_ccard_new w
+    on w.ID_CUST=c.ID_CUST
+    and w.ID_ACCOUNT=c.ID_ACCOUNT
+    and w.CD_CCARD_PROCESS_STATUS=c.CD_CCARD_PROCESS_STATUS
+    where w.ID_CUST is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci015_cust_ccard edl_archive.plus_vmci015_cust_ccard
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci015_cust_ccard_new edl_stage.plus_vmci015_cust_ccard
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci015_cust_ccard_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci015_cust_ccard*.txt.gz"
+

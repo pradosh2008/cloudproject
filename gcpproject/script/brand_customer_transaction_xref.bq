@@ -1,0 +1,33 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.brand_customer_transaction_xref  'gs://p-asna-datasink-003/brand_customer_transaction_xref/*'
+rc_check $? "Load edl_landing"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.brand_customer_transaction_xref_new --use_legacy_sql=false <<!
+SELECT c.* 
+from edl_landing.brand_customer_transaction_xref c
+!
+rc_check $? "Build new table"
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.brand_customer_transaction_xref_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.brand_customer_transaction_xref c
+left join edl_landing.brand_customer_transaction_xref w
+    on w.transaction_key = c.transaction_key	    
+    and w.brand_customer_transaction_role_cd = c.brand_customer_transaction_role_cd	    
+where w.transaction_key is null
+!
+rc_check $? "Merge new table"
+
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.brand_customer_transaction_xref edl_archive.brand_customer_transaction_xref
+rc_check $? "Archive copy"
+bq cp --force edl_conform.brand_customer_transaction_xref_new edl_conform.brand_customer_transaction_xref
+rc_check $? "Copy new table"
+bq rm --force edl_conform.brand_customer_transaction_xref_new
+rc_check $? "Remove new table"
+

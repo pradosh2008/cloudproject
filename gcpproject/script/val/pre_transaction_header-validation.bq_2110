@@ -1,0 +1,75 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (
+    SELECT transaction_key
+    , COUNT(*)
+    FROM analytic_mart.pre_transaction_header
+    GROUP BY 1
+    HAVING COUNT(*)>1
+    )
+'
+
+run_validation "$sql" "Unique Key Check"
+
+#Historical Completeness CHECK
+
+sql='
+SELECT COUNT(*) cnt
+      FROM edl_stage.pre_hst_transaction_header sh
+      LEFT OUTER JOIN analytic_mart.pre_transaction_header ah ON (ah.transaction_num = sh.txn_nbr)
+      WHERE ah.batch_id = 20160101
+      AND ah.transaction_num IS NULL
+'
+
+run_validation "$sql" "Historical Completeness Check"
+
+#AW Completeness CHECK
+
+sql='
+SELECT COUNT(*) cnt
+      FROM edl_stage.pre_aw_transaction_header sh
+      LEFT OUTER JOIN analytic_mart.pre_transaction_header ah
+      ON (ah.transaction_num = CONCAT(CAST(sh.store_no AS string),":",CAST (sh.register_no AS string),":",CAST(FORMAT_TIMESTAMP("%Y%m%d", sh.entry_date_time) AS STRING),":",cast(sh.transaction_no AS string)))
+      WHERE ah.batch_id > 20160101
+      AND ah.transaction_source_cd = "AW"
+      AND ah.transaction_num IS NULL
+'
+
+run_validation "$sql" "AW Completeness Check"
+
+#ATG Completeness CHECK
+
+sql='
+SELECT COUNT(*) cnt 
+      FROM edl_stage.pre_atg_order_header sh
+      LEFT OUTER JOIN analytic_mart.pre_transaction_header ah
+      ON (ah.transaction_num = sh.orderid)
+      WHERE ah.batch_id > 20160101
+      AND ah.transaction_source_cd = "ATG"
+      AND ah.transaction_num IS NULL 
+'
+
+run_validation "$sql" "ATG Completeness Check"
+
+#ATG RETURNS Completeness CHECK
+
+sql='
+SELECT COUNT(*) cnt
+      FROM edl_stage.pre_atg_order_return sh
+      LEFT OUTER JOIN analytic_mart.pre_transaction_header ah
+      ON (ah.transaction_num = sh.returnid)
+      WHERE ah.batch_id > 20160101
+      AND ah.transaction_source_cd = "ATG"
+      AND ah.transaction_num IS NULL
+'
+
+run_validation "$sql" "ATG RETURNS Completeness CHECK"
+
+exit ${ERROR_CD:-0}

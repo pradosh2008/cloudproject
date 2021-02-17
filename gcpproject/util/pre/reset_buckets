@@ -1,0 +1,113 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/atg/*.txt'
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/aw/*.dat'
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/bi/*.DAT'
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/dom/*.dat'
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/sapd/*.dat'
+archive_bucket_files 'gs://p-ascena-aadp-landing-01/pre/sapwm/*.dat'
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200404 gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200404.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200405.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200405.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200406.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200406.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200407 gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200407.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200408.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200408.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_20200409.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_RETURNS_20200409.txt &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_RETURNS_2020041*.txt' gs://p-ascena-aadp-landing-01/pre/atg/ &
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200404.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200404.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200405.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200405.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200406.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200406.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200407.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200407.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200408.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200408.txt &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_20200409.txt gs://p-ascena-aadp-landing-01/pre/atg/ANN_ATG_TRANSACTIONS_20200409.txt &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/atg/arc/ANN_ATG_TRANSACTIONS_2020041*.txt' gs://p-ascena-aadp-landing-01/pre/atg/ &
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200409.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200407.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200404.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200405.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200406.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200407.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200408.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200409.dat gs://p-ascena-aadp-landing-01/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/aw/ &
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200404.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200404.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200405.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200405.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200406.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200406.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200407.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200407.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200408.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200408.dat &
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200409.dat gs://p-ascena-aadp-landing-01/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200409.dat &
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_2020041*.dat' gs://p-ascena-aadp-landing-01/pre/bi/ &
+wait
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/dom/arc/ANN_DOM_BOPIS_TRANSACTIONS_2020*.dat' gs://p-ascena-aadp-landing-01/pre/dom/ &
+wait
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapd/arc/ANN_SAP_EXCHRATE_202001*_001.dat' gs://p-ascena-aadp-landing-01/pre/sapd &
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapd/arc/ANN_SAP_EXCHRATE_202002*_001.dat' gs://p-ascena-aadp-landing-01/pre/sapd &
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapd/arc/ANN_SAP_EXCHRATE_202003*_001.dat' gs://p-ascena-aadp-landing-01/pre/sapd &
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapd/arc/ANN_SAP_EXCHRATE_202004*_001.dat' gs://p-ascena-aadp-landing-01/pre/sapd &
+
+wait
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapd/arc/ANN_SAP_PROMO_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapd/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_PRODUCT_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_STORE_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_STYLE_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_VENDOR_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+wait

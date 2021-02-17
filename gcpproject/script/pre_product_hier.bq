@@ -1,0 +1,39 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#archival
+bq cp --force analytic_mart.pre_product_hier edl_archive.pre_product_hier
+rc_check $? "archive copy"
+
+#loading the temporary table in staging (it has new records)
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.pre_product_hier --use_legacy_sql=false <<!
+SELECT style_id
+, style_desc
+, color_id
+, color_desc
+, store_set_1
+, store_set_2
+, ecomm_exclusive
+, test_ind
+, fashion_pyramid
+, batch_id
+FROM (
+      SELECT 
+      style_id
+      , style_desc
+      , color_id
+      , color_desc
+      , store_set_1
+      , store_set_2
+      , ecomm_exclusive
+      , test_ind
+      , fashion_pyramid
+      , batch_id
+      , ROW_NUMBER() OVER (PARTITION BY style_id, 
+                                        color_id ORDER BY batch_id DESC) rn
+      FROM edl_stage.pre_acc_df_prod_hier
+) WHERE rn = 1
+!
+rc_check $? "Load full data into pre_product_hier data from edl_stage table"

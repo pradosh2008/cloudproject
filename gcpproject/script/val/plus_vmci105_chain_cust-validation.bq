@@ -1,0 +1,35 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+    ID_CHAIN
+    ,ID_CUST
+    ,EXTRACT_TS
+    from edl_stage.plus_vmci105_chain_cust
+    group by 1,2,3
+    having count(*)>1
+)'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.lbca_vmci105_chain_cust l
+left join edl_stage.plus_vmci105_chain_cust p
+    on CAST(TRIM(l.ID_CHAIN) AS INT64) = p.ID_CHAIN
+    and CAST(TRIM(l.ID_CUST) AS INT64) = p.ID_CUST
+where p.ID_CUST is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

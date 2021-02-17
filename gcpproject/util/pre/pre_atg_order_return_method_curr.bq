@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_return_method_curr
+as
+  SELECT
+  returnid
+  ,orderid
+  ,sumoftotalrefundamount
+  ,method
+  ,batch_id
+  FROM(select *, dense_rank() over (PARTITION BY returnid,method order by batch_id desc) rn
+  from  \`${project}.edl_stage.pre_atg_order_return_method\`
+  ) where rn = 1
+!

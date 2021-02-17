@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+        r.returnid
+        , r.commerceitemid
+        , r.batch_id
+        ,count(*)
+    from edl_stage.pre_atg_order_return_commerceitem r
+     
+        group by 1,2,3 
+    having count(*) >1
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT 
+    count(*) cnt
+from edl_landing.ann_ann_atg_returns l
+left join  edl_stage.pre_atg_order_return_commerceitem s 
+    ON l.returnid = s.returnid
+    and l.commerceitemid = s.commerceitemid
+    and l.batch_id = s.batch_id
+where l.orderid is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

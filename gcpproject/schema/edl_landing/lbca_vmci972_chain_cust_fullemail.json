@@ -1,0 +1,42 @@
+[
+	{
+		"name": "ID_CHAIN",
+		"type": "string"
+	},
+	{
+		"name": "ID_CUST",
+		"type": "string"
+	},
+	{
+		"name": "ID_EMAIL",
+		"type": "string"
+	},
+	{
+		"name": "ID_DOMAIN",
+		"type": "string"
+	},
+	{
+		"name": "CD_EMAIL_STYLE",
+		"type": "string"
+	},
+	{
+		"name": "DA_EMAIL_CREATED",
+		"type": "string"
+	},
+	{
+		"name": "FL_PRIMARY_EMAIL",
+		"type": "string"
+	},
+	{
+		"name": "DA_EM_CUST_VERIFIED",
+		"type": "string"
+	},
+	{
+		"name": "FL_EMAIL_VALID",
+		"type": "string"
+	},
+	{
+		"name": "EXTRACT_TS",
+		"type": "string"
+	}
+]

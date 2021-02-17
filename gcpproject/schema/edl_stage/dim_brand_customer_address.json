@@ -1,0 +1,172 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_customer_email_division_key", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_customer_email_key", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "brand_customer_key", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "division_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_address_id", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "household_id", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "latest_hard_bounce_dt", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "bounced_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "complaint_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "soft_bounce_cnt", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_preference_cd", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "invalid_ind", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_email_send_dt", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_email_open_dt", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "last_email_click_dt", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_1_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_2_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_3_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_4_6_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_7_12_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_13_24_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_sends_25_36_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_opens_1_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_opens_2_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_opens_3_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_opens_4_6_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_opens_7_12_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_clicks_1_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_clicks_2_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_clicks_3_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_clicks_4_6_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "email_clicks_7_12_mo_cnt", 
+    "type": "INTEGER"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "max_unsub_pref_dt", 
+    "type": "TIMESTAMP"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "batch_id", 
+    "type": "integer"
+  }
+]

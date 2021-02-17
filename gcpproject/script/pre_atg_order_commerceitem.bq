@@ -1,0 +1,114 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_commerceItem_new --use_legacy_sql=false <<!
+    select distinct orderid       
+           ,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",submitteddate) as submitteddate
+           ,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) as lastmodifieddate
+           ,profileid
+           ,commerceitemid
+           ,commerceitemtype
+           ,producttype
+           ,catalogrefid
+           ,CAST(commerceitemquantity as INT64) as commerceitemquantity
+           ,finalsale
+           ,giftcardstatus
+           ,message
+           ,quantitydiscounted
+           ,saleprice
+           ,listprice 
+           ,onsale
+           ,rawtotalprice
+           ,itempriceinfoorderdiscountshare
+           ,detaileditempriceinfoquantity
+           ,detaileditempriceinfoorderdiscountshare
+           ,detaileditempriceinfotax
+           ,ordermanualadjustmentshare
+           ,commerceitempriceinfoamount
+           ,commerceitempriceinfodiscounted
+           ,commerceitempriceinfoamountisfinal
+           ,commerceitempriceinfofullprice
+           ,commerceitempriceinfononfullprice
+           ,catalogid
+           ,catalogkey
+           ,productid
+           ,commerceitemstate
+           ,commerceitemstatedetail
+           ,order_ref
+           ,CAST(lastmodified AS TIMESTAMP) as lastmodified
+           ,maxsvscalls
+           ,giftboxed
+           ,messageto
+           ,messagefrom
+           ,commerceitempartnerid
+           ,batch_id
+    from edl_landing.ann_ann_atg_transactions atg
+	--where orderid not like "%.orderid%"
+!
+
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_commerceItem_new --use_legacy_sql=false <<!
+select 
+           c.orderid       
+           ,c.submitteddate
+           ,c.lastmodifieddate
+           ,c.profileid
+           ,c.commerceitemid
+           ,c.commerceitemtype
+           ,c.producttype
+           ,c.catalogrefid
+           ,c.commerceitemquantity
+           ,c.finalsale
+           ,c.giftcardstatus
+           ,c.message
+           ,c.quantitydiscounted
+           ,CAST(c.saleprice as numeric) as saleprice
+           ,CAST(c.listprice as numeric) as listprice 
+           ,c.onsale
+           ,CAST(c.rawtotalprice as numeric) as rawtotalprice
+           ,CAST(c.itempriceinfoorderdiscountshare as numeric) as itempriceinfoorderdiscountshare
+           ,c.detaileditempriceinfoquantity
+           ,CAST(c.detaileditempriceinfoorderdiscountshare as numeric) as detaileditempriceinfoorderdiscountshare
+           ,CAST(c.detaileditempriceinfotax as numeric) as detaileditempriceinfotax
+           ,CAST(c.ordermanualadjustmentshare as numeric) as ordermanualadjustmentshare
+           ,CAST(c.commerceitempriceinfoamount as numeric) as commerceitempriceinfoamount
+           ,c.commerceitempriceinfodiscounted
+           ,c.commerceitempriceinfoamountisfinal
+           ,CAST(c.commerceitempriceinfofullprice as numeric) as commerceitempriceinfofullprice
+           ,CAST(c.commerceitempriceinfononfullprice as numeric) as commerceitempriceinfononfullprice
+           ,c.catalogid
+           ,c.catalogkey
+           ,c.productid
+           ,c.commerceitemstate
+           ,c.commerceitemstatedetail
+           ,c.order_ref
+           ,c.lastmodified
+           ,c.maxsvscalls
+           ,c.giftboxed
+           ,c.messageto
+           ,c.messagefrom
+           ,c.commerceitempartnerid
+           ,c.batch_id
+from edl_stage.pre_atg_order_commerceItem c
+left join edl_stage.pre_atg_order_commerceItem_new w
+    on  w.orderid = c.orderid
+    and w.commerceitemid=c.commerceitemid
+    and w.lastmodifieddate = c.lastmodifieddate
+    and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+
+bq cp --force edl_stage.pre_atg_order_commerceItem edl_archive.pre_atg_order_commerceItem
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_commerceItem_new edl_stage.pre_atg_order_commerceItem
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_commerceItem_new
+rc_check $? "drop the temp table"
+

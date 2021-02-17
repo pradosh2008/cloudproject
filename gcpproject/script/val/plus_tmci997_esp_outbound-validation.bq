@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+    id_chain, id_email, id_cust, count(*)
+    from edl_stage.plus_tmci997_esp_outbound
+    group by 1,2,3
+    having count(*)>1 )'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql="
+SELECT count(*) cnt
+from edl_landing.lbca_tmci997_esp_outbound l
+left join edl_stage.plus_tmci997_esp_outbound p
+    on (case when TRIM(l.id_chain)='' then null else cast(TRIM(l.id_chain) as INT64) end)= p.id_chain
+    and (case when TRIM(l.id_email)='' then null else cast(TRIM(l.id_email) as INT64) end)=p.id_email
+    and (case when TRIM(l.id_cust)='' then null else cast(TRIM(l.id_cust) as INT64) end)=p.id_cust
+where p.id_cust is null"
+
+run_validation "$sql" "Completeness Check"
+
+exit ${ERROR_CD:-0}
+
+
+

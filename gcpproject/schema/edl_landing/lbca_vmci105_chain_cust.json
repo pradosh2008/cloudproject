@@ -1,0 +1,127 @@
+[
+  {
+    "name": "ID_CHAIN",
+    "type": "STRING"
+  },
+  {
+    "name": "ID_CUST",
+    "type": "STRING"
+  },
+  {
+    "name": "DA_LAST_TRNS",
+    "type": "STRING"
+  },
+  {
+    "name": "CD_MAIL",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_DO_NOT_PROMOTE",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_OK_TO_MAIL",
+    "type": "STRING"
+  },
+  {
+    "name": "ID_STORE",
+    "type": "STRING"
+  },
+  {
+    "name": "ID_EMP",
+    "type": "STRING"
+  },
+  {
+    "name": "DA_FIRST_TRNS",
+    "type": "STRING"
+  },
+  {
+    "name": "DA_MAIL_CODE",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_ACTIVE_HOUSCARD",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_HLDR_HOUSCARD",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_DECLIN_HOUSCARD",
+    "type": "STRING"
+  },
+  {
+    "name": "DA_APPLY_HOUSCARD",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_ACTIVE_COBRAND",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_HLDR_COBRAND",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_CLOSED_HOUSCARD",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_CLOSED_COBRAND",
+    "type": "STRING"
+  },
+  {
+    "name": "CD_ACCOUNT_TERM",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_SHOPS_JUNIORS",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_SHOPS_MISSES",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_SHOPS_PLUS",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_OK_TO_PHONE",
+    "type": "STRING"
+  },
+  {
+    "name": "DA_CH_CUST_ADDED",
+    "type": "STRING"
+  },
+  {
+    "name": "FL_OK_TO_STMT_INS",
+    "type": "STRING"
+  },
+  {
+    "name": "IN_CUST_SOURCE_FIRST",
+    "type": "STRING"
+  },
+  {
+    "name": "IN_CUST_SOURCE_2ND_FIRST",
+    "type": "STRING"
+  },
+  {
+    "name": "IN_CUST_SOURCE_LAST",
+    "type": "STRING"
+  },
+  {
+    "name": "IN_CUST_SOURCE_2ND_LAST",
+    "type": "STRING"
+  },
+  {
+    "name": "CD_LBO_MIGRATION_STATUS",
+    "type": "STRING"
+  },
+  {
+    "name": "EXTRACT_TS",
+    "type": "STRING"
+  }
+]
+

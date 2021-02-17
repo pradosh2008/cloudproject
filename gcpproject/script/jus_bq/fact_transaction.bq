@@ -1,0 +1,43 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.fact_transaction_new --use_legacy_sql=false <<!
+SELECT c.transaction_key
+    ,c.transaction_id
+    ,c.brand_customer_key
+    ,c.store_key
+    ,e.brand_customer_email_key
+    ,c.transaction_dt
+    ,c.order_dt
+    ,c.transaction_num
+    ,c.register_num
+    ,c.purchase_gross_amt
+    ,c.purchase_mktg_discount_amt
+    ,c.purchase_mrch_discount_amt
+    ,c.purchase_net_amt
+    ,c.purchase_item_cnt
+    ,c.departments_shopped_cnt
+    ,c.return_gross_amt
+    ,c.return_mktg_discount_amt
+    ,c.return_mrch_discount_amt
+    ,c.return_net_amt
+    ,c.return_item_cnt
+    ,c.purchase_other_discount_amt
+    ,c.return_other_discount_amt
+    ,c.total_deflated_cost_amt
+    ,c.total_actual_cost_amt
+    ,c.batch_id
+from jus_stage.work_transaction c
+left join jus_stage.dim_brand_customer_email e
+    on  cast(e.email_address_id as string) = c.email_address_id
+    and e.brand_customer_key = c.brand_customer_key
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.fact_transaction_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.fact_transaction c
+left join jus_stage.work_transaction w
+    on  w.transaction_key = c.transaction_key
+where w.transaction_key is null
+!
+bq cp --force jus_stage.fact_transaction edl_archive.fact_transaction
+bq cp --force jus_stage.fact_transaction_new jus_stage.fact_transaction
+bq rm --force jus_stage.fact_transaction_new

@@ -1,0 +1,177 @@
+[
+  {
+    "mode": "nullable",
+    "name": "chain_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "selling_loc_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "week_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "sku_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "style_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "color_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "size_id",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_inv_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_inv_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_inv_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_inv_valued_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_to_dc_it_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_to_dc_it_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_to_dc_it_actual_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_dc_to_dc_it_valued_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_receipt_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_receipt_d_valued_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_receipt_actual_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_receipt_valued_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_mkd_dc_inv_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_mkd_dc_inv_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_mkd_dc_inv_actual_unit_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "bop_mkd_dc_inv_value_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_dmos_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_dmos_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_dmos_actual_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_dmos_valued_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_mkd_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_mkd_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "dc_mkd_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "rtv_inv_unit_cnt",
+    "type": "integer"
+  },
+  {
+    "mode": "nullable",
+    "name": "rtv_inv_retail_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "rtv_inv_actual_cost_amt",
+    "type": "float"
+  },
+  {
+    "mode": "nullable",
+    "name": "rtv_inv_valued_cost_amt",
+    "type": "float"
+  }
+]

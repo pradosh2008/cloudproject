@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq cp --force edl_conform.brand_customer_membership analytic_mart.dim_brand_customer_membership
+rc_check $? "Mart table loaded dim_brand_customer_membership"

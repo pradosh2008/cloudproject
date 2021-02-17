@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+        r.if_entry_no
+        , r.line_id
+        ,count(*) cnt
+    from edl_stage.pre_aw_transaction_return_detail r
+    group by 1,2
+    having count(*) >1
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+select 
+    count(*) cnt
+from edl_landing.ann_ann_aw_transactions_returndtl l
+left join edl_stage.pre_aw_transaction_return_detail s
+    on l.if_entry_no = s.if_entry_no
+  and l.line_id = s.line_id
+where l.if_entry_no is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

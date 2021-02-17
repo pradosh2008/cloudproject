@@ -1,0 +1,142 @@
+[
+	{
+		"name": "CHAIN_ID",
+		"type": "string"
+	},
+	{
+		"name": "DC_ID",
+		"type": "string"
+	},
+	{
+		"name": "SELLING_LOC_ID",
+		"type": "string"
+	},
+	{
+		"name": "WEEK_ID",
+		"type": "string"
+	},
+	{
+		"name": "STYLE_ID",
+		"type": "string"
+	},
+	{
+		"name": "COLOR_ID",
+		"type": "string"
+	},
+	{
+		"name": "SIZE_ID",
+		"type": "string"
+	},
+	{
+		"name": "SKU_ID",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_INV_U",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_INV_R",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_INV_C_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_INV_C_VALUED",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_TO_DC_IT_U",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_TO_DC_IT_R",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_TO_DC_IT_C_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "BOP_DC_TO_DC_IT_C_VALUED",
+		"type": "string"
+	},
+	{
+		"name": "DC_RECEIPT_U",
+		"type": "string"
+	},
+	{
+		"name": "DC_RECEIPT_D",
+		"type": "string"
+	},
+	{
+		"name": "DC_RECEIPT_C_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "DC_RECEIPT_C_VALUED",
+		"type": "string"
+	},
+	{
+		"name": "BOP_MKD_DC_INV_U",
+		"type": "string"
+	},
+	{
+		"name": "BOP_MKD_DC_INV_R",
+		"type": "string"
+	},
+	{
+		"name": "BOP_MKD_DC_INV_U_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "BOP_MKD_DC_INV_C_VALUE",
+		"type": "string"
+	},
+	{
+		"name": "DC_DMOS_U",
+		"type": "string"
+	},
+	{
+		"name": "DC_DMOS_R",
+		"type": "string"
+	},
+	{
+		"name": "DC_DMOS_C_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "DC_DMOS_C_VALUED",
+		"type": "string"
+	},
+	{
+		"name": "DC_MKD_U",
+		"type": "string"
+	},
+	{
+		"name": "DC_MKD_R",
+		"type": "string"
+	},
+	{
+		"name": "DC_MKD_C",
+		"type": "string"
+	},
+	{
+		"name": "RTV_INV_U",
+		"type": "string"
+	},
+	{
+		"name": "RTV_INV_R",
+		"type": "string"
+	},
+	{
+		"name": "RTV_INV_C_ACTUAL",
+		"type": "string"
+	},
+	{
+		"name": "RTV_INV_C_VALUED",
+		"type": "string"
+	}
+]

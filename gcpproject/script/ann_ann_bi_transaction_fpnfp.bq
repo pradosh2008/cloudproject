@@ -1,0 +1,59 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_bi_transaction_fpnfp  'gs://p-asna-datasink-003/ann_ann_bi_transaction_fpnfp/*'
+rc_check $? "Load edl_landing"
+
+#deduping fpnfp table in edl_landing schema
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_landing.ann_ann_bi_transaction_fpnfp_temp --use_legacy_sql=false <<!
+SELECT transaction_nbr
+, transaction_type_cd
+, item_sku
+, full_price_flg
+, batch_id 
+FROM
+    (SELECT transaction_nbr
+    , transaction_type_cd
+    , item_sku
+    , full_price_flg
+    , batch_id
+    , row_number() OVER (PARTITION BY transaction_nbr, item_sku order by batch_id desc, full_price_flg desc) as rn 
+    FROM edl_landing.ann_ann_bi_transaction_fpnfp) AS A 
+WHERE rn = 1
+!
+rc_check $? "create a temp table after deduping  edl_landing table"
+
+bq cp --force edl_landing.ann_ann_bi_transaction_fpnfp_temp edl_landing.ann_ann_bi_transaction_fpnfp
+rc_check $? "replace the landing table with the deduped table"
+bq rm --force edl_landing.ann_ann_bi_transaction_fpnfp_temp
+rc_check $? "drop the landing deduped temp table"
+
+#loading the temporary table in staging (it has both new and updated records)
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_ann_ann_bi_transaction_fpnfp_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.ann_ann_bi_transaction_fpnfp c
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_ann_ann_bi_transaction_fpnfp_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_ann_ann_bi_transaction_fpnfp c
+left join edl_landing.ann_ann_bi_transaction_fpnfp w
+    on  w.transaction_nbr = c.transaction_nbr
+    AND w.item_sku = c.item_sku
+    AND w.batch_id = c.batch_id
+    where w.transaction_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_ann_ann_bi_transaction_fpnfp edl_archive.pre_ann_ann_bi_transaction_fpnfp
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_ann_ann_bi_transaction_fpnfp_new edl_stage.pre_ann_ann_bi_transaction_fpnfp
+rc_check $? "replace the staging table with the new table"
+bq rm --force edl_stage.pre_ann_ann_bi_transaction_fpnfp_new
+rc_check $? "drop the temp table"
+

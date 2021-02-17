@@ -1,0 +1,118 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "tax_category_nbr",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tax_jurisdiction_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tax_level_nbr",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "line_action_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "line_object_type_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "line_object_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tax_rt",
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE",
+    "name": "customer_paid_tax_amt",
+    "type": "NUMERIC"
+  }, 
+  {
+    "mode": "NULLABLE",
+    "name": "company_owed_tax_amt",
+    "type": "NUMERIC"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "selling_chain_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "selling_store_nbr",
+    "type": "Numeric"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "chain_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "store_nbr",
+    "type": "numeric"
+  },      
+  {
+    "mode": "NULLABLE",
+    "name": "register_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "transaction_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "transaction_dt",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "detail_fee_seq_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "detail_fee_ind",
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE",
+    "name": "record_seq_nbr",
+    "type": "INTEGER"
+  },  
+  {
+    "mode": "NULLABLE",
+    "name": "note_type_cd",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "tax_amt",
+    "type": "NUMERIC"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "last_update_ts",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "extract_ts",
+    "type": "STRING"
+  }
+]
+

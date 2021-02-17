@@ -1,0 +1,35 @@
+[
+     {"name":"chain_id"          ,"type":"integer"}
+    ,{"name":"dc_id"          ,"type":"integer"}
+    ,{"name":"selling_loc_id"          ,"type":"integer"}
+    ,{"name":"week_id"          ,"type":"integer"}
+    ,{"name":"style_id"          ,"type":"integer"}
+    ,{"name":"color_id"          ,"type":"integer"}
+    ,{"name":"bop_dc_inv_u"          ,"type":"integer"}
+    ,{"name":"bop_dc_inv_r"          ,"type":"float"}
+    ,{"name":"bop_dc_inv_c_actual"          ,"type":"float"}
+    ,{"name":"bop_dc_inv_c_valued"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_u"          ,"type":"integer"}
+    ,{"name":"bop_dc_to_dc_it_r"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_c_actual"          ,"type":"float"}
+    ,{"name":"bop_dc_to_dc_it_c_valued"          ,"type":"float"}
+    ,{"name":"dc_receipt_u"          ,"type":"integer"}
+    ,{"name":"dc_receipt_d"          ,"type":"float"}
+    ,{"name":"dc_receipt_c_actual"          ,"type":"float"}
+    ,{"name":"dc_receipt_c_valued"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_u"          ,"type":"integer"}
+    ,{"name":"bop_mkd_dc_inv_r"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_u_actual"          ,"type":"float"}
+    ,{"name":"bop_mkd_dc_inv_c_value"          ,"type":"float"}
+    ,{"name":"dc_dmos_u"          ,"type":"integer"}
+    ,{"name":"dc_dmos_r"          ,"type":"float"}
+    ,{"name":"dc_dmos_c_actual"          ,"type":"float"}
+    ,{"name":"dc_dmos_c_valued"          ,"type":"float"}
+    ,{"name":"dc_mkd_u"          ,"type":"integer"}
+    ,{"name":"dc_mkd_r"          ,"type":"float"}
+    ,{"name":"dc_mkd_c"          ,"type":"float"}
+    ,{"name":"rtv_inv_u"          ,"type":"integer"}
+    ,{"name":"rtv_inv_r"          ,"type":"float"}
+    ,{"name":"rtv_inv_c_actual"          ,"type":"float"}
+    ,{"name":"rtv_inv_c_valued"          ,"type":"float"}
+]

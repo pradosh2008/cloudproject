@@ -1,0 +1,24 @@
+bq cp --force  edl_stage_0319.pre_acc_df_prod_hier             edl_stage.pre_acc_df_prod_hier &
+bq cp --force  edl_stage_0319.pre_ann_ann_bi_transaction_fpnfp edl_stage.pre_ann_ann_bi_transaction_fpnfp &
+bq cp --force  edl_stage_0319.pre_ann_calendar                 edl_stage.pre_ann_calendar  &
+bq cp --force  edl_stage_0319.pre_atg_order_commerceItem       edl_stage.pre_atg_order_commerceItem &
+bq cp --force  edl_stage_0319.pre_atg_order_commerceitemadjustments edl_stage.pre_atg_order_commerceitemadjustments  &
+bq cp --force  edl_stage_0319.pre_atg_order_commerceitemcoupons edl_stage.pre_atg_order_commerceitemcoupons &
+bq cp --force  edl_stage_0319.pre_atg_order_header             edl_stage.pre_atg_order_header  &
+bq cp --force  edl_stage_0319.pre_atg_order_payment            edl_stage.pre_atg_order_payment &
+bq cp --force  edl_stage_0319.pre_atg_order_return             edl_stage.pre_atg_order_return  &
+bq cp --force  edl_stage_0319.pre_atg_order_return_commerceitem edl_stage.pre_atg_order_return_commerceitem &
+bq cp --force  edl_stage_0319.pre_atg_order_return_method      edl_stage.pre_atg_order_return_method  &
+bq cp --force  edl_stage_0319.pre_atg_order_shipment           edl_stage.pre_atg_order_shipment &
+bq cp --force  edl_stage_0319.pre_atg_order_shipment_tracking  edl_stage.pre_atg_order_shipment_tracking  &
+bq cp --force  edl_stage_0319.pre_aw_transaction_discount_detail edl_stage.pre_aw_transaction_discount_detail &
+bq cp --force  edl_stage_0319.pre_aw_transaction_header        edl_stage.pre_aw_transaction_header  &
+bq cp --force  edl_stage_0319.pre_aw_transaction_line          edl_stage.pre_aw_transaction_line &
+bq cp --force  edl_stage_0319.pre_aw_transaction_linenotes     edl_stage.pre_aw_transaction_linenotes  &
+bq cp --force  edl_stage_0319.pre_aw_transaction_merch_detail  edl_stage.pre_aw_transaction_merch_detail  &
+bq cp --force  edl_stage_0319.pre_aw_transaction_return_detail edl_stage.pre_aw_transaction_return_detail &
+bq cp --force  edl_stage_0319.pre_sap_product edl_stage.pre_sap_product &
+bq cp --force  edl_stage_0319.pre_sap_style edl_stage.pre_sap_style &
+bq cp --force  edl_stage_0319.pre_sap_store edl_stage.pre_sap_store &
+bq cp --force  edl_stage_0319.pre_sap_vendor edl_stage.pre_sap_vendor &
+wait

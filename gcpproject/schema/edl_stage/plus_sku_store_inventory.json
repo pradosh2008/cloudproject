@@ -1,0 +1,45 @@
+[
+			{"name":"chain_id"            ,"type":"integer"}
+			,{"name":"store_id"            ,"type":"integer"}
+			,{"name":"week_id"            ,"type":"integer"}
+			,{"name":"sku_id"            ,"type":"integer"}
+			,{"name":"style_id"            ,"type":"integer"}
+			,{"name":"color_id"            ,"type":"integer"}
+			,{"name":"size_id"            ,"type":"integer"}
+			,{"name":"bop_store_inv_unit_cnt"            ,"type":"integer"}
+			,{"name":"bop_store_inv_retail_amt"            ,"type":"float"}
+			,{"name":"bop_store_inv_actual_cost_amt"            ,"type":"float"}
+			,{"name":"bop_store_inv_value_cost_amt"            ,"type":"float"}
+			,{"name":"bop_store_it_unit_cnt"            ,"type":"integer"}
+			,{"name":"bop_store_it_retail_amt"            ,"type":"float"}
+			,{"name":"bop_store_it_actual_cost_amt"            ,"type":"float"}
+			,{"name":"bop_store_it_value_cost_amt"            ,"type":"float"}
+			,{"name":"store_receipt_unit_cnt"            ,"type":"integer"}
+			,{"name":"store_receipt_retail_amt"            ,"type":"float"}
+			,{"name":"store_receipt_actual_cost_amt"            ,"type":"float"}
+			,{"name":"store_receipt_value_cost_amt"            ,"type":"float"}
+			,{"name":"bop_mkd_store_it_unit_cnt"            ,"type":"integer"}
+			,{"name":"bop_mkd_store_it_retail_amt"            ,"type":"float"}
+			,{"name":"bop_mkd_store_it_actual_cost_amt"            ,"type":"float"}
+			,{"name":"bop_mkd_store_it_value_cost_amt"            ,"type":"float"}
+			,{"name":"dmos_unit_cnt"            ,"type":"integer"}
+			,{"name":"dmos_retail_amt"            ,"type":"float"}
+			,{"name":"dmos_actual_cost_amt"            ,"type":"float"}
+			,{"name":"dmos_value_cost_amt"            ,"type":"float"}
+			,{"name":"store_trans_out_unit_cnt"            ,"type":"integer"}
+			,{"name":"store_trans_out_retail_amt"            ,"type":"float"}
+			,{"name":"store_trans_out_actual_cost_amt"            ,"type":"float"}
+			,{"name":"store_trans_out_value_cost_amt"            ,"type":"float"}
+			,{"name":"store_trans_in_unit_cnt"            ,"type":"integer"}
+			,{"name":"store_trans_in_retail_amt"            ,"type":"float"}
+			,{"name":"store_trans_in_actual_cost_amt"            ,"type":"float"}
+			,{"name":"store_trans_in_value_cost_amt"            ,"type":"float"}
+			,{"name":"bop_alloc_notship_inv_unit_cnt"            ,"type":"integer"}
+			,{"name":"bop_alloc_notship_inv_retail_amt"            ,"type":"float"}
+			,{"name":"bop_alloc_notship_actual_cost_amt"            ,"type":"float"}
+			,{"name":"bop_alloc_notship_value_cost_amt"            ,"type":"float"}
+			,{"name":"mkd_issue_unit_cnt"            ,"type":"integer"}
+			,{"name":"mkd_issue_retail_amt"            ,"type":"float"}
+			,{"name":"mkd_issue_c_amt"            ,"type":"float"}
+]
+

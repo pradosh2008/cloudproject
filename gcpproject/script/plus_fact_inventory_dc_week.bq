@@ -1,0 +1,66 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_inventory_dc_week_new --use_legacy_sql=false <<!
+SELECT 
+  psdi.dc_id
+, CAST(psdi.week_id as INT64) as fiscal_week_nbr
+, TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN cast(psdi.chain_id as INT64) = 35 THEN 'LB' 
+                           ELSE 'CA'
+                      END
+                    , '|'
+                    , CAST(CAST(psdi.sku_id as INT64) as STRING)))) as item_key
+, psdi.sku_id
+, psdi.style_id
+, psdi.color_id
+, psdi.size_id
+, psdi.bop_dc_inv_unit_cnt
+, psdi.bop_dc_inv_retail_amt
+, psdi.bop_dc_inv_actual_cost_amt
+, psdi.bop_dc_inv_valued_cost_amt
+, psdi.bop_dc_to_dc_it_unit_cnt
+, psdi.bop_dc_to_dc_it_retail_amt
+, psdi.bop_dc_to_dc_it_actual_cost_amt
+, psdi.bop_dc_to_dc_it_valued_cost_amt
+, psdi.dc_receipt_unit_cnt
+, psdi.dc_receipt_d_cost_amt
+, psdi.dc_receipt_actual_cost_amt
+, psdi.dc_receipt_valued_cost_amt
+, psdi.bop_mkd_dc_inv_unit_cnt
+, psdi.bop_mkd_dc_inv_retail_amt
+, psdi.bop_mkd_dc_inv_actual_cost_amt
+, psdi.bop_mkd_dc_inv_valued_cost_amt
+, psdi.dc_dmos_unit_cnt
+, psdi.dc_dmos_retail_amt
+, psdi.dc_dmos_actual_cost_amt
+, psdi.dc_dmos_valued_cost_amt
+, psdi.dc_mkd_unit_cnt
+, psdi.dc_mkd_retail_amt
+, psdi.dc_mkd_cost_amt
+, psdi.rtv_inv_unit_cnt
+, psdi.rtv_inv_retail_amt
+, psdi.rtv_inv_actual_cost_amt
+, psdi.rtv_inv_valued_cost_amt
+, CURRENT_TIMESTAMP as edl_create_tms
+, 'PLUS_FACT_INVENTORY_DC_WEEK' as edl_create_job_nam
+, CURRENT_TIMESTAMP as edl_last_update_tms
+, 'PLUS_FACT_INVENTORY_DC_WEEK' as edl_last_update_job_nam
+FROM edl_stage.plus_sku_dc_inventory psdi
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_inventory_dc_week edl_archive.plus_fact_inventory_dc_week
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_inventory_dc_week_new analytic_mart.plus_fact_inventory_dc_week
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_inventory_dc_week_new
+rc_check $? "drop the temp table"
+
+

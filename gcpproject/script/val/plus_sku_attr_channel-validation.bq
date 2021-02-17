@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+	h.chain_nbr, h.sku_nbr, count(*)
+    from edl_stage.plus_sku_attr_channel h
+    group by 1,2
+    having count(*)>1)'
+
+run_validation "$sql" "Unique Key Check"
+
+#Completeness check
+
+sql="SELECT count(*) cnt
+from edl_landing.ca_sku_attr_channel  l
+left join edl_stage.plus_sku_attr_channel s
+    on  cast(trim(l.chain_nbr) as int64) = s.chain_nbr
+    AND l.sku_nbr = s.sku_nbr
+where s.CHAIN_NBR=4 and s.sku_nbr is null"
+
+run_validation "$sql" "CA Completeness Check"
+
+sql="SELECT count(*) cnt
+from edl_landing.lb_sku_attr_channel  l
+left join edl_stage.plus_sku_attr_channel s
+    on  cast(trim(l.chain_nbr) as int64) = s.chain_nbr
+    AND l.sku_nbr = s.sku_nbr
+where s.CHAIN_NBR=7 and s.sku_nbr is null"
+
+run_validation "$sql" "LB Completeness Check"
+
+
+exit ${ERROR_CD:-0}
+

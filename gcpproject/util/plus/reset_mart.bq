@@ -1,0 +1,10 @@
+bq cp --force analytic_mart_0310.dim_item                       analytic_mart.dim_item &
+bq cp --force analytic_mart_0310.dim_store                     analytic_mart.dim_store &
+#bq cp --force analytic_mart_0310.fact_transaction               analytic_mart.fact_transaction &
+#bq cp --force analytic_mart_0310.fact_transaction_detail        analytic_mart.fact_transaction_detail &
+#bq cp --force analytic_mart_0310.fact_transaction_discount      analytic_mart.fact_transaction_discount &
+bq cp --force analytic_mart_0310.fact_transaction_merch_line    analytic_mart.fact_transaction_merch_line 
+wait
+fix_dim_item.bq
+fix_dim_store.bq
+

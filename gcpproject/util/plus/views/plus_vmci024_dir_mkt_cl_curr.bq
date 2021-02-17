@@ -1,0 +1,53 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci024_dir_mkt_cl_curr as
+select 
+ stgn.id_dir_mkt_cell
+,stgn.tx_cell_desc_short
+,stgn.da_rcd_created
+,stgn.da_rcd_updated
+,stgn.fl_qry_updated
+,stgn.in_cell_type
+,stgn.in_control_type
+,stgn.tx_cell_desc_long
+,stgn.id_mailing
+,stgn.nu_versions
+,stgn.id_qry
+,stgn.nu_priority
+,stgn.nu_raw_custs
+,stgn.nu_selected_custs
+,stgn.nu_deduped_custs
+,stgn.nu_control_custs
+,stgn.pc_control_custs
+,stgn.nu_not_mailed
+,stgn.nu_output
+,stgn.fl_run_query
+,stgn.da_status
+,stgn.ti_status
+,stgn.tx_status
+,stgn.na_job
+,stgn.id_chain
+,stgn.cd_group
+,stgn.id_user_created
+,stgn.cd_cell
+,stgn.id_control_cell
+,stgn.id_offer_list
+,stgn.da_promo_start
+,stgn.da_promo_expire
+,stgn.tx_creative_type
+,stgn.am_ad_unit_cost
+,stgn.id_flowchart
+,stgn.extract_ts
+from 
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_dir_mkt_cell 
+ order by lbca.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_vmci024_dir_mkt_cl\` as lbca
+) as stgn 
+where row_num=1
+!
+

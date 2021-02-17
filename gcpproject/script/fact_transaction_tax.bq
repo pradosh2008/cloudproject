@@ -1,0 +1,83 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.fact_transaction_tax_new --use_legacy_sql=false <<!
+select b.transaction_key
+      ,b.tax_line_num
+      ,cast(b.tax_category_num as string) as tax_category_num --casted it to string to be in sync with prod 17/03/2020
+      ,b.tax_jurisdiction_cd
+      ,cast(b.tax_level_num as string) as tax_level_num --casted it to string to be in sync with prod 17/03/2020
+      ,b.line_action_cd
+      ,b.line_object_type_cd
+      ,b.line_object_cd
+      ,b.tax_rt
+      ,b.customer_paid_tax_amt
+      ,b.company_owed_tax_amt
+      ,b.edl_create_tms
+      ,b.edl_create_job_nam
+      ,b.edl_last_update_tms
+      ,b.edl_last_update_job_nam
+      ,b.brand_cd
+from 
+(
+SELECT
+TO_HEX(md5(concat(CASE WHEN stt.selling_chain_nbr = 4 THEN 'CA|'
+                       WHEN stt.selling_chain_nbr = 7 THEN 'LB|' END,
+                        CAST(stt.selling_store_nbr AS STRING),"|",
+                        CAST(stt.register_nbr AS STRING),"|",
+                        CAST(stt.transaction_dt AS STRING),"|",
+                        CAST(stt.transaction_nbr AS STRING)
+                  )))AS transaction_key
+, stt.detail_fee_seq_nbr AS tax_line_num
+, stt.record_seq_nbr
+, ROW_NUMBER () OVER (PARTITION BY stt.selling_store_nbr, stt.register_nbr, stt.transaction_dt, stt.transaction_nbr, stt.detail_fee_seq_nbr ORDER BY stt.record_seq_nbr DESC) AS curr_record_seq_nbr
+, stt.tax_category_nbr AS tax_category_num
+, stt.tax_jurisdiction_cd
+, stt.tax_level_nbr AS tax_level_num
+, stt.line_action_cd
+, stt.line_object_type_cd
+, stt.line_object_cd
+, stt.tax_rt
+, case when stt.line_action_cd = '11' then stt.customer_paid_tax_amt
+      when line_action_cd = '12' then (-1) * stt.customer_paid_tax_amt
+      else stt.customer_paid_tax_amt end as customer_paid_tax_amt
+, case when stt.line_action_cd = '11' then stt.company_owed_tax_amt
+      when line_action_cd = '12' then (-1) * stt.company_owed_tax_amt
+      else stt.company_owed_tax_amt end as company_owed_tax_amt
+, CURRENT_TIMESTAMP AS edl_create_tms
+, 'TRANS' AS edl_create_job_nam
+, CURRENT_TIMESTAMP AS edl_last_update_tms
+, 'TRANS' AS edl_last_update_job_nam
+, CASE WHEN stt.selling_chain_nbr = 4 THEN 'CA'
+       WHEN stt.selling_chain_nbr = 7 THEN 'LB' END AS brand_cd
+FROM edl_stage.plus_sales_transaction_tax stt
+) b
+where curr_record_seq_nbr = 1
+--order by b.transaction_key, b.tax_line_num,b.edl_create_tms desc
+!
+
+
+#Merge/UPSert old records into new Mart Stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_tax_new --use_legacy_sql=false <<!
+SELECT C.*
+FROM analytic_mart.fact_transaction_tax c
+LEFT JOIN analytic_mart.fact_transaction_tax_new m
+ON c.transaction_key = m.transaction_key
+AND c.tax_line_num = m.tax_line_num
+WHERE m.transaction_key IS NULL
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.fact_transaction_tax edl_archive.fact_transaction_tax
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_tax_new analytic_mart.fact_transaction_tax
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_tax_new
+rc_check $? "drop the temp table"
+
+
+

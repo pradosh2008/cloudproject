@@ -1,0 +1,49 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+        cc.orderid
+    , cc.commerceitemid
+    , cc.catalogrefid
+    , cc.commerceitemcouponscouponcode
+    , cc.commerceitemcouponsdiscountamt
+        , cc.batch_id
+        , cc.lastmodifieddate
+        ,count(*)
+    from edl_stage.pre_atg_order_commerceitemcoupons cc
+        where orderid not in ("881016112839","881073299182")
+        group by 1,2,3,4,5,6,7
+    having count(*) >1    
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT 
+    count(*) cnt
+from edl_landing.ann_ann_atg_transactions c
+left join edl_stage.pre_atg_order_commerceitemcoupons w
+          on  w.orderid = c.orderid
+          and w.commerceitemid=c.commerceitemid
+          and w.catalogrefid=c.catalogrefid
+          and coalesce(w.commerceitemcouponscouponcode,"")=coalesce(c.commerceitemcouponscouponcode,"")
+          and coalesce(w.commerceitemcouponsdiscountamt,0.0)=coalesce(c.commerceitemcouponsdiscountamt,0.0)
+          and w.lastmodifieddate = PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",c.lastmodifieddate)
+          and w.batch_id=c.batch_id
+where w.orderid is null
+and c.orderid not like "%.orderid%"'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

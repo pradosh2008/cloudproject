@@ -1,0 +1,80 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_demand_sales_day_new --use_legacy_sql=false <<!
+SELECT 
+  TO_HEX(MD5(CONCAT(  CASE 
+               WHEN DSSSD.CHAIN_NBR = 4 THEN 'CA' 
+               WHEN DSSSD.CHAIN_NBR = 7 THEN 'LB' 
+                END
+                    , '|'
+                    , CAST(CAST(DSSSD.SKU_NBR as INT64) as STRING))))                as ITEM_KEY
+, TO_HEX(MD5(CONCAT(  CASE 
+               WHEN DSSSD.CHAIN_NBR = 4 THEN 'CA' 
+               WHEN DSSSD.CHAIN_NBR = 7 THEN 'LB' 
+               END
+                    , '|'
+                    , CAST(DSSSD.STORE_NBR AS STRING))))                 as STORE_KEY
+, CAST(CASE 
+            WHEN DSSSD.CHAIN_NBR = 4 THEN 'CA' 
+            WHEN DSSSD.CHAIN_NBR = 7 THEN 'LB' 
+            END as STRING
+      )                                                                  as BRAND_CD
+, CAST(CAST(DSSSD.SKU_NBR as INT64) as STRING)                           as SKU_ID
+, CAST(DSSSD.STORE_NBR AS STRING)                                        as STORE_ID
+, DSSSD.TRANSACTION_DT                                                   as TRANSACTION_DT
+, DSSSD.DEMAND_ORDER_TYPE_CD                                             as DEMAND_ORDER_TYPE_CD
+, DSSSD.SHIP_TO_HOME_OR_STORE_FLG                                        as SHIP_TO_CD
+, CASE 
+       WHEN DSSSD.SHIP_TO_HOME_OR_STORE_FLG = 'S' then 'STORE'
+       WHEN DSSSD.SHIP_TO_HOME_OR_STORE_FLG = 'H' then 'HOME'
+  END                                                                    as SHIP_TO_DES
+, DSSSD.PRICE_TYPE_CD                                                    as PRICE_TYPE_CD
+, DSSSD.DEMAND_NET_SALES_QTY                                             as DEMAND_NET_SALES_QTY
+, DSSSD.DEMAND_NET_SALES_RTL                                             as DEMAND_NET_SALES_RTL_AMT
+, DSSSD.DEMAND_NET_SALES_CST                                             as DEMAND_NET_SALES_CST_AMT
+, DSSSD.DEMAND_PRODUCTIVE_SALES_QTY                                      as DEMAND_PRODUCTIVE_SALES_QTY
+, DSSSD.DEMAND_PRODUCTIVE_SALES_RTL                                      as DEMAND_PRODUCTIVE_SALES_RTL_AMT
+, DSSSD.DEMAND_PRODUCTIVE_SALES_CST                                      as DEMAND_PRODUCTIVE_SALES_CST_AMT
+, DSSSD.DEMAND_PRODUCTIVE_TRANS_CNT                                      as DEMAND_PRODUCTIVE_TRANS_CNT
+, DSSSD.DEMAND_DISCOUNT_MARKDOWN_RTL                                     as DEMAND_DISCOUNT_MARKDOWN_RTL_AMT
+, DSSSD.DEMAND_MERCH_DISCOUNT_AMT                                        as DEMAND_MERCH_DISCOUNT_AMT
+, DSSSD.DEMAND_NON_MERCH_DISCOUNT_AMT                                    as DEMAND_NON_MERCH_DISCOUNT_AMT
+, DSSSD.DEMAND_FEE_AMT                                                   as DEMAND_FEE_AMT
+, DSSSD.DEMAND_CUSTOMER_PAID_TAX_AMT                                     as DEMAND_CUSTOMER_PAID_TAX_AMT
+, DSSSD.DEMAND_COMPANY_OWED_TAX_AMT                                      as DEMAND_COMPANY_OWED_TAX_AMT
+, DSSSD.STORE_FFLLM_NET_SLS_QTY                                          as STORE_FFLLM_NET_SALES_QTY
+, DSSSD.STORE_FFLLM_NET_SLS_RTL                                          as STORE_FFLLM_NET_SALES_RTL_AMT
+, DSSSD.STORE_FFLLM_NET_SLS_CST                                          as STORE_FFLLM_NET_SALES_CST_AMT
+, DSSSD.STORE_FFLLM_PRODTV_SLS_QTY                                       as STORE_FFLLM_PRODUCTIVE_SALES_QTY
+, DSSSD.STORE_FFLLM_PRODTV_SLS_RTL                                       as STORE_FFLLM_PRODUCTIVE_SALES_RTL_AMT
+, DSSSD.STORE_FFLLM_PRODTV_SLS_CST                                       as STORE_FFLLM_PRODUCTIVE_SALES_CST_AMT
+, DSSSD.STORE_PRODUCTIVE_TRANS_CNT                                       as STORE_PRODUCTIVE_TRANS_CNT
+, DSSSD.DC_FFLLM_NET_SLS_QTY                                             as DC_FFLLM_NET_SALES_QTY
+, DSSSD.DC_FFLLM_NET_SLS_RTL                                             as DC_FFLLM_NET_SALES_RTL_AMT
+, DSSSD.DC_FFLLM_NET_SLS_CST                                             as DC_FFLLM_NET_SALES_CST_AMT
+, DSSSD.DC_FFLLM_PRODTV_SLS_QTY                                          as DC_FFLLM_PRODUCTIVE_SALES_QTY
+, DSSSD.DC_FFLLM_PRODTV_SLS_RTL                                          as DC_FFLLM_PRODUCTIVE_SALES_RTL_AMT
+, DSSSD.DC_FFLLM_PRODTV_SLS_CST                                          as DC_FFLLM_PRODUCTIVE_SALES_CST_AMT
+, DSSSD.DC_PRODUCTIVE_TRANS_CNT                                          as DC_PRODUCTIVE_TRANS_CNT
+, CURRENT_TIMESTAMP                                                      as EDL_CREATE_TMS
+, 'PLUS_FACT_DEMAND_SALES_DAY'                                           as EDL_CREATE_JOB_NAM
+, CURRENT_TIMESTAMP                                                      as EDL_LAST_UPDATE_TMS
+, 'PLUS_FACT_DEMAND_SALES_DAY'                                           as EDL_LAST_UPDATE_JOB_NAM
+FROM edl_stage.plus_demand_sales_sku_store_day DSSSD
+!
+rc_check $? "Load stage data into the new mart table"
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_demand_sales_day edl_archive.plus_fact_demand_sales_day
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_demand_sales_day_new analytic_mart.plus_fact_demand_sales_day
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_demand_sales_day_new
+rc_check $? "drop the temp table"
+
+

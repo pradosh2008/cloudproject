@@ -1,0 +1,85 @@
+echo 'Row count'
+bq query --use_legacy_sql=false <<!
+select count(1) from jus_stage.fact_transaction
+!
+
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,count(*)
+from jus_stage.fact_transaction a
+group by a.transaction_key 
+having count(*) > 1
+limit 10
+!
+
+echo 'dim_transaction fk check: transaction count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join jus_stage.dim_transaction b 
+    on a.transaction_key = b.transaction_key
+!
+echo 'dim_brand_customer fk check: transaction count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.brand_customer_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.brand_customer_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join jus_stage.dim_brand_customer b 
+    on a.brand_customer_key = b.brand_customer_key
+where a.brand_customer_key is not null
+
+!
+echo 'dim_store fk check: transaction count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.store_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.store_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join jus_stage.dim_store b 
+    on a.store_key = b.store_key
+!
+echo 'dim_brand_customer_email fk check: transaction count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.brand_customer_email_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.brand_customer_email_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join jus_stage.dim_brand_customer_email b 
+    on a.brand_customer_email_key = b.brand_customer_email_key
+where a.brand_customer_email_key is not null
+!
+echo 'Transaction count by month'
+bq query --use_legacy_sql=false <<!
+select date_trunc(t.transaction_dt,MONTH) 
+    ,count(distinct t.transaction_key)                               as tran_cnt
+    ,sum(case when dt.transaction_key is null then 1 else 0 end)     as dim_tran_orphan_cnt
+    ,sum(case when c.brand_customer_key is null 
+               and t.brand_customer_key is not null 
+            then 1 else 0 
+         end)                                                        as customer_tran_orphan_cnt
+    ,count(distinct case when c.brand_customer_key is null 
+                        then t.brand_customer_key else null 
+                    end
+          )                                                          as customer_orphan_cnt
+    ,sum(case when s.store_key is null then 1 else 0 end)            as store_tran_orphan_cnt
+    ,count(distinct case when s.store_key is null 
+                        then t.store_key else null 
+                    end
+          )                                                          as store_orphan_cnt
+    ,sum(case when e.brand_customer_email_key is null 
+               and t.brand_customer_email_key is not null
+              then 1 else 0 
+         end)                                                        as email_tran_orphan_cnt
+from jus_stage.fact_transaction t
+left join jus_stage.dim_transaction dt 
+    on dt.transaction_key = t.transaction_key
+left join jus_stage.dim_brand_customer c 
+    on c.brand_customer_key = t.brand_customer_key
+left join jus_stage.dim_store s 
+    on s.store_key = t.store_key
+left join jus_stage.dim_brand_customer_email e 
+    on e.brand_customer_email_key = t.brand_customer_email_key
+group by date_trunc(t.transaction_dt,MONTH)
+order by 1
+!
+

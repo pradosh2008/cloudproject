@@ -1,0 +1,36 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+      id_chain
+    , id_cust
+    , id_club_memb
+    from edl_stage.plus_vmci079_club_memb
+    group by 1,2,3
+    having count(*)>1
+)'
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.lbca_vmci079_club_memb l
+left join edl_stage.plus_vmci079_club_memb p
+    on CAST(TRIM(l.id_chain) AS INT64) = p.id_chain
+    and CAST(TRIM(l.id_cust) AS INT64) = p.id_cust
+    and CAST(TRIM(l.id_club_memb) AS NUMERIC) = p.id_club_memb
+where p.id_club_memb is null'
+
+run_validation "$sql" "Completeness Check"
+
+exit ${ERROR_CD:-0}
+
+
+

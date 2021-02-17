@@ -1,0 +1,84 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_vmci079_club_memb.json \
+        edl_landing.lbca_vmci079_club_memb \
+        "gs://${default_bucket}/plus/crm/vmci079_club_memb*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci079_club_memb_new --use_legacy_sql=false <<!
+SELECT
+stgn.id_cust
+,stgn.cd_club
+,stgn.id_chain
+,stgn.id_club_memb
+,stgn.fl_needs_card
+,stgn.fl_card_ret_mail
+,stgn.da_ogin_signup
+,stgn.da_renewed
+,stgn.da_expiration
+,stgn.da_canceled
+,stgn.am_fee_paid
+,stgn.fl_auto_enroll
+,stgn.fl_canceled
+,stgn.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_chain,lbca.id_cust,lbca.id_club_memb
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+ CAST(TRIM(c.id_cust) AS INT64) AS id_cust
+,TRIM(c.cd_club) AS cd_club
+,CAST(TRIM(c.id_chain) AS INT64) AS id_chain
+,CAST(TRIM(c.id_club_memb) AS NUMERIC) AS id_club_memb
+,TRIM(c.fl_needs_card) AS fl_needs_card
+,TRIM(c.fl_card_ret_mail) AS fl_card_ret_mail
+,case when TRIM(c.da_ogin_signup)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.da_ogin_signup)) end as da_ogin_signup
+,case when TRIM(c.da_renewed)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.da_renewed)) end as da_renewed
+,case when TRIM(c.da_expiration)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.da_expiration)) end as da_expiration
+,case when TRIM(c.da_canceled)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.da_canceled)) end as da_canceled
+,CAST(TRIM(c.am_fee_paid) AS NUMERIC) AS am_fee_paid
+,TRIM(c.fl_auto_enroll) AS fl_auto_enroll
+,TRIM(c.fl_canceled) AS fl_canceled
+,case when TRIM(c.extract_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_vmci079_club_memb c
+) lbca
+) stgn
+where stgn.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci079_club_memb_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci079_club_memb c
+left join edl_stage.lbca_vmci079_club_memb_new w
+    on w.id_chain=c.id_chain
+    and w.id_cust=c.id_cust
+    and w.id_club_memb=c.id_club_memb
+    where w.id_club_memb is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci079_club_memb edl_archive.plus_vmci079_club_memb
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci079_club_memb_new edl_stage.plus_vmci079_club_memb
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci079_club_memb_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci079_club_memb*.txt.gz"
+

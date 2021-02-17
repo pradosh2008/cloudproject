@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+CREATE OR REPLACE VIEW edl_stage.plus_vmci396_curr_opt_in_out_full_curr as
+SELECT
+ stg.ID_CUST
+,stg.ID_CHAIN
+,stg.IN_CUST_SOURCE
+,stg.IN_CUST_SOURCE_2ND
+,stg.TS_TMCI396_CREATED
+,stg.ID_CUST_ORIG
+,stg.ID_EMAIL
+,stg.TE_CUST
+,stg.ID_STORE
+,stg.CD_OPT_IN_OUT
+,stg.FL_OPT_IN
+,stg.TS_OPT_IN_OUT
+,stg.CD_CUST_EXT_TYPE
+,stg.DA_OPT_IN_OUT
+,stg.EXTRACT_TS
+
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST, lbca.ID_CHAIN, lbca.ID_CUST_ORIG, lbca.ID_EMAIL, lbca.TE_CUST, lbca.CD_OPT_IN_OUT
+order by lbca.EXTRACT_TS desc) as row_num
+from \`${project}.edl_stage.plus_vmci396_curr_opt_in_out_full\` as lbca
+)as stg where row_num=1
+!
+

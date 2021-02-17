@@ -1,0 +1,66 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci025_mailing_curr as
+select
+ stgn.ID_MAILING
+,stgn.TX_MAIL_DESC_SHORT
+,stgn.TX_MAIL_DESC_LONG
+,stgn.DA_MAIL_EFF
+,stgn.DA_MAIL_EXP
+,stgn.DA_FILE_CREATED
+,stgn.DA_MAILED
+,stgn.NU_MAX_CUSTS
+,stgn.IN_DEDUP_TYPE
+,stgn.DA_RCD_CREATED
+,stgn.DA_RCD_UPDATED
+,stgn.FL_EXCL_EMP
+,stgn.CD_MAIL_TYPE
+,stgn.CD_PROCESS_TYPE
+,stgn.DA_STATUS
+,stgn.TI_STATUS
+,stgn.TX_STATUS
+,stgn.NA_JOB
+,stgn.ID_CHAIN
+,stgn.CD_GROUP
+,stgn.CD_OUTPUT_TYPE
+,stgn.ID_USER_CREATED
+,stgn.FL_INCLUDE_ALWAYS
+,stgn.FL_INCLUDE_SEED
+,stgn.FL_INCLUDE_DECOY
+,stgn.FL_INCLUDE_REQUEST
+,stgn.FL_SKIP_COUNTS
+,stgn.DA_PURGE
+,stgn.ID_LAST_CELL_DONE
+,stgn.TX_INCL_STATES
+,stgn.FL_OK_TO_MAIL_YES_CHKD
+,stgn.FL_OK_TO_MAIL_NO_CHKD
+,stgn.FL_OK_TO_EMAIL_YES_CHKD
+,stgn.FL_OK_TO_EMAIL_NO_CHKD
+,stgn.FL_EXCL_DO_NOT_PROMOTE
+,stgn.TX_INCL_DSFCODES
+,stgn.FL_INCL_MAIL_UNDETERMINED
+,stgn.FL_INCL_EMAIL_UNDETERMINED
+,stgn.CD_CAMPAIGN
+,stgn.TX_INTIATIVE
+,stgn.TX_CAMPAIGN_OBJECTIVE
+,stgn.DA_PRELIM_COUNT_DUE
+,stgn.DA_FINAL_COUNT_DUE
+,stgn.NA_MAIL_VENDOR
+,stgn.CD_ADTRAX
+,stgn.ID_WEEK_MAILING_EFF
+,stgn.NU_REQD_CIRCULATION
+,stgn.DA_DUE_LETTERSHOP
+,stgn.EXTRACT_TS
+from 
+(SELECT plus.*
+,ROW_NUMBER() OVER (partition by plus.id_mailing
+order by plus.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_vmci025_mailing\` as plus
+) as stgn 
+where row_num=1
+!
+

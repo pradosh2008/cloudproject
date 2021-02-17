@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true \
+edl_stage.lbca_hst_trans_detail  \
+"gs://${default_bucket}/lbca_hst_trans_detail/*"
+rc_check $? "edl_stage Load for lbca_hst_trans_detail Complete"

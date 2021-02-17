@@ -1,0 +1,14 @@
+pre_acc_df_prod_hier_curr.bq
+pre_sap_product_curr.bq
+pre_ann_ann_bi_transaction_fpnfp_curr.bq
+pre_atg_order_commerceitemadjustments_curr.bq
+pre_atg_order_commerceitemcoupons_curr.bq
+pre_atg_order_commerceItem_curr.bq
+pre_atg_order_header_curr.bq
+pre_atg_order_payment_curr.bq
+pre_atg_order_return_commerceitem_curr.bq
+pre_atg_order_return_curr.bq
+pre_atg_order_return_method_curr.bq
+pre_atg_order_shipment_curr.bq
+pre_atg_order_shipment_tracking_curr.bq
+pre_aw_transaction_header_curr.bq

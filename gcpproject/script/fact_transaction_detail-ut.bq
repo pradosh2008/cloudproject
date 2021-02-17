@@ -1,0 +1,63 @@
+echo 'Row count'
+bq query --use_legacy_sql=false <<!
+select count(1) from analytic_mart.fact_transaction_detail
+!
+#198765466
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,a.transaction_line_num
+    ,count(*)
+from analytic_mart.fact_transaction_detail a
+group by a.transaction_key 
+    ,a.transaction_line_num
+having count(*) > 1
+limit 10
+!
+
+echo 'fact_transaction_detail orphan check: transaction detail count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction_detail a 
+left join analytic_mart.fact_transaction b 
+    on a.transaction_key = b.transaction_key
+!
+#| match_count | orphan_count |
+#|   686356584 |            0 |
+echo 'fact_transaction no detail check: transaction detail count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction a 
+left join (select distinct transaction_key from analytic_mart.fact_transaction_detail) b 
+    on a.transaction_key = b.transaction_key
+!
+#|   183689647 |     15075819 |
+echo 'dim_item fk check: transaction line count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.item_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.item_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction_detail a 
+left join analytic_mart.dim_item b 
+    on b.item_key = a.item_key
+!
+#|   554263518 |    132093066 |
+echo 'dim_store fk check: transaction line count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.store_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.store_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction_detail a 
+left join analytic_mart.dim_store b 
+    on b.store_key = a.store_key
+!
+#|   686356584 |            0 |
+echo 'dim_brand_customer fk check: transaction line count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.brand_customer_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.brand_customer_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction_detail a 
+left join analytic_mart.dim_brand_customer b 
+    on b.brand_customer_key = a.brand_customer_key
+!
+#|   686313072 |        43512 |

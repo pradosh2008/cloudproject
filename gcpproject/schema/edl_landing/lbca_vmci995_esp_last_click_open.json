@@ -1,0 +1,30 @@
+[
+	{
+		"name": "ID_CHAIN",
+		"type": "string"
+	},
+	{
+		"name": "ID_EMAIL",
+		"type": "string"
+	},
+	{
+		"name": "TS_LAST_CLICK",
+		"type": "string"
+	},
+	{
+		"name": "TS_LAST_OPEN",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_CLICK",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_OPEN",
+		"type": "string"
+	},
+	{
+		"name": "EXTRACT_TS",
+		"type": "string"
+	}
+]

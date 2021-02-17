@@ -1,0 +1,261 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load ALL PROD (p-asna-analytics-002) DATA FROM analytic_mart.dim_item to NON-PROD(p-ascn-da-aadp-001) analytic_mart.dim_item
+bq cp -f p-asna-analytics-002:analytic_mart.dim_item p-ascn-da-aadp-001:analytic_mart.dim_item
+rc_check $? "Successfully copied dim_item from prod project to non-prod project"
+
+#To fix the datatypes of dim_item table
+/home/svc_gcpintegnp/util/plus/fix_dim_item.bq
+rc_check $? "dim_item table fixed"
+
+#Load Data from staging table into analytic_mart
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_item_new --use_legacy_sql=false <<!
+SELECT
+      TO_HEX(
+				MD5(
+                        CONCAT(CASE WHEN a.CHAIN_ID = 4 
+									THEN 'CA|' 
+									WHEN a.CHAIN_ID = 7 
+									THEN 'LB|' 
+								END
+								,CAST(CAST(a.SKU_ID AS INT64)AS STRING)))) 		as item_key
+      , CAST(CAST(a.SKU_ID AS INT64) AS STRING) 								AS sku_id
+      , TO_HEX(
+                    MD5(
+                        CONCAT(CASE WHEN a.CHAIN_ID = 4 
+									THEN 'CA|' 
+									WHEN a.CHAIN_ID = 7 
+									THEN 'LB|' 
+								END
+								,CAST(CAST(a.VENDOR_ID AS INT64)AS STRING)))) 	as vendor_key
+      , a.ITEM_DESC 															AS item_des
+      , a.SHORT_DESC 															AS item_short_des
+      , CAST(a.STYLE_ID AS STRING) 												AS style_id
+      , a.STYLE_DESC 															AS style_des
+      , a.ITEM_DIFF_COLOR 														AS different_color_cd
+      , a.DIFF_COLOR_DESC 														AS different_color_des
+      , a.ITEM_DIFF_SIZE 														AS different_size_cd
+      , a.DIFF_SIZE_DESC 														AS different_size_des
+      , CAST(a.DEPT_ID AS STRING) 												AS department_id
+      , a.DEPT_NAME 															AS department_nam
+      , CAST(a.CLASS_ID AS STRING) 												AS class_id
+      , a.CLASS_NAME 															AS class_nam
+      , CAST(a.SUBCLASS_ID AS STRING) 											AS subclass_id
+      , a.SUBCLASS_NAME 														AS subclass_nam
+      , CAST(a.DIVISION_ID AS STRING) 											AS division_id
+      , a.DIVISION_NAME 														AS division_nam
+      , CAST(a.GROUP_NO AS STRING) 												AS group_num
+      , a.GROUP_NAME 															AS group_nam
+      , a.ITEM_STATUS 															AS item_status_cd
+      , a.STANDARD_UOM 															AS standard_uom_des
+      , a.REGULAR_UNIT_RETAIL 													AS regular_unit_retail_amt
+      , a.SELLING_UNIT_RETAIL 													AS selling_unit_retail_amt
+      , case	when a.INVENTORY_IND='Y' 
+				then 1
+				when a.INVENTORY_IND = 'N' 
+				then 0
+				else NULL 
+		end 																	as INVENTORY_IND
+      , case 	when a.MERCHANDISE_IND='Y' 
+				then 1
+				when a.MERCHANDISE_IND = 'N' 
+				then 0
+				else NULL 
+		end 																	as MERCHANDISE_IND
+      , case 	when a.ORDERABLE_IND='Y' 
+				then 1
+				when a.ORDERABLE_IND = 'N' 
+				then 0
+				else NULL 
+		end 																	as ORDERABLE_IND
+      , case 	when a.SELLABLE_IND='Y' 
+				then 1
+				when a.SELLABLE_IND = 'N' 
+				then 0
+				else NULL 
+		end 																	as SELLABLE_IND
+      , case	when a.SHIP_ALONE_IND='Y' 
+				then 1
+				when a.SHIP_ALONE_IND = 'N' 
+				then 0
+				else NULL 
+		end 																	as SHIP_ALONE_IND
+      , CAST(a.CREATE_DATETIME AS TIMESTAMP) 									AS item_create_tms
+      , CAST(a.LAST_UPDT_TS AS TIMESTAMP) 										AS last_update_tms
+      , a.UNIT_COST 															AS unit_cost_amt
+      , a.ORIGIN_COUNTRY_ID 													AS origin_country_cd
+      , a.record_status 														AS item_record_status_cd
+      , CAST(a.season_id AS STRING) 											AS season_id
+      , a.season_desc 															AS season_des
+      , CURRENT_TIMESTAMP 														AS edl_create_tms
+      , 'Product' 																AS edl_create_job_nam
+      , CURRENT_TIMESTAMP 														AS edl_last_update_tms
+      , 'Product' 																AS edl_last_update_job_nam
+      , case 	when a.CHAIN_ID = 4 
+				then "CA"
+				when a.CHAIN_ID = 7 
+				then "LB"
+        end 																	AS brand_cd
+FROM               
+  (SELECT 	*            
+			, ROW_NUMBER() OVER (PARTITION BY sku_id, chain_id ORDER BY batch_id DESC) 	as rn
+      FROM edl_stage.plus_item_sku
+	) a
+WHERE a.rn = 1
+!
+rc_check $? "Data Loaded from edl_stage to analytic_mart.dim_item_new table"
+
+#Add legacy records from old table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.dim_item_new --use_legacy_sql=false <<!
+select	c.*
+from analytic_mart.dim_item c
+left join analytic_mart.dim_item_new w
+    on  w.item_key = c.item_key
+where w.item_key is null
+!
+rc_check $? "Merged analytic_mart.dim_item to analytic_mart.dim_item_new table"
+
+#This script will run only once during merging, and to keep the hierarchy intact we consider sku level hierarchy for both historical and incremental. And update the whole dim_item_new table into dim_item_new1 table 
+#Build Hierarchy Table for dim_item
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.item_hierarchy --use_legacy_sql=false <<!
+SELECT style_id
+		, style_des
+		, class_id
+		, class_nam
+		, subclass_id
+		, subclass_nam
+		, department_id
+		, department_nam
+		, group_num
+		, group_nam
+		, division_id
+		, division_nam
+		, brand_cd
+		FROM (
+				SELECT 
+					style_id
+					, style_des
+					, class_id
+					, class_nam
+					, subclass_id
+					, subclass_nam
+					, department_id
+					, department_nam
+					, group_num
+					, group_nam
+					, division_id
+					, division_nam
+					, brand_cd
+					, last_updt_ts
+					, batch_id
+					, ROW_NUMBER() OVER (PARTITION BY style_id, brand_cd ORDER BY last_updt_ts desc) as rn
+FROM 
+(
+SELECT CAST(style_id AS STRING) style_id
+, style_desc as style_des
+, CAST(class_id AS STRING) as class_id
+, class_name as class_nam
+, CAST(subclass_id AS STRING) as subclass_id
+, subclass_name as subclass_nam
+, CAST(dept_id AS STRING) as department_id
+, dept_name as department_nam
+, CAST(group_no AS STRING) as group_num
+, group_name as group_nam
+, CAST(division_id AS STRING) as division_id
+, division_name as division_nam
+, last_updt_ts as last_updt_ts
+, CASE WHEN chain_id = 4 THEN 'CA' WHEN chain_id = 7 THEN 'LB' ELSE NULL END as brand_cd
+, batch_id
+FROM edl_stage.plus_item_sku
+UNION ALL
+SELECT style_id as style_id
+, style_des as style_des
+, class_id as class_id
+, class_nam as class_nam
+, subclass_id as subclass_id
+, subclass_nam as subclass_nam
+, department_id as department_id
+, department_nam as department_nam
+, group_num as group_num
+, group_nam as group_nam
+, division_id as division_id
+, division_nam as division_nam
+, last_update_tms as last_updt_ts
+, brand_cd as brand_cd
+, 20190101 as batch_id
+FROM analytic_mart.dim_item
+) U 
+) H
+WHERE rn = 1
+!
+rc_check $? "Hierarchy table built from edl_stage and analytic_mart item tables"
+
+#Load data from temp table to get the latest reclassification of the hierarchy
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_item_new1 --use_legacy_sql=false <<!
+SELECT
+di.item_key
+, di.sku_id
+, di.vendor_key
+, di.item_des
+, di.item_short_des
+, di.style_id
+, si.style_des
+, di.different_color_cd
+, di.different_color_des
+, di.different_size_cd
+, di.different_size_des
+, si.department_id
+, si.department_nam
+, si.class_id
+, si.class_nam
+, si.subclass_id
+, si.subclass_nam
+, si.division_id
+, si.division_nam
+, si.group_num
+, si.group_nam
+, di.item_status_cd
+, di.standard_uom_des
+, di.regular_unit_retail_amt
+, di.selling_unit_retail_amt
+, di.inventory_ind
+, di.merchandise_ind
+, di.orderable_ind
+, di.sellable_ind
+, di.ship_alone_ind
+, di.item_create_tms
+, di.last_update_tms
+, di.unit_cost_amt
+, di.origin_country_cd
+, di.item_record_status_cd
+, di.season_id
+, di.season_des
+, di.edl_create_tms
+, di.edl_create_job_nam
+, di.edl_last_update_tms
+, di.edl_last_update_job_nam
+, di.brand_cd
+FROM analytic_mart.dim_item_new di
+        INNER JOIN analytic_mart.item_hierarchy si
+        ON di.style_id = si.style_id 
+        AND di.brand_cd = si.brand_cd
+!
+rc_check $? "Corrected Hierarchy in analytic_mart.dim_item_new1 Table"
+
+
+
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.dim_item edl_archive.dim_item
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.dim_item_new1 analytic_mart.dim_item
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.dim_item_new1
+rc_check $? "Remove new1 table "
+bq rm --force analytic_mart.dim_item_new
+rc_check $? "Remove new table "
+bq rm --force analytic_mart.item_hierarchy
+rc_check $? "Remove item_hierarchy table "

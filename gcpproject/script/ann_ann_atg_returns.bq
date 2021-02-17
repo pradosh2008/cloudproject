@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_atg_returns  'gs://p-asna-datasink-003/ann_ann_atg_returns/*'
+
+rc_check $? "Load edl_landing"
+
+echo "pre_atg_order_return.bq" >/data/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_return_commerceitem.bq" >/data/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl
+echo "pre_atg_order_return_method.bq" >/data/ctl/$RANDOM-`date +%m%d%H%M%S`.ctl

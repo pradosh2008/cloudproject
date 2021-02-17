@@ -1,0 +1,7 @@
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.model_score --use_legacy_sql=false 2>&1 <<!
+select m.*
+from jus_stage.work_model_score m
+left join jus_stage.model_score tgt
+    on tgt.model_score_run_key = m.model_score_run_key
+where tgt.model_score_run_key is null
+!

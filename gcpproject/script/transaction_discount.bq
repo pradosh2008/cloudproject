@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.transaction_discount  'gs://p-asna-datasink-003/transaction_discount/*'
+rc_check $? "Load edl_landing"
+
+#Archive target
+bq cp --force edl_conform.transaction_discount edl_archive.transaction_discount
+rc_check $? "Archive copy"
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.transaction_discount --use_legacy_sql=false <<!
+select c.*
+from edl_landing.transaction_discount c
+left join edl_conform.transaction_discount w
+    on  w.transaction_key = c.transaction_key
+    AND w.transaction_line_num = c.transaction_line_num
+    AND w.discount_line_num = c.discount_line_num
+    where w.transaction_key is null
+!
+rc_check $? "Append edl_conform"
+
+

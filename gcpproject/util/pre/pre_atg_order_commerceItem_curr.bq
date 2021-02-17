@@ -1,0 +1,55 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_commerceItem_curr
+as
+  select  orderid
+  	,profileid
+    ,submitteddate
+    ,lastmodifieddate
+  	,commerceitemid
+  	,commerceitemtype
+  	,producttype
+  	,catalogrefid
+  	--,ROW_NUMBER() OVER() lineid
+  	,commerceitemquantity
+  	,finalsale
+  	,giftcardstatus
+  	,message
+  	,quantitydiscounted
+  	,saleprice
+  	,listprice
+  	,onsale
+  	,rawtotalprice
+  	,itempriceinfoorderdiscountshare
+  	,detaileditempriceinfoquantity
+  	,detaileditempriceinfoorderdiscountshare
+  	,detaileditempriceinfotax
+  	,ordermanualadjustmentshare
+  	,commerceitempriceinfoamount
+  	,commerceitempriceinfodiscounted
+  	,commerceitempriceinfoamountisfinal
+  	,commerceitempriceinfofullprice
+  	,commerceitempriceinfononfullprice
+  	,catalogid
+  	,catalogkey
+  	,productid
+  	,commerceitemstate
+  	,commerceitemstatedetail
+  	,order_ref
+  	,lastmodified
+  	,maxsvscalls
+  	,giftboxed
+  	,messageto
+  	,messagefrom
+  	,commerceitempartnerid
+    ,batch_id
+  from
+  (select *
+  ,dense_rank() over (PARTITION BY orderid,commerceitemid order by batch_id desc,lastmodifieddate desc) rn
+  from  \`${project}.edl_stage.pre_atg_order_commerceItem\`
+  ) where rn = 1
+!

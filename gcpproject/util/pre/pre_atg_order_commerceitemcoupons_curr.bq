@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_commerceitemcoupons_curr
+as
+  SELECT
+  orderid
+  , commerceitemid
+  , catalogrefid
+  , commerceitemcouponscouponcode
+  , commerceitemcouponsdiscountamt
+  , batch_id
+  , lastmodifieddate
+  FROM(select *, dense_rank() over (PARTITION BY orderid, commerceitemid, catalogrefid, commerceitemcouponscouponcode ,cast( commerceitemcouponsdiscountamt as string) order by batch_id desc, lastmodifieddate desc) rn
+  from  \`${project}.edl_stage.pre_atg_order_commerceitemcoupons\`
+  ) where rn = 1
+!
+

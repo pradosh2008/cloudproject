@@ -1,0 +1,112 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|"  --schema=${schema_path}/edl_landing/lbca_sales_transaction_discount.json edl_landing.lb_sales_transaction_discount "gs://${default_bucket}/plus/edw/lb_sales_transaction_discount*.txt.gz"
+rc_check $? "Load edl_landing for LB Complete"
+
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_sales_transaction_discount_new --use_legacy_sql=false <<!
+SELECT
+stg.detail_fee_seq_nbr 
+,stg.discount_seq_nbr
+,stg.coupon_cd
+,stg.discount_amt
+,stg.discount_reason_cd
+,stg.discount_sub_reason_cd
+,stg.pos_event_cd
+,stg.discount_type_cd
+,stg.deal_cd
+,stg.discount_method_cd
+,stg.selling_chain_nbr
+,stg.selling_store_nbr
+,stg.chain_nbr
+,stg.store_nbr
+,stg.transaction_dt
+,stg.register_nbr
+,stg.transaction_nbr
+,stg.detail_fee_ind
+,stg.sku_nbr
+,stg.create_dt
+,stg.last_update_ts
+,stg.record_seq_nbr
+,stg.line_object_type_cd
+,stg.line_object_cd
+,stg.line_action_cd
+,stg.promo_nbr
+,stg.promo_component_nbr
+,stg.promo_detail_nbr
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr, lbca.record_seq_nbr
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+ CAST(TRIM(detail_fee_seq_nbr) AS INT64) as detail_fee_seq_nbr
+,CAST(TRIM(discount_seq_nbr) AS INT64) as discount_seq_nbr
+,coupon_cd
+,CAST(TRIM(discount_amt) AS NUMERIC) as discount_amt
+,discount_reason_cd
+,CAST(TRIM(discount_sub_reason_cd) AS INT64) as discount_sub_reason_cd 
+,CAST(TRIM(pos_event_cd) AS INT64) as pos_event_cd 
+,discount_type_cd
+,CAST(TRIM(deal_cd) AS INT64) as deal_cd 
+,discount_method_cd
+,CAST(TRIM(selling_chain_nbr) AS INT64) as selling_chain_nbr 
+,CAST(TRIM(selling_store_nbr) AS NUMERIC) as selling_store_nbr 
+,CAST(TRIM(chain_nbr) AS INT64) as chain_nbr 
+,CAST(TRIM(store_nbr) AS NUMERIC) as store_nbr 
+,case when TRIM(transaction_dt)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(transaction_dt)) end as transaction_dt
+,CAST(TRIM(register_nbr) AS INT64) as register_nbr
+,CAST(TRIM(transaction_nbr) AS INT64) as transaction_nbr
+,detail_fee_ind
+,sku_nbr
+,case when TRIM(create_dt)='' then null else PARSE_DATE("%Y-%m-%d",TRIM(create_dt)) end as create_dt
+,case when TRIM(last_update_ts)='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",TRIM(last_update_ts),"America/New_York") end as last_update_ts
+,CAST(TRIM(record_seq_nbr) AS INT64) as record_seq_nbr
+,line_object_type_cd
+,line_object_cd
+,line_action_cd
+,CAST(TRIM(promo_nbr) AS NUMERIC) as promo_nbr
+,CAST(TRIM(promo_component_nbr) AS NUMERIC) as promo_component_nbr
+,CAST(TRIM(promo_detail_nbr) AS NUMERIC) as promo_detail_nbr
+,case when TRIM(extract_ts)='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",TRIM(extract_ts),"America/New_York") end as extract_ts
+from edl_landing.lb_sales_transaction_discount
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_discount_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_discount c
+left join edl_stage.lbca_sales_transaction_discount_new w
+    on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    and w.record_seq_nbr = c.record_seq_nbr
+    where w.record_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sales_transaction_discount edl_archive.plus_sales_transaction_discount
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_discount_new edl_stage.plus_sales_transaction_discount
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_discount_new
+rc_check $? "drop the temp table"
+
+# Following function is only stubbed in it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_discount*.txt.gz"
+
+

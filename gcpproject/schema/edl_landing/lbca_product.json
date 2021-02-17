@@ -1,0 +1,43 @@
+[
+    {"name": "SKU_ID", "type": "STRING"}
+    , {"name": "CHAIN_ID", "type": "STRING"}
+    , {"name": "DIVISION_ID", "type": "STRING"}
+    , {"name": "STYLE_ID", "type": "STRING"}
+    , {"name": "DEPT_ID", "type": "STRING"}
+    , {"name": "CLASS_ID", "type": "STRING"}
+    , {"name": "SUBCLASS_ID", "type": "STRING"}
+    , {"name": "GROUP_NO", "type": "STRING"}
+    , {"name": "ITEM_STATUS", "type": "STRING"}
+    , {"name": "STANDARD_UOM", "type": "STRING"}
+    , {"name": "REGULAR_UNIT_RETAIL", "type": "STRING"}
+    , {"name": "SELLING_UNIT_RETAIL", "type": "STRING"}
+    , {"name": "ITEM_DIFF_COLOR", "type": "STRING"}
+    , {"name": "ITEM_DIFF_SIZE", "type": "STRING"}
+    , {"name": "INVENTORY_IND", "type": "STRING"}
+    , {"name": "MERCHANDISE_IND", "type": "STRING"}
+    , {"name": "ORDERABLE_IND", "type": "STRING"}
+    , {"name": "SELLABLE_IND", "type": "STRING"}
+    , {"name": "SHIP_ALONE_IND", "type": "STRING"}
+    , {"name": "ITEM_DESC", "type": "STRING"}
+    , {"name": "SHORT_DESC", "type": "STRING"}
+    , {"name": "CREATE_DATETIME", "type": "STRING"}
+    , {"name": "LAST_UPDT_TS", "type": "STRING"}
+    , {"name": "SEASON_ID", "type": "STRING"}
+    , {"name": "SEASON_DESC", "type": "STRING"}
+    , {"name": "VENDOR_ID", "type": "STRING"}
+    , {"name": "VENDOR_NAME", "type": "STRING"}
+    , {"name": "VENDOR_PRODUCT_ID", "type": "STRING"}
+    , {"name": "UNIT_COST", "type": "STRING"}
+    , {"name": "ORIGIN_COUNTRY_ID", "type": "STRING"}
+    , {"name": "STYLE_DESC", "type": "STRING"}
+    , {"name": "DIFF_COLOR_DESC", "type": "STRING"}
+    , {"name": "DIFF_SIZE_DESC", "type": "STRING"}
+    , {"name": "SUBCLASS_NAME", "type": "STRING"}
+    , {"name": "CLASS_NAME", "type": "STRING"}
+    , {"name": "DEPT_NAME", "type": "STRING"}
+    , {"name": "GROUP_NAME", "type": "STRING"}
+    , {"name": "DIVISION_NAME", "type": "STRING"}
+    , {"name": "RECORD_STATUS", "type": "STRING"}
+    , {"name": "ECOM_EXCLUSIVES", "type": "STRING"}
+    , {"name": "PLANNED_MD_DATE", "type": "STRING"}
+]

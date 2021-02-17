@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.pre_atg_order_shipment_tracking_curr
+as
+  SELECT orderid
+  , lastmodifieddate
+  , shipitemrelid
+  , trackingdetailtrackingnumber
+  , shippingcarrier
+  , shipmentdate
+  , fullfilledlocation
+  , shippedquantity
+  , batch_id
+  FROM
+  (SELECT *
+  , row_number() OVER (PARTITION BY orderid, shipitemrelid ORDER BY batch_id DESC, lastmodifieddate DESC) as dn
+  FROM \`${project}.edl_stage.pre_atg_order_shipment_tracking\`) AS A
+  WHERE dn = 1
+!

@@ -1,0 +1,29 @@
+#!/usr/bin/sh
+bq rm jus_stage.fact_transaction_detail
+bq cp jus_stage.fact_transaction_detail_fix jus_stage.fact_transaction_detail
+exit
+#bq query --allow_large_results --append_table --destination_table jus_stage.fact_transaction_detail_fix --use_legacy_sql=false <<!
+SELECT t.TRANSACTION_KEY
+    ,t.brand_customer_key
+    ,t.store_key
+    ,t.brand_customer_email_key
+    ,t.item_key 
+    ,t.line_num
+    ,t.TRANSACTION_DT
+    ,t.ORDER_DT
+    ,t.GROSS_PRICE_AMT
+    ,t.NET_PRICE_AMT
+    ,t.ORIGINAL_PRICE_AMT
+    ,t.ACTUAL_COST_AMT
+    ,t.DEFLATED_COST_AMT
+    ,t.MARKDOWN_IND
+    ,t.OIS_IND
+    ,t.SALE_RETURN_CD
+from (select row_number() over (partition by d.transaction_key
+                                , d.line_num 
+                  ) as row_num
+	,d.*
+from jus_stage.fact_transaction_detail d
+) t
+where t.row_num = 1
+!

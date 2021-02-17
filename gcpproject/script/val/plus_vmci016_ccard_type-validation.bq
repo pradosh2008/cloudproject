@@ -1,0 +1,31 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select id_chain,cd_bank_card_type
+    from edl_stage.plus_vmci016_ccard_type
+    group by id_chain,cd_bank_card_type
+    having count(*)>1
+)'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT count(*) cnt
+from edl_landing.lbca_vmci016_ccard_type l
+left join edl_stage.plus_vmci016_ccard_type p
+    on cast(trim(l.id_chain) as int64) = p.id_chain
+    and trim(l.cd_bank_card_type) = p.cd_bank_card_type
+    where p.cd_bank_card_type is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

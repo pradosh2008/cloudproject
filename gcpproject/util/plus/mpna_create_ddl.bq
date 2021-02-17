@@ -1,0 +1,789 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE edl_stage.plus_sales_sku_store_day
+(
+  CHAIN_NBR                      int64
+, SKU_NBR                        string
+, STORE_NBR                      numeric
+, TRANSACTION_DT                 date
+, SALES_CHANNEL_TYPE_CD          string
+, RETURN_QTY                     int64
+, RETURN_CST                     numeric
+, RETURN_RTL                     numeric
+, ECOMM_CREDIT_RETURN_QTY        int64
+, ECOMM_CREDIT_RETURN_RTL        numeric
+, ECOMM_CREDIT_RETURN_CST        numeric
+, SALES_QTY                      int64
+, SALES_RTL                      numeric
+, SALES_CST                      numeric
+, SALES_ORDER_QTY                int64
+, SALES_ORDER_RTL                numeric
+, SALES_ORDER_CST                numeric
+, DISCOUNT_MARKDOWN_RTL          numeric
+, SALES_DISCOUNT_MARKDOWN_RTL    numeric
+, RETURN_DISCOUNT_MARKDOWN_RTL   numeric
+, PRODUCTIVE_SALES_QTY           int64
+, PRODUCTIVE_SALES_RTL           numeric
+, PRODUCTIVE_SALES_CST           numeric
+, GROSS_SALES_QTY                int64
+, GROSS_SALES_RTL                numeric
+, GROSS_SALES_CST                numeric
+, NET_SALES_QTY                  int64
+, NET_SALES_RTL                  numeric
+, NET_SALES_CST                  numeric
+, GROSS_PROFIT_PRODTV_SLS_RTL    numeric
+, GROSS_PROFIT_RETURN_RTL        numeric
+, GROSS_PROFIT_NET_SALES_RTL     numeric
+, STYLE_LOCATOR_QTY              int64
+, STYLE_LOCATOR_RTL              numeric
+, STYLE_LOCATOR_CST              numeric
+, MERCH_DISCOUNT_AMT             numeric
+, NON_MERCH_DISCOUNT_AMT         numeric
+, COMMISSION_AMT                 numeric
+, FEE_AMT                        numeric
+, CUSTOMER_PAID_TAX_AMT          numeric
+, COMPANY_OWED_TAX_AMT           numeric
+, TAX_AMT                        numeric
+, PRICE_TYPE_CD                  string
+, LAST_UPDATE_TS                 timestamp
+, EXTRACT_TS                     timestamp
+);
+!
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE edl_stage.plus_demand_sales_sku_store_day
+(
+  chain_nbr                      int64
+, sku_nbr                        string
+, store_nbr                      int64
+, transaction_dt                 date
+, demand_order_type_cd           string
+, ship_to_home_or_store_flg      string
+, price_type_cd                  string
+, demand_net_sales_qty           int64
+, demand_net_sales_rtl           numeric
+, demand_net_sales_cst           numeric
+, demand_productive_sales_qty    int64
+, demand_productive_sales_rtl    numeric
+, demand_productive_sales_cst    numeric
+, demand_productive_trans_cnt    int64
+, demand_discount_markdown_rtl   numeric
+, demand_merch_discount_amt      numeric
+, demand_non_merch_discount_amt  numeric
+, demand_fee_amt                 numeric
+, demand_customer_paid_tax_amt   numeric
+, demand_company_owed_tax_amt    numeric
+, store_ffllm_net_sls_qty        int64
+, store_ffllm_net_sls_rtl        numeric
+, store_ffllm_net_sls_cst        numeric
+, store_ffllm_prodtv_sls_qty     int64
+, store_ffllm_prodtv_sls_rtl     numeric
+, store_ffllm_prodtv_sls_cst     numeric
+, store_productive_trans_cnt     int64
+, dc_ffllm_net_sls_qty           int64
+, dc_ffllm_net_sls_rtl           numeric
+, dc_ffllm_net_sls_cst           numeric
+, dc_ffllm_prodtv_sls_qty        int64
+, dc_ffllm_prodtv_sls_rtl        numeric
+, dc_ffllm_prodtv_sls_cst        numeric
+, dc_productive_trans_cnt        int64
+, last_update_ts                 timestamp
+, extract_ts                     timestamp
+);
+!
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE edl_stage.plus_subclass_store_day
+(
+  CHAIN_NBR                       int64
+, SUBCLASS_NBR                    numeric
+, STORE_NBR                       numeric
+, TRANSACTION_DT                  date
+, SALES_CHANNEL_TYPE_CD           string
+, PRICE_TYPE_CD                   string
+, STORE_ON_HAND_QTY               int64
+, STORE_ON_HAND_RTL               numeric
+, STORE_ON_HAND_CST               numeric
+, STORE_ON_HAND_REGULAR_QTY       int64
+, STORE_ON_HAND_REGULAR_RTL       numeric
+, STORE_ON_HAND_REGULAR_CST       numeric
+, STORE_ON_HAND_MARKUP_QTY        int64
+, STORE_ON_HAND_MARKUP_RTL        numeric
+, STORE_ON_HAND_MARKUP_CST        numeric
+, STORE_ON_HAND_MARKDOWN_QTY      int64
+, STORE_ON_HAND_MARKDOWN_RTL      numeric
+, STORE_ON_HAND_MARKDOWN_CST      numeric
+, STORE_ON_HAND_PROMO_QTY         int64
+, STORE_ON_HAND_PROMO_RTL         numeric
+, STORE_ON_HAND_PROMO_CST         numeric
+, STORE_ON_HAND_CLRNCE_QTY        int64
+, STORE_ON_HAND_CLRNCE_RTL        numeric
+, STORE_ON_HAND_CLRNCE_CST        numeric
+, STORE_NON_SELLABLE_QTY          int64
+, STORE_NON_SELLABLE_RTL          numeric
+, STORE_NON_SELLABLE_CST          numeric
+, STORE_MARKUP_QTY                int64
+, STORE_MARKUP_RTL                numeric
+, STORE_MARKUP_CST                numeric
+, STORE_MARKDOWN_QTY              int64
+, STORE_MARKDOWN_RTL              numeric
+, STORE_MARKDOWN_CST              numeric
+, PROMO_MARKDOWN_QTY              int64
+, PROMO_MARKDOWN_RTL              numeric
+, PROMO_MARKDOWN_CST              numeric
+, STORE_CLRNCE_MARKDOWN_QTY       int64
+, STORE_CLRNCE_MARKDOWN_RTL       numeric
+, STORE_CLRNCE_MARKDOWN_CST       numeric
+, STORE_RECEIPT_QTY               int64
+, STORE_RECEIPT_RTL               numeric
+, STORE_RECEIPT_CST               numeric
+, STORE_DIRECT_RECEIPT_QTY        int64
+, STORE_DIRECT_RECEIPT_RTL        numeric
+, STORE_DIRECT_RECEIPT_CST        numeric
+, STORE_TRANSFER_IN_QTY           int64
+, STORE_TRANSFER_IN_RTL           numeric
+, STORE_TRANSFER_IN_CST           numeric
+, STORE_TRANSFER_OUT_QTY          int64
+, STORE_TRANSFER_OUT_RTL          numeric
+, STORE_TRANSFER_OUT_CST          numeric
+, STORE_MOOS_QTY                  int64
+, STORE_MOOS_RTL                  numeric
+, STORE_MOOS_CST                  numeric
+, STORE_ADJUSTMENT_QTY            int64
+, STORE_ADJUSTMENT_RTL            numeric
+, STORE_ADJUSTMENT_CST            numeric
+, STORE_DAMAGE_QTY                int64
+, STORE_DAMAGE_RTL                numeric
+, STORE_DAMAGE_CST                numeric
+, STORE_RTV_QTY                   int64
+, STORE_RTV_RTL                   numeric
+, STORE_RTV_CST                   numeric
+, STORE_OPEN_CLAIM_QTY            int64
+, STORE_OPEN_CLAIM_RTL            numeric
+, STORE_OPEN_CLAIM_CST            numeric
+, RETURN_QTY                      int64
+, RETURN_RTL                      numeric
+, RETURN_CST                      numeric
+, NET_SALES_QTY                   int64
+, NET_SALES_RTL                   numeric
+, NET_SALES_CST                   numeric
+, NET_SALES_REGULAR_QTY           int64
+, NET_SALES_REGULAR_RTL           numeric
+, NET_SALES_REGULAR_CST           numeric
+, NET_SALES_MARKUP_QTY            int64
+, NET_SALES_MARKUP_RTL            numeric
+, NET_SALES_MARKUP_CST            numeric
+, NET_SALES_MARKDOWN_QTY          int64
+, NET_SALES_MARKDOWN_RTL          numeric
+, NET_SALES_MARKDOWN_CST          numeric
+, NET_SALES_PROMO_QTY             int64
+, NET_SALES_PROMO_RTL             numeric
+, NET_SALES_PROMO_CST             numeric
+, NET_SALES_CLRNCE_QTY            int64
+, NET_SALES_CLRNCE_RTL            numeric
+, NET_SALES_CLRNCE_CST            numeric
+, SALES_EMPLOYEE_DISCOUNT_QTY     int64
+, SALES_EMPLOYEE_DISCOUNT_RTL     numeric
+, SALES_EMPLOYEE_DISCOUNT_CST     numeric
+, SALES_ORDER_QTY                 int64
+, SALES_ORDER_RTL                 numeric
+, SALES_ORDER_CST                 numeric
+, STORE_PRE_ALLOCATED_QTY         int64
+, STORE_PRE_ALLOCATED_RTL         numeric
+, STORE_PRE_ALLOCATED_CST         numeric
+, STORE_ALLOCATED_QTY             int64
+, STORE_ALLOCATED_RTL             numeric
+, STORE_ALLOCATED_CST             numeric
+, STORE_CARTON_SHORT_QTY          int64
+, STORE_CARTON_SHORT_RTL          numeric
+, STORE_CARTON_SHORT_CST          numeric
+, STORE_SHIPMENT_QTY              int64
+, STORE_SHIPMENT_RTL              numeric
+, STORE_SHIPMENT_CST              numeric
+, STORE_TRANSFER_RESERVED_QTY     int64
+, STORE_TRANSFER_RESERVED_RTL     numeric
+, STORE_TRANSFER_RESERVED_CST     numeric
+, STORE_TRANSFER_EXPECTED_QTY     int64
+, STORE_TRANSFER_EXPECTED_RTL     numeric
+, STORE_TRANSFER_EXPECTED_CST     numeric
+, STORE_IN_TRANSIT_QTY            int64
+, STORE_IN_TRANSIT_RTL            numeric
+, STORE_IN_TRANSIT_CST            numeric
+, STORE_CUSTOMER_RESERVED_QTY     int64
+, STORE_CUSTOMER_RESERVED_RTL     numeric
+, STORE_CUSTOMER_RESERVED_CST     numeric
+, STORE_PROJECTED_SHRINK_QTY      int64
+, STORE_PROJECTED_SHRINK_RTL      numeric
+, STORE_PROJECTED_SHRINK_CST      numeric
+, STORE_PHYS_INV_PRELIM_CNT_QTY   int64
+, STORE_PHYS_INV_PRELIM_CNT_RTL   numeric
+, STORE_PHYS_INV_PRELIM_CNT_CST   numeric
+, STORE_PHYS_INV_FINAL_CNT_QTY    int64
+, STORE_PHYS_INV_FINAL_CNT_RTL    numeric
+, STORE_PHYS_INV_FINAL_CNT_CST    numeric
+, STR_PHYS_INV_PRELIM_SHRNK_CST   numeric
+, STR_PHYS_INV_PRELIM_SHRNK_QTY   int64
+, STR_PHYS_INV_PRELIM_SHRNK_RTL   numeric
+, STORE_PHYS_INV_FINAL_SHRNK_CST  numeric
+, STORE_PHYS_INV_FINAL_SHRNK_QTY  int64
+, STORE_PHYS_INV_FINAL_SHRNK_RTL  numeric
+, STORE_RECEIPT_HIST_QTY          int64
+, STORE_RECEIPT_HIST_RTL          numeric
+, STORE_RECEIPT_HIST_CST          numeric
+, PERM_MD_CALC_RTL                numeric
+, PERM_MD_CALC_QTY                int64
+, PERM_MD_CALC_CST                numeric
+, STORE_TO_DC_TRANSFER_OUT_QTY    int64
+, STORE_TO_DC_TRANSFER_OUT_RTL    numeric
+, STORE_TO_DC_TRANSFER_OUT_CST    numeric
+, STORE_TO_STORE_IN_TRANSIT_QTY   int64
+, STORE_TO_STORE_IN_TRANSIT_RTL   numeric
+, STORE_TO_STORE_IN_TRANSIT_CST   numeric
+, STORE_TO_STORE_TRANSFER_IN_QTY  int64
+, STORE_TO_STORE_TRANSFER_IN_RTL  numeric
+, STORE_TO_STORE_TRANSFER_IN_CST  numeric
+, STORE_TO_STORE_TRASFR_OUT_QTY   int64
+, STORE_TO_STORE_TRASFR_OUT_RTL   numeric
+, STORE_TO_STORE_TRASFR_OUT_CST   numeric
+, STORE_TO_STORE_PRE_ALOCD_QTY    int64
+, STORE_TO_STORE_PRE_ALOCD_RTL    numeric
+, STORE_TO_STORE_PRE_ALOCD_CST    numeric
+, STORE_TO_STORE_ALLOCATED_QTY    int64
+, STORE_TO_STORE_ALLOCATED_RTL    numeric
+, STORE_TO_STORE_ALLOCATED_CST    numeric
+, DC_TO_STORE_IN_TRANSIT_QTY      int64
+, DC_TO_STORE_IN_TRANSIT_RTL      numeric
+, DC_TO_STORE_IN_TRANSIT_CST      numeric
+, DC_TO_STORE_TRANSFER_IN_QTY     int64
+, DC_TO_STORE_TRANSFER_IN_RTL     numeric
+, DC_TO_STORE_TRANSFER_IN_CST     numeric
+, DC_TO_STORE_PRE_ALLOCATED_QTY   int64
+, DC_TO_STORE_PRE_ALLOCATED_RTL   numeric
+, DC_TO_STORE_PRE_ALLOCATED_CST   numeric
+, DC_TO_STORE_ALLOCATED_QTY       int64
+, DC_TO_STORE_ALLOCATED_RTL       numeric
+, DC_TO_STORE_ALLOCATED_CST       numeric
+, LAST_UPDATE_TS                  timestamp
+, EXTRACT_TS                      timestamp
+);
+!
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE edl_stage.plus_merch_plan_week
+(
+  CHAIN_NBR                      int64
+, FISCAL_WEEK_NBR                int64
+, SUBCLASS_NBR                   numeric
+, MERCH_CHANNEL_TYPE_CD          string
+, PLAN_CHANNEL_TYPE_CD           string
+, PLAN_VERSION_NBR               numeric
+, MERCH_PLAN_TYPE_CD             string
+, PLAN_INITIAL_MARKUP_RTL        numeric
+, PLAN_ON_ORDER_QTY              numeric
+, PLAN_ON_ORDER_RTL              numeric
+, PLAN_ON_ORDER_CST              numeric
+, PLAN_DC_RECEIPTS_QTY           numeric
+, PLAN_DC_RECEIPTS_RTL           numeric
+, PLAN_DC_RECEIPTS_CST           numeric
+, PLAN_DC_BOP_QTY                numeric
+, PLAN_DC_BOP_RTL                numeric
+, PLAN_DC_BOP_CST                numeric
+, PLAN_DC_ON_HAND_QTY            numeric
+, PLAN_DC_ON_HAND_RTL            numeric
+, PLAN_DC_ON_HAND_CST            numeric
+, PLAN_DC_DISTRIBUTED_OUT_QTY    numeric
+, PLAN_DC_DISTRIBUTED_OUT_RTL    numeric
+, PLAN_DC_DISTRIBUTED_OUT_CST    numeric
+, PLAN_DC_PERM_MARKDOWN_QTY      numeric
+, PLAN_DC_PERM_MARKDOWN_RTL      numeric
+, PLAN_DC_PERM_MARKDOWN_CST      numeric
+, PLAN_DC_ADJUSTMENT_QTY         numeric
+, PLAN_DC_ADJUSTMENT_RTL         numeric
+, PLAN_DC_ADJUSTMENT_CST         numeric
+, PLAN_DC_SHRINK_QTY             numeric
+, PLAN_DC_SHRINK_RTL             numeric
+, PLAN_DC_SHRINK_CST             numeric
+, PLAN_IN_TRANSIT_QTY            numeric
+, PLAN_IN_TRANSIT_RTL            numeric
+, PLAN_IN_TRANSIT_CST            numeric
+, PLAN_STORE_RECEIPTS_QTY        numeric
+, PLAN_STORE_RECEIPTS_RTL        numeric
+, PLAN_STORE_RECEIPTS_CST        numeric
+, PLAN_STORE_BOP_QTY             numeric
+, PLAN_STORE_BOP_RTL             numeric
+, PLAN_STORE_BOP_CST             numeric
+, PLAN_STORE_COUNT_QTY           numeric
+, PLAN_STORE_ON_HAND_QTY         numeric
+, PLAN_STORE_ON_HAND_RTL         numeric
+, PLAN_STORE_ON_HAND_CST         numeric
+, PLAN_STORE_SALES_QTY           numeric
+, PLAN_STORE_SALES_RTL           numeric
+, PLAN_STORE_SALES_CST           numeric
+, PLAN_MARKUP_INITIAL            numeric
+, PLAN_MARKUP_QTY                numeric
+, PLAN_MARKUP_RTL                numeric
+, PLAN_MARKUP_CST                numeric
+, PLAN_STORE_PERM_MARKDOWN_QTY   numeric
+, PLAN_STORE_PERM_MARKDOWN_RTL   numeric
+, PLAN_STORE_PERM_MARKDOWN_CST   numeric
+, PLAN_STORE_PROMO_MARKDOWN_QTY  numeric
+, PLAN_STORE_PROMO_MARKDOWN_RTL  numeric
+, PLAN_STORE_PROMO_MARKDOWN_CST  numeric
+, PLAN_STORE_SHRINK_QTY          numeric
+, PLAN_STORE_SHRINK_RTL          numeric
+, PLAN_STORE_SHRINK_CST          numeric
+, PLAN_STORE_ADJUSTMENT_QTY      numeric
+, PLAN_STORE_ADJUSTMENT_RTL      numeric
+, PLAN_STORE_ADJUSTMENT_CST      numeric
+, PLAN_TOTAL_BOP_QTY             numeric
+, PLAN_TOTAL_BOP_RTL             numeric
+, PLAN_TOTAL_BOP_CST             numeric
+, PLAN_TOTAL_ON_HAND_QTY         numeric
+, PLAN_TOTAL_ON_HAND_RTL         numeric
+, PLAN_TOTAL_ON_HAND_CST         numeric
+, PLAN_EROSION_FACTOR_QTY        numeric
+, PLAN_EROSION_FACTOR_RTL        numeric
+, PLAN_EROSION_FACTOR_CST        numeric
+, PLAN_EROSION_QTY               numeric
+, PLAN_EROSION_RTL               numeric
+, PLAN_EROSION_CST               numeric
+, PLAN_STORES_CST                numeric
+, PLAN_ADDITIONAL_MARKUP_RTL     numeric
+, PLAN_ADDITIONAL_MARKUP_CST     numeric
+, PLAN_ADDITIONAL_MARKUP_QTY     numeric
+, CHAIN_PLAN_TYPE_DESC           int64
+, LAST_UPDATE_TS                 timestamp
+, EXTRACT_TS                     timestamp
+);
+!
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE analytic_mart.plus_fact_sales_day
+(
+   item_key                               string
+ , store_key                              string
+ , brand_cd                               string
+ , sku_id                                 string
+ , store_id                               string
+ , transaction_dt                         date
+ , sales_channel_type_cd                  string
+ , price_type_cd                          string
+ , return_qty                             int64
+ , return_cst_amt                         numeric
+ , return_rtl_amt                         numeric
+ , ecomm_credit_return_qty                int64
+ , ecomm_credit_return_rtl_amt            numeric
+ , ecomm_credit_return_cst_amt            numeric
+ , sales_qty                              int64
+ , sales_rtl_amt                          numeric
+ , sales_cst_amt                          numeric
+ , sales_order_qty                        int64
+ , sales_order_rtl_amt                    numeric
+ , sales_order_cst_amt                    numeric
+ , discount_markdown_rtl_amt              numeric
+ , sales_discount_markdown_rtl_amt        numeric
+ , return_discount_markdown_rtl_amt       numeric
+ , productive_sales_qty                   int64
+ , productive_sales_rtl_amt               numeric
+ , productive_sales_cst_amt               numeric
+ , gross_sales_qty                        int64
+ , gross_sales_rtl_amt                    numeric
+ , gross_sales_cst_amt                    numeric
+ , net_sales_qty                          int64
+ , net_sales_rtl_amt                      numeric
+ , net_sales_cst_amt                      numeric
+ , gross_profit_productive_sales_rtl_amt  numeric
+ , gross_profit_return_rtl_amt            numeric
+ , gross_profit_net_sales_rtl_amt         numeric
+ , style_locator_qty                      int64
+ , style_locator_rtl_amt                  numeric
+ , style_locator_cst_amt                  numeric
+ , merch_discount_amt                     numeric
+ , non_merch_discount_amt                 numeric
+ , commission_amt                         numeric
+ , fee_amt                                numeric
+ , customer_paid_tax_amt                  numeric
+ , company_owed_tax_amt                   numeric
+ , tax_amt                                numeric
+ , edl_create_tms                         timestamp
+ , edl_create_job_nam                     string
+ , edl_last_update_tms                    timestamp
+ , edl_last_update_job_nam                string
+);
+!
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE analytic_mart.plus_fact_demand_sales_day
+(
+   item_key                                    string
+ , store_key                                   string
+ , brand_cd                                    string
+ , sku_id                                      string
+ , store_id                                    string
+ , transaction_dt                              date
+ , demand_order_type_cd                        string
+ , ship_to_cd                                  string
+ , ship_to_des                                 string
+ , price_type_cd                               string
+ , demand_net_sales_qty                        int64
+ , demand_net_sales_rtl_amt                    numeric
+ , demand_net_sales_cst_amt                    numeric
+ , demand_productive_sales_qty                 int64
+ , demand_productive_sales_rtl_amt             numeric
+ , demand_productive_sales_cst_amt             numeric
+ , demand_productive_trans_cnt                 int64
+ , demand_discount_markdown_rtl_amt            numeric
+ , demand_merch_discount_amt                   numeric
+ , demand_non_merch_discount_amt               numeric
+ , demand_fee_amt                              numeric
+ , demand_customer_paid_tax_amt                numeric
+ , demand_company_owed_tax_amt                 numeric
+ , store_ffllm_net_sales_qty                   int64
+ , store_ffllm_net_sales_rtl_amt               numeric
+ , store_ffllm_net_sales_cst_amt               numeric
+ , store_ffllm_productive_sales_qty            int64
+ , store_ffllm_productive_sales_rtl_amt        numeric
+ , store_ffllm_productive_sales_cst_amt        numeric
+ , store_productive_trans_cnt                  int64
+ , dc_ffllm_net_sales_qty                      int64
+ , dc_ffllm_net_sales_rtl_amt                  numeric
+ , dc_ffllm_net_sales_cst_amt                  numeric
+ , dc_ffllm_productive_sales_qty               int64
+ , dc_ffllm_productive_sales_rtl_amt           numeric
+ , dc_ffllm_productive_sales_cst_amt           numeric
+ , dc_productive_trans_cnt                     int64
+ , edl_create_tms                              timestamp
+ , edl_create_job_nam                          string
+ , edl_last_update_tms                         timestamp
+ , edl_last_update_job_nam                     string
+);
+!
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE analytic_mart.plus_fact_subclass_store_day
+(
+    subclass_key                         string
+  , store_key                            string
+  , brand_cd                             string
+  , subclass_id                          string
+  , store_id                             string
+  , transaction_dt                       date
+  , sales_channel_type_cd                string
+  , price_type_cd                        string
+  , store_on_hand_qty                    int64
+  , store_on_hand_rtl_amt                numeric
+  , store_on_hand_cst_amt                numeric
+  , store_on_hand_regular_qty            int64
+  , store_on_hand_regular_rtl_amt        numeric
+  , store_on_hand_regular_cst_amt        numeric
+  , store_on_hand_markup_qty             int64
+  , store_on_hand_markup_rtl_amt         numeric
+  , store_on_hand_markup_cst_amt         numeric
+  , store_on_hand_markdown_qty           int64
+  , store_on_hand_markdown_rtl_amt       numeric
+  , store_on_hand_markdown_cst_amt       numeric
+  , store_on_hand_promo_qty              int64
+  , store_on_hand_promo_rtl_amt          numeric
+  , store_on_hand_promo_cst_amt          numeric
+  , store_on_hand_clrnce_qty             int64
+  , store_on_hand_clrnce_rtl_amt         numeric
+  , store_on_hand_clrnce_cst_amt         numeric
+  , store_non_sellable_qty               int64
+  , store_non_sellable_rtl_amt           numeric
+  , store_non_sellable_cst_amt           numeric
+  , store_markup_qty                     int64
+  , store_markup_rtl_amt                 numeric
+  , store_markup_cst_amt                 numeric
+  , store_markdown_qty                   int64
+  , store_markdown_rtl_amt               numeric
+  , store_markdown_cst_amt               numeric
+  , promo_markdown_qty                   int64
+  , promo_markdown_rtl_amt               numeric
+  , promo_markdown_cst_amt               numeric
+  , store_clrnce_markdown_qty            int64
+  , store_clrnce_markdown_rtl_amt        numeric
+  , store_clrnce_markdown_cst_amt        numeric
+  , store_receipt_qty                    int64
+  , store_receipt_rtl_amt                numeric
+  , store_receipt_cst_amt                numeric
+  , store_direct_receipt_qty             int64
+  , store_direct_receipt_rtl_amt         numeric
+  , store_direct_receipt_cst_amt         numeric
+  , store_transfer_in_qty                int64
+  , store_transfer_in_rtl_amt            numeric
+  , store_transfer_in_cst_amt            numeric
+  , store_transfer_out_qty               int64
+  , store_transfer_out_rtl_amt           numeric
+  , store_transfer_out_cst_amt           numeric
+  , store_moos_qty                       int64
+  , store_moos_rtl_amt                   numeric
+  , store_moos_cst_amt                   numeric
+  , store_adjustment_qty                 int64
+  , store_adjustment_rtl_amt             numeric
+  , store_adjustment_cst_amt             numeric
+  , store_damage_qty                     int64
+  , store_damage_rtl_amt                 numeric
+  , store_damage_cst_amt                 numeric
+  , store_rtv_qty                        int64
+  , store_rtv_rtl_amt                    numeric
+  , store_rtv_cst_amt                    numeric
+  , store_open_claim_qty                 int64
+  , store_open_claim_rtl_amt             numeric
+  , store_open_claim_cst_amt             numeric
+  , return_qty                           int64
+  , return_rtl_amt                       numeric
+  , return_cst_amt                       numeric
+  , net_sales_qty                        int64
+  , net_sales_rtl_amt                    numeric
+  , net_sales_cst_amt                    numeric
+  , net_sales_regular_qty                int64
+  , net_sales_regular_rtl_amt            numeric
+  , net_sales_regular_cst_amt            numeric
+  , net_sales_markup_qty                 int64
+  , net_sales_markup_rtl_amt             numeric
+  , net_sales_markup_cst_amt             numeric
+  , net_sales_markdown_qty               int64
+  , net_sales_markdown_rtl_amt           numeric
+  , net_sales_markdown_cst_amt           numeric
+  , net_sales_promo_qty                  int64
+  , net_sales_promo_rtl_amt              numeric
+  , net_sales_promo_cst_amt              numeric
+  , net_sales_clrnce_qty                 int64
+  , net_sales_clrnce_rtl_amt             numeric
+  , net_sales_clrnce_cst_amt             numeric
+  , sales_employee_discount_qty          int64
+  , sales_employee_discount_rtl_amt      numeric
+  , sales_employee_discount_cst_amt      numeric
+  , sales_order_qty                      int64
+  , sales_order_rtl_amt                  numeric
+  , sales_order_cst_amt                  numeric
+  , store_pre_allocated_qty              int64
+  , store_pre_allocated_rtl_amt          numeric
+  , store_pre_allocated_cst_amt          numeric
+  , store_allocated_qty                  int64
+  , store_allocated_rtl_amt              numeric
+  , store_allocated_cst_amt              numeric
+  , store_carton_short_qty               int64
+  , store_carton_short_rtl_amt           numeric
+  , store_carton_short_cst_amt           numeric
+  , store_shipment_qty                   int64
+  , store_shipment_rtl_amt               numeric
+  , store_shipment_cst_amt               numeric
+  , store_transfer_reserved_qty          int64
+  , store_transfer_reserved_rtl_amt      numeric
+  , store_transfer_reserved_cst_amt      numeric
+  , store_transfer_expected_qty          int64
+  , store_transfer_expected_rtl_amt      numeric
+  , store_transfer_expected_cst_amt      numeric
+  , store_in_transit_qty                 int64
+  , store_in_transit_rtl_amt             numeric
+  , store_in_transit_cst_amt             numeric
+  , store_customer_reserved_qty          int64
+  , store_customer_reserved_rtl_amt      numeric
+  , store_customer_reserved_cst_amt      numeric
+  , store_projected_shrink_qty           int64
+  , store_projected_shrink_rtl_amt       numeric
+  , store_projected_shrink_cst_amt       numeric
+  , store_phys_inv_prelim_cnt_qty        int64
+  , store_phys_inv_prelim_cnt_rtl_amt    numeric
+  , store_phys_inv_prelim_cnt_cst_amt    numeric
+  , store_phys_inv_final_cnt_qty         int64
+  , store_phys_inv_final_cnt_rtl_amt     numeric
+  , store_phys_inv_final_cnt_cst_amt     numeric
+  , str_phys_inv_prelim_shrnk_cst_amt    numeric
+  , str_phys_inv_prelim_shrnk_qty        int64
+  , str_phys_inv_prelim_shrnk_rtl_amt    numeric
+  , store_phys_inv_final_shrnk_cst_amt   numeric
+  , store_phys_inv_final_shrnk_qty       int64
+  , store_phys_inv_final_shrnk_rtl_amt   numeric
+  , store_receipt_hist_qty               int64
+  , store_receipt_hist_rtl_amt           numeric
+  , store_receipt_hist_cst_amt           numeric
+  , perm_md_calc_rtl_amt                 numeric
+  , perm_md_calc_qty                     int64
+  , perm_md_calc_cst_amt                 numeric
+  , store_to_dc_transfer_out_qty         int64
+  , store_to_dc_transfer_out_rtl_amt     numeric
+  , store_to_dc_transfer_out_cst_amt     numeric
+  , store_to_store_in_transit_qty        int64
+  , store_to_store_in_transit_rtl_amt    numeric
+  , store_to_store_in_transit_cst_amt    numeric
+  , store_to_store_transfer_in_qty       int64
+  , store_to_store_transfer_in_rtl_amt   numeric
+  , store_to_store_transfer_in_cst_amt   numeric
+  , store_to_store_trasfr_out_qty        int64
+  , store_to_store_trasfr_out_rtl_amt    numeric
+  , store_to_store_trasfr_out_cst_amt    numeric
+  , store_to_store_pre_alocd_qty         int64
+  , store_to_store_pre_alocd_rtl_amt     numeric
+  , store_to_store_pre_alocd_cst_amt     numeric
+  , store_to_store_allocated_qty         int64
+  , store_to_store_allocated_rtl_amt     numeric
+  , store_to_store_allocated_cst_amt     numeric
+  , dc_to_store_in_transit_qty           int64
+  , dc_to_store_in_transit_rtl_amt       numeric
+  , dc_to_store_in_transit_cst_amt       numeric
+  , dc_to_store_transfer_in_qty          int64
+  , dc_to_store_transfer_in_rtl_amt      numeric
+  , dc_to_store_transfer_in_cst_amt      numeric
+  , dc_to_store_pre_allocated_qty        int64
+  , dc_to_store_pre_allocated_rtl_amt    numeric
+  , dc_to_store_pre_allocated_cst_amt    numeric
+  , dc_to_store_allocated_qty            int64
+  , dc_to_store_allocated_rtl_amt        numeric
+  , dc_to_store_allocated_cst_amt        numeric
+  , edl_create_tms                       timestamp
+  , edl_create_job_nam                   string
+  , edl_last_update_tms                  timestamp
+  , edl_last_update_job_nam              string
+);
+!
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE analytic_mart.plus_fact_merch_plan_week
+(
+    subclass_key                       string
+  , brand_cd                           string
+  , fiscal_week_nbr                    int64
+  , subclass_id                        string
+  , merch_channel_type_cd              string
+  , plan_channel_type_cd               string
+  , plan_version_nbr                   numeric
+  , merch_plan_type_cd                 string
+  , plan_initial_markup_rtl_amt        numeric
+  , plan_on_order_qty                  numeric
+  , plan_on_order_rtl_amt              numeric
+  , plan_on_order_cst_amt              numeric
+  , plan_dc_receipts_qty               numeric
+  , plan_dc_receipts_rtl_amt           numeric
+  , plan_dc_receipts_cst_amt           numeric
+  , plan_dc_bop_qty                    numeric
+  , plan_dc_bop_rtl_amt                numeric
+  , plan_dc_bop_cst_amt                numeric
+  , plan_dc_on_hand_qty                numeric
+  , plan_dc_on_hand_rtl_amt            numeric
+  , plan_dc_on_hand_cst_amt            numeric
+  , plan_dc_distributed_out_qty        numeric
+  , plan_dc_distributed_out_rtl_amt    numeric
+  , plan_dc_distributed_out_cst_amt    numeric
+  , plan_dc_perm_markdown_qty          numeric
+  , plan_dc_perm_markdown_rtl_amt      numeric
+  , plan_dc_perm_markdown_cst_amt      numeric
+  , plan_dc_adjustment_qty             numeric
+  , plan_dc_adjustment_rtl_amt         numeric
+  , plan_dc_adjustment_cst_amt         numeric
+  , plan_dc_shrink_qty                 numeric
+  , plan_dc_shrink_rtl_amt             numeric
+  , plan_dc_shrink_cst_amt             numeric
+  , plan_in_transit_qty                numeric
+  , plan_in_transit_rtl_amt            numeric
+  , plan_in_transit_cst_amt            numeric
+  , plan_store_receipts_qty            numeric
+  , plan_store_receipts_rtl_amt        numeric
+  , plan_store_receipts_cst_amt        numeric
+  , plan_store_bop_qty                 numeric
+  , plan_store_bop_rtl_amt             numeric
+  , plan_store_bop_cst_amt             numeric
+  , plan_store_count_qty               numeric
+  , plan_store_on_hand_qty             numeric
+  , plan_store_on_hand_rtl_amt         numeric
+  , plan_store_on_hand_cst_amt         numeric
+  , plan_store_sales_qty               numeric
+  , plan_store_sales_rtl_amt           numeric
+  , plan_store_sales_cst_amt           numeric
+  , plan_markup_initial_amt            numeric
+  , plan_markup_qty                    numeric
+  , plan_markup_rtl_amt                numeric
+  , plan_markup_cst_amt                numeric
+  , plan_store_perm_markdown_qty       numeric
+  , plan_store_perm_markdown_rtl_amt   numeric
+  , plan_store_perm_markdown_cst_amt   numeric
+  , plan_store_promo_markdown_qty      numeric
+  , plan_store_promo_markdown_rtl_amt  numeric
+  , plan_store_promo_markdown_cst_amt  numeric
+  , plan_store_shrink_qty              numeric
+  , plan_store_shrink_rtl_amt          numeric
+  , plan_store_shrink_cst_amt          numeric
+  , plan_store_adjustment_qty          numeric
+  , plan_store_adjustment_rtl_amt      numeric
+  , plan_store_adjustment_cst_amt      numeric
+  , plan_total_bop_qty                 numeric
+  , plan_total_bop_rtl_amt             numeric
+  , plan_total_bop_cst_amt             numeric
+  , plan_total_on_hand_qty             numeric
+  , plan_total_on_hand_rtl_amt         numeric
+  , plan_total_on_hand_cst_amt         numeric
+  , plan_erosion_factor_qty            numeric
+  , plan_erosion_factor_rtl_amt        numeric
+  , plan_erosion_factor_cst_amt        numeric
+  , plan_erosion_qty                   numeric
+  , plan_erosion_rtl_amt               numeric
+  , plan_erosion_cst_amt               numeric
+  , plan_stores_cst_amt                numeric
+  , plan_additional_markup_rtl         numeric
+  , plan_additional_markup_cst_amt     numeric
+  , plan_additional_markup_qty_amt     numeric
+  , chain_plan_type_des                int64
+  , edl_create_tms                     timestamp
+  , edl_create_job_nam                 string
+  , edl_last_update_tms                timestamp
+  , edl_last_update_job_nam            string
+);
+!
+
+bq query --replace=true --use_legacy_sql=false <<!
+CREATE TABLE analytic_mart.plus_fact_demand_sales_week
+(
+   item_key                                    string
+ , store_key                                   string
+ , brand_cd                                    string
+ , sku_id                                      string
+ , store_id                                    string
+ , fiscal_week_nbr                             int64
+ , demand_order_type_cd                        string
+ , ship_to_cd                                  string
+ , ship_to_des                                 string
+ , price_type_cd                               string
+ , demand_net_sales_qty                        int64
+ , demand_net_sales_rtl_amt                    numeric
+ , demand_net_sales_cst_amt                    numeric
+ , demand_productive_sales_qty                 int64
+ , demand_productive_sales_rtl_amt             numeric
+ , demand_productive_sales_cst_amt             numeric
+ , demand_productive_trans_cnt                 int64
+ , demand_discount_markdown_rtl_amt            numeric
+ , demand_merch_discount_amt                   numeric
+ , demand_non_merch_discount_amt               numeric
+ , demand_fee_amt                              numeric
+ , demand_customer_paid_tax_amt                numeric
+ , demand_company_owed_tax_amt                 numeric
+ , store_ffllm_net_sales_qty                   int64
+ , store_ffllm_net_sales_rtl_amt               numeric
+ , store_ffllm_net_sales_cst_amt               numeric
+ , store_ffllm_productive_sales_qty            int64
+ , store_ffllm_productive_sales_rtl_amt        numeric
+ , store_ffllm_productive_sales_cst_amt        numeric
+ , store_productive_trans_cnt                  int64
+ , dc_ffllm_net_sales_qty                      int64
+ , dc_ffllm_net_sales_rtl_amt                  numeric
+ , dc_ffllm_net_sales_cst_amt                  numeric
+ , dc_ffllm_productive_sales_qty               int64
+ , dc_ffllm_productive_sales_rtl_amt           numeric
+ , dc_ffllm_productive_sales_cst_amt           numeric
+ , dc_productive_trans_cnt                     int64
+ , edl_create_tms                              timestamp
+ , edl_create_job_nam                          string
+ , edl_last_update_tms                         timestamp
+ , edl_last_update_job_nam                     string
+);
+!
+

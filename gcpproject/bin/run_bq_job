@@ -1,0 +1,113 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+USAGE="USAGE: `basename $0` [-he script_name] "
+data_root="/${env_data_root}"
+
+
+#Process command line
+while getopts he: OPT; do
+    case "$OPT" in
+        h)
+            echo $USAGE
+            echo "    Execute scripts from ${HOME}/script.
+  When run without paramters, run_bq_job for another copy of itself running, and quits if it 
+  detects another run_bq_job process. Otherwise it checks ${data_root}/ctl for any files with a 
+  '.ctl' extention and does the following. 
+    -Executes the script listed in the ctl file 
+    -Redirects standard out and error to a log file in ${HOME}/log
+    -Keaps track of all running scripts and loads edl_stage.bq_job_status with the result. 
+    -Only reads ${data_root}/ctl once (in prod, cron executes run_bq_job every five minutes)
+    -If there is no work to do, it deletes its log file before exiting
+  If -e switch is specified, it will look for the given script in the script directory and 
+  execute it.
+  NOTE: it only executes scripts with execute permission stored in ${HOME}/script
+  ToDo: Change self check to use a run marker file in ${data_root}/ctl directory instead of 
+    using the ps command. This change will be more reliable and run_bq_job -e processes will 
+    not interfere with cron execution. Extra care will be need to make sure that script failure 
+    does not leave run markers behind that erroneously prevent subsequent jobs from running.
+"
+            exit 0
+            ;;
+        e)  script_name=$OPTARG
+            ;;
+        \?)
+            # getopts issues an error message
+            echo $USAGE >&2
+            exit 1
+            ;;
+    esac
+done
+
+# Remove the switches we parsed above.
+shift `expr $OPTIND - 1`
+
+##### Define local functions #####
+#
+run_job () {
+    local script=$1
+    local ctl=${2:-noctl}
+    
+    unset ERROR_CD
+    unset ERROR_MSG
+
+    exec_log $script
+    echo "Running ${script}"
+    ${script_path}/${script}
+	rc_check $? $script Warning
+
+    utscript=${script%%.*}-validation.bq
+#    if [ -f $HOME/script/ut/${utscript} ]; then
+    if [ -x ${script_path}/val/${utscript} ]; then
+        echo "Running validation script ${utscript}"		
+        ${script_path}/val/${utscript}
+        rc_check $? $script 'ValidationError'
+    fi
+    if [ $ctl != "noctl" ]; then
+	    mv $ctl ${arc_path}	
+        rc_check $? "Archive control file" Warning
+    fi
+    log_job_status $script $ctl
+    load_job_status $script
+}
+    
+##### Main #####
+#
+pid=$$
+program=`basename $0`
+ctl_path=${data_root}/ctl
+arc_path=${data_root}/arc
+declare -a children
+
+if [ -n "$script_name" ]; then
+    echo "Executing ${script_name}..."
+    (run_job $script_name )
+    exit 0
+fi
+exec_log $program
+
+#Check to see if prior run script is still up
+if ps --no-headers -C $program |grep -v $pid; then
+    echo "pid: $pid"
+    ps -C $program |grep -v $pid
+    echo "$program already running - shutting down..."
+    exit 0
+fi
+i=0
+ls ${ctl_path}/*.ctl 2>/dev/null |( while read ctl_file
+    do
+        script_name=`cat $ctl_file`
+		
+        run_job $script_name $ctl_file &
+        children[${i}]=$!
+        ((i++))
+    done
+    if [ ${#children[@]} -gt 0 ]; then
+        date
+        wait ${children[@]}
+        date
+    fi
+) 
+if [ ! -s ${LOG_FILE} ]; then
+    rm $LOG_FILE
+fi

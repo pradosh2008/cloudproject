@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.transaction_fee  'gs://p-asna-datasink-003/transaction_fee/*'
+rc_check $? "Load edl_landing"
+
+#COPY DATA TO ARCHIVE
+bq cp --force edl_conform.transaction_fee edl_archive.transaction_fee
+rc_check $? "Archive"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.transaction_fee --use_legacy_sql=false <<!
+select l.*
+from edl_landing.transaction_fee l
+left join edl_conform.transaction_fee c
+    on  l.transaction_key = c.transaction_key
+    and l.transaction_fee_line_num = c.transaction_fee_line_num
+    where c.transaction_key is null
+!
+rc_check $? "Append edl_conform"

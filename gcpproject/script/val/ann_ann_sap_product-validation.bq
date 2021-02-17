@@ -1,0 +1,35 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (select
+    sku
+    , batch_id
+    , count(*)
+    from edl_stage.pre_sap_product
+    group by 1,2
+    having count(*)>1
+)' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.ann_sap_product l
+left join edl_stage.pre_sap_product s
+    on l.sku = s.sku
+where s.sku is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

@@ -1,0 +1,12 @@
+[
+    { "name": "chain_id", "type": "integer" }
+   ,{ "name": "sku_id", "type": "integer" }
+   ,{ "name": "CURRENT_SKU_NBR", "type": "integer" }
+   ,{ "name": "CURRENT_SKU_CD", "type": "string" }
+   ,{ "name": "CURRENT_COLOR_NBR", "type": "string" }
+   ,{ "name": "CURRENT_SIZE_NBR", "type": "string" }
+   ,{ "name": "CURRENT_STYLE_NBR", "type": "integer" }
+   ,{ "name": "CURRENT_SUBCLASS_NBR", "type": "integer" }
+   ,{ "name": "CURRENT_SKU_DESC", "type": "string" }
+]
+

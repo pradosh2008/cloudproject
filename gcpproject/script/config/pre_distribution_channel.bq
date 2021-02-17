@@ -1,0 +1,49 @@
+bq query --project_id='p-asna-analytics-002' --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_distribution_channel --use_legacy_sql=false <<!
+select 'A1' as distribution_channel_id
+		,	'Non-Merc Dist Channel' as distribution_channel_name
+		,	'ENT' as brand_cd
+UNION DISTINCT
+select '01' as distribution_channel_id
+		,	'Distribution Center' as distribution_channel_name
+		,	'ENT' as brand_cd
+UNION DISTINCT		
+select '99' as distribution_channel_id
+		,	'Corporate AW Site' as distribution_channel_name
+		,	'ENT' as brand_cd
+UNION DISTINCT
+select '90' as distribution_channel_id
+		,	'Intl Franchise Sales' as distribution_channel_name
+		,	'ENT' as brand_cd
+UNION DISTINCT
+select '02' as distribution_channel_id
+		,	'ATS' as distribution_channel_name
+		,	'ATS' as brand_cd
+UNION DISTINCT
+select '03' as distribution_channel_id
+		,	'ATS.COM' as distribution_channel_name
+		,	'ATS' as brand_cd
+UNION DISTINCT
+select '08' as distribution_channel_id
+		,	'ATF.COM' as distribution_channel_name
+		,	'ATF' as brand_cd
+UNION DISTINCT
+select '04' as distribution_channel_id
+		,	'ATF' as distribution_channel_name
+		,	'ATF' as brand_cd
+UNION DISTINCT
+select '06' as distribution_channel_id
+		,	'LOFT.COM' as distribution_channel_name
+		,	'LOFT' as brand_cd
+UNION DISTINCT
+select '05' as distribution_channel_id
+		,	'LOFT' as distribution_channel_name
+		,	'LOFT' as brand_cd
+UNION DISTINCT
+select '09' as distribution_channel_id
+		,	'LOS.COM' as distribution_channel_name
+		,	'LOS' as brand_cd
+UNION DISTINCT
+select '07' as distribution_channel_id
+		,	'LOS' as distribution_channel_name
+		,	'LOS' as brand_cd
+!

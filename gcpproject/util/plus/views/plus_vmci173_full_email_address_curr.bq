@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci173_full_email_address_curr as
+SELECT
+ stgn.ID_EMAIL
+,stgn.ID_EMAIL_DOMAIN
+,stgn.NU_BB_SOFT
+,stgn.NU_BB_HARD
+,stgn.CD_EMAIL_STYLE
+,stgn.DA_TMCI173_CREATED
+,stgn.DA_TMCI173_UPDATED
+,stgn.IN_CUST_SOURCE_FIRST
+,stgn.IN_CUST_SOURCE_2ND_FIRST
+,stgn.IN_CUST_SOURCE_LAST
+,stgn.IN_CUST_SOURCE_2ND_LAST
+,stgn.CD_EMAIL_INVALID
+,stgn.DA_FRST_HARD_BB
+,stgn.DA_LAST_HARD_BB
+,stgn.DA_FIRST_SOFT_BB
+,stgn.DA_LAST_SOFT_BB
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_EMAIL
+order by lbca.EXTRACT_TS desc) as row_num
+from \`${project}.edl_stage.plus_vmci173_full_email_address\` as lbca
+)  as stgn where row_num=1
+!

@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.promo_offer_linkage_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_promo_offer_linkage c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.promo_offer_linkage_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.promo_offer_linkage c
+left join jus_stage.work_promo_offer_linkage w
+    on  w.promo_offer_reference_key = c.promo_offer_reference_key
+where w.promo_offer_reference_key is null
+!
+bq cp --force jus_stage.promo_offer_linkage edl_archive.promo_offer_linkage
+bq cp --force jus_stage.promo_offer_linkage_new jus_stage.promo_offer_linkage
+bq rm --force jus_stage.promo_offer_linkage_new

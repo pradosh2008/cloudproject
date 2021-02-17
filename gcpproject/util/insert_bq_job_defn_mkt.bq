@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+INSERT edl_stage.bq_job_defn (job_def_id, brand_cd, bq_name, table_name, job_type, load_type) VALUES
+( 'S230','PLUS', 'plus_vmci024_dir_mkt_cl.bq', 'plus_vmci024_dir_mkt_cl', 'Stage', 'Daily' ),
+( 'S231','PLUS', 'plus_vmci025_mailing.bq', 'plus_vmci025_mailing', 'Stage', 'Daily' ),
+( 'S232','PLUS', 'plus_vmci051_clcst_gp_h.bq', 'plus_vmci051_clcst_gp_h', 'Stage', 'Daily' );
+!
+

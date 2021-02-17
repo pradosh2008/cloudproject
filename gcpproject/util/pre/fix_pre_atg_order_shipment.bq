@@ -1,0 +1,74 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --use_legacy_sql=false \
+          --destination_table=edl_stage.pre_atg_order_shipment_fix <<!
+select orderid
+    ,timestamp_add(lastmodifieddate, interval -1 hour) as lastmodifieddate
+    ,shippinggroupid
+    ,shippingmethod
+    ,description
+    ,shipondate
+    ,actualshipdate
+    ,shippinggroupstate
+    ,shippinggroupstatedetail
+    ,shippinggroupsubmitteddate
+    ,rawshipping
+    ,shippingtax
+    ,order_no
+    ,shippinggroupspecialinstructions
+    ,shippinggrouptype
+    ,hardgoodshippinggrouptrackingnumber
+    ,pickuptype
+    ,storenum
+    ,shippingaddressprefix
+    ,shippingaddressfirstname
+    ,shippingaddressmiddlename
+    ,shippingaddresslastname
+    ,shippingaddresssuffix
+    ,shippingaddresscompanyname
+    ,shippingaddressjobtitle
+    ,shippingaddresspobox
+    ,shippingaddressaddress1
+    ,shippingaddressaddress2
+    ,shippingaddressaddress3
+    ,shippingaddresscity
+    ,shippingaddressstateaddress
+    ,shippingaddresscountry
+    ,shippingaddresspostalcode
+    ,shippingaddressemail
+    ,shippingaddressphonenumber
+    ,shippingaddresscounty
+    ,shippingaddressfaxnumber
+    ,electronicshippinggroupemail
+    ,handlinginstructionstype
+    ,giftlistid
+    ,giftlistitemid
+    ,handlingmethod
+    ,handlinginstructionsshippinggroupid
+    ,handlinginstructionscommerceitemid
+    ,handlinginstructionsquantity
+    ,relationshiptype
+    ,shipitemrelshippinggroupid
+    ,shipitemrelcommerceitemid
+    ,shipitemrelquantity
+    ,returnedquantity
+    ,relationshipshipitemrelamount
+    ,shipitemrelstate
+    ,shipitemrelstatedetail
+    ,lowbound
+    ,highbound
+    ,shortshippedquantity
+    ,egcnumber
+    ,batch_id
+from edl_stage.pre_atg_order_shipment
+!
+rc_check $? "build fix"
+
+bq cp --force edl_stage.pre_atg_order_shipment edl_archive.pre_atg_order_shipment
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_shipment_fix edl_stage.pre_atg_order_shipment
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_shipment_fix
+rc_check $? "drop the temp table"
+

@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci105_chain_cust_curr as
+SELECT
+stg.ID_CHAIN
+,stg.ID_CUST
+,stg.DA_LAST_TRNS
+,stg.CD_MAIL
+,stg.FL_DO_NOT_PROMOTE
+,stg.FL_OK_TO_MAIL
+,stg.ID_STORE
+,stg.ID_EMP
+,stg.DA_FIRST_TRNS
+,stg.DA_MAIL_CODE
+,stg.FL_ACTIVE_HOUSCARD
+,stg.FL_HLDR_HOUSCARD
+,stg.FL_DECLIN_HOUSCARD
+,stg.DA_APPLY_HOUSCARD
+,stg.FL_ACTIVE_COBRAND
+,stg.FL_HLDR_COBRAND
+,stg.FL_CLOSED_HOUSCARD
+,stg.FL_CLOSED_COBRAND
+,stg.CD_ACCOUNT_TERM
+,stg.FL_SHOPS_JUNIORS
+,stg.FL_SHOPS_MISSES
+,stg.FL_SHOPS_PLUS
+,stg.FL_OK_TO_PHONE
+,stg.DA_CH_CUST_ADDED
+,stg.FL_OK_TO_STMT_INS
+,stg.IN_CUST_SOURCE_FIRST
+,stg.IN_CUST_SOURCE_2ND_FIRST
+,stg.IN_CUST_SOURCE_LAST
+,stg.IN_CUST_SOURCE_2ND_LAST
+,stg.CD_LBO_MIGRATION_STATUS
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN,lbca.ID_CUST
+order by lbca.EXTRACT_TS desc) as row_num
+from \`${project}.edl_stage.plus_vmci105_chain_cust\` as lbca
+)  as stg where row_num=1
+!

@@ -1,0 +1,7 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+$HOME/script/ann/pre_ut/pre_atg_order_header-validation.bq

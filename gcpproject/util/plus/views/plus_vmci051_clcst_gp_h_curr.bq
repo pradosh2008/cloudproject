@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --use_legacy_sql=false <<!
+create or replace view edl_stage.plus_vmci051_clcst_gp_h_curr as
+select
+ stgn.id_cust
+,stgn.id_dir_mkt_cell
+,stgn.cd_cell_cust_type
+,stgn.id_cell_version
+,stgn.fl_responded
+,stgn.cd_interaction
+,stgn.id_package
+,stgn.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_cust,lbca.id_dir_mkt_cell,lbca.cd_cell_cust_type,lbca.fl_responded,lbca.id_package 
+ order by lbca.extract_ts desc) as row_num
+from \`${project}.edl_stage.plus_vmci051_clcst_gp_h\` as lbca
+) as stgn 
+where row_num=1
+!
+

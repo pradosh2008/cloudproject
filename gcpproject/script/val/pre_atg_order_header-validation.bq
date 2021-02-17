@@ -1,0 +1,43 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#--eval result=\$\("bq query --quiet --format=csv 'select 0 Count' | awk '{if(NR>1)print}'"\)
+#--echo $result
+
+#bq query --use_legacy_sql=false <<!
+#select 1 Count
+#!
+#rc_check $? "Test Check"
+
+#Unique Key CHECK
+eval result=\$\("bq query --quiet --format=csv --use_legacy_sql=false '
+select count(*) cnt 
+from
+(
+select 
+s.orderid
+,s.batch_id
+,s.lastmodifieddate
+,count(*)
+from edl_stage.pre_atg_order_header s
+--where orderid not in ('881016112839','881073299182')
+group by 1,2,3 
+having count(*) >1
+)
+' | awk '{if(NR>1)print}'"\)
+!
+#echo $result
+rc_check $result "Unique Key Check"
+
+#completeness check 
+eval result=\$\("bq query --quiet --format=csv --use_legacy_sql=false '
+SELECT 
+	count(*) cnt
+from edl_landing.ann_ann_atg_transactions l
+left join  edl_stage.pre_atg_order_header s 
+	ON l.orderid = s.orderid 
+	and l.batch_id = s.batch_id
+where l.orderid is null' | awk '{if(NR>1)print}'"\)
+rc_check $result "Completeness Check"

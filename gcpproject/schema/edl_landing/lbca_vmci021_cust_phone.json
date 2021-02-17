@@ -1,0 +1,46 @@
+[
+	{
+		"name": "ID_CUST",
+		"type": "STRING"
+	},
+	{
+		"name": "TE_CUST",
+		"type": "STRING"
+	},
+	{
+		"name": "IN_PHONE_SRCE",
+		"type": "STRING"
+	},
+	{
+		"name": "FL_PHONE_UNLISTED",
+		"type": "STRING"
+	},
+	{
+		"name": "DA_PHONE_ADDED",
+		"type": "STRING"
+	},
+	{
+		"name": "IN_PHONE_TYPE",
+		"type": "STRING"
+	},
+	{
+		"name": "TE_PHONE_EXT",
+		"type": "STRING"
+	},
+	{
+		"name": "CD_PHONE_VERIFIED",
+		"type": "STRING"
+	},
+	{
+		"name": "DA_PHONE_VERIFIED",
+		"type": "STRING"
+	},
+	{
+		"name": "CD_PHONE_CATEGORY",
+		"type": "STRING"
+	},
+	{
+		"name": "EXTRACT_TS",
+		"type": "STRING"
+	}
+]

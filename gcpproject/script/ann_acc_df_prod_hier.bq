@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+
+#. ${HOME}/lib/set_env.sh
+#. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --autodetect --replace --source_format=CSV --quote="" edl_landing.ann_acc_df_prod_hier1 'gs://p-asna-datasink-003/pre/ANN_ACC_DF_PROD_HIER_*.txt'
+
+#rc_check $? "Load edl_landing"
+
+
+

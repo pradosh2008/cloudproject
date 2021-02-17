@@ -1,0 +1,41 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --replace=true --use_legacy_sql=false <<!
+create table analytic_mart.fact_transaction_fee_dedup as
+with trans_feeCTE as
+(
+select ftf.*
+,row_number() over (partition by transaction_key,transaction_fee_line_num order by transaction_key,transaction_fee_line_num,edl_create_tms desc) as dupnum
+from analytic_mart.fact_transaction_fee ftf
+)
+select
+transaction_key
+,transaction_fee_line_num
+,fee_cd
+,cast(fee_amt as numeric) as fee_amt
+,cast(0 as numeric) as discount_amt -- RJ Karthik needs to check why its not there in stage
+,non_merchandise_tax_type_cd
+,cast(non_merchandise_prorated_tax_amt as numeric) as non_merchandise_prorated_tax_amt
+,cast(non_merchandise_tax_amt as numeric) as non_merchandise_tax_amt
+,edl_create_tms
+,edl_create_job_nam
+,edl_last_update_tms
+,edl_last_update_job_nam
+,brand_cd
+from trans_feeCTE
+where dupnum = 1
+!
+rc_check $? "Fix dedup and columns from float to numeric"
+
+
+bq cp --force analytic_mart.fact_transaction_fee edl_archive.fact_transaction_fee
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_fee_dedup analytic_mart.fact_transaction_fee
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_fee_dedup
+rc_check $? "drop the temp table"
+

@@ -1,0 +1,16 @@
+run_bq_job -e plus_tmci997_esp_outbound.bq &
+run_bq_job -e plus_vmci015_cust_ccard.bq &
+run_bq_job -e plus_vmci019_customer.bq &
+run_bq_job -e plus_vmci019_custonly.bq &
+run_bq_job -e plus_vmci021_cust_phone.bq &
+#run_bq_job -e plus_vmci067_cust_block.bq &
+run_bq_job -e plus_vmci079_club_memb.bq &
+run_bq_job -e plus_vmci105_chain_cust.bq &
+run_bq_job -e plus_vmci172_chain_cust_email.bq &
+run_bq_job -e plus_vmci173_full_email_addr_status.bq &
+run_bq_job -e plus_vmci173_full_email_address.bq &
+run_bq_job -e plus_vmci180_cust_demog.bq &
+run_bq_job -e plus_vmci396_curr_opt_in_out_full.bq &
+run_bq_job -e plus_vmci972_chain_cust_fullemail.bq &
+run_bq_job -e plus_vmci995_esp_last_click_open.bq &
+wait

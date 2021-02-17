@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+SELECT count(*) cnt 
+FROM 
+(SELECT kurst_curr, fcurr_curr, tcurr_curr, gdatu_inv, ukurs_curr, batch_id, count(*)
+FROM `p-asna-analytics-002.edl_stage.pre_sap_exchrate`
+GROUP BY kurst_curr, fcurr_curr, tcurr_curr, gdatu_inv, ukurs_curr, batch_id having count(*)>1
+)' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT
+    count(*) cnt
+from edl_landing.ann_ann_sap_exchrate l
+left join edl_stage.pre_sap_exchrate s
+    on substr(l.sap_exchrate_src,1,4) = s.kurst_curr
+    AND substr(l.sap_exchrate_src,5,5) = s.fcurr_curr
+    AND substr(l.sap_exchrate_src,10,5) = s.tcurr_curr
+    AND substr(l.sap_exchrate_src,15,8) = s.gdatu_inv
+    AND substr(l.sap_exchrate_src,23,10) = s.ukurs_curr
+    AND l.batch_id = s.batch_id
+where s.kurst_curr is null'
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

@@ -1,0 +1,87 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.dim_subclass_new --use_legacy_sql=false <<!
+select
+ distinct
+ to_hex(md5(concat(  case
+                           when a.chain_id = 4 then 'CA'
+                           when a.chain_id = 7 then 'LB'
+                      end
+                    , '|'
+                    , cast(a.subclass_id as string))))  as subclass_key
+, cast(a.subclass_id as string)                         as subclass_id
+, upper(a.subclass_name)                                as subclass_nam
+, cast(a.class_id as string)                            as class_id
+, upper(a.class_name)                                   as class_nam
+, cast(a.dept_id as string)                             as department_id
+, upper(a.dept_name)                                    as department_nam
+, cast(a.group_no as string)                            as group_num
+, upper(a.group_name)                                   as group_nam
+, cast(a.division_id as string)                         as division_id
+, upper(a.division_name)                                as division_nam
+, case 
+       when substr(a.subclass_name,1,1) = 'S' then '1'
+       when substr(a.subclass_name,1,1) = 'F' then '2'
+       when substr(a.subclass_name,1,1) = 'Y' then '3'
+       else NULL
+  end                                                   as season_id
+, substr(a.subclass_name,1,1)                           as season_cd
+, case 
+       when substr(a.subclass_name,1,1) = 'S' then 'SPRING'
+       when substr(a.subclass_name,1,1) = 'F' then 'FALL'
+       when substr(a.subclass_name,1,1) = 'Y' then 'YEAR ROUND'
+       else NULL
+  end                                                   as season_des
+, current_timestamp                                     as edl_create_tms
+, 'Subclass'                                            as edl_create_job_nam
+, current_timestamp                                     as edl_last_update_tms
+, 'Subclass'                                            as edl_last_update_job_nam
+, case 
+       when a.chain_id = 4 then 'CA' 
+       when a.chain_id = 7 then 'LB' 
+  end                                                   as brand_cd
+from (
+        select
+        distinct
+          chain_id
+        , subclass_id
+        , subclass_name
+        , class_id
+        , class_name
+        , dept_id
+        , dept_name
+        , group_no
+        , group_name
+        , division_id
+        , division_name
+        , batch_id
+        , max(batch_id) over (partition by subclass_id) max_batch_id 
+        from edl_stage.plus_item_sku
+     ) a
+where a.batch_id = a.max_batch_id
+!
+rc_check $? "Load stage data into the new mart table"
+
+#Add legacy records from old table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.dim_subclass_new --use_legacy_sql=false <<!
+select  c.*
+from analytic_mart.dim_subclass c
+left join analytic_mart.dim_subclass_new w on  w.subclass_key = c.subclass_key
+where w.subclass_key is null
+!
+rc_check $? "Merge analytic_mart.dim_subclass to analytic_mart.dim_subclass_new table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.dim_subclass edl_archive.dim_subclass
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.dim_subclass_new analytic_mart.dim_subclass
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.dim_subclass_new
+rc_check $? "Remove new table "
+
+

@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt
+from
+    (select
+    ID_CUST, ID_CHAIN, ID_CUST_ORIG, ID_EMAIL, TE_CUST, CD_OPT_IN_OUT, EXTRACT_TS, count(*)
+    from edl_stage.plus_vmci396_curr_opt_in_out_full
+    group by 1,2,3,4,5,6,7
+    having count(*)>1 )'
+
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check
+
+sql='
+SELECT count(*) cnt
+from edl_landing.lbca_vmci396_curr_opt_in_out_full l
+left join edl_stage.plus_vmci396_curr_opt_in_out_full p
+    on CAST(TRIM(l.ID_CUST) AS INT64)= p.ID_CUST
+    and CAST(TRIM(l.ID_CHAIN) AS INT64)= p.ID_CHAIN
+    and CAST(TRIM(l.ID_CUST_ORIG) AS INT64)  = p.ID_CUST_ORIG 
+    and case when TRIM(l.ID_EMAIL)="" then 0 else CAST(TRIM(l.ID_EMAIL) AS INT64) end =(case when p.ID_EMAIL is null then 0 else p.id_email end) 
+    and TRIM(l.TE_CUST)= p.TE_CUST
+    and TRIM(l.CD_OPT_IN_OUT)= p.CD_OPT_IN_OUT
+    where p.CD_OPT_IN_OUT is null'
+
+run_validation "$sql" "Completeness Check"
+
+exit ${ERROR_CD:-0}
+
+

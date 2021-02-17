@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+select count(*) cnt 
+from
+    (
+    select 
+        i.orderid
+        , i.commerceitemid
+        , i.batch_id
+        , i.lastmodifieddate
+        , i.commerceitemstate
+        ,count(*)
+    from edl_stage.pre_atg_order_commerceItem i
+        where orderid not in ("881016112839","881073299182","111334720459")
+        group by 1,2,3,4,5 
+    having count(*) >1
+    )' 
+	
+
+run_validation "$sql" "Unique Key Check"
+
+#completeness check 
+
+sql='
+SELECT 
+    count(*) cnt
+from edl_landing.ann_ann_atg_transactions l
+left join  edl_stage.pre_atg_order_commerceItem s 
+    ON l.orderid = s.orderid 
+    and l.batch_id = s.batch_id
+    and l.commerceitemid = s.commerceitemid
+    and s.lastmodifieddate = PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",l.lastmodifieddate)
+where s.orderid is null
+and l.orderid not like "%.orderid%" '
+
+run_validation "$sql" "Completeness Check"
+
+
+exit ${ERROR_CD:-0}

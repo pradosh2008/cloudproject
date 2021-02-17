@@ -1,0 +1,44 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the target table in analytic_mart
+bq query  --max_rows 1 --allow_large_results --replace --destination_table analytic_mart.transaction_customer_xref --use_legacy_sql=false <<!
+select
+		TO_HEX( MD5( CONCAT(case	when psc.selling_chain_nbr = 4 
+									THEN 'CA|'
+									when psc.selling_chain_nbr = 7 
+									THEN 'LB|' 
+							end
+							,cast(psc.selling_store_nbr as string)
+							,"|",cast(psc.register_nbr as string)
+							,"|",cast(psc.transaction_dt as string)
+							,"|",cast(psc.transaction_nbr as string) ))) 			AS transaction_key 
+		,CASE 	WHEN psc.customer_nbr IS NULL or psc.customer_nbr = 0
+				THEN '0'
+				ELSE
+					TO_HEX(MD5(concat(case	when psc.selling_chain_nbr = 4 
+											THEN 'CA|'
+											when psc.selling_chain_nbr = 7 
+											THEN 'LB|' 
+										end
+										,cast(psc.customer_nbr as string))))
+      END                                           								as brand_customer_key					
+		,psc.transaction_dt															AS transaction_dt	
+		,CURRENT_TIMESTAMP 															AS edl_create_tms
+		,'TRANS' 																	AS edl_create_job_nam
+		,CURRENT_TIMESTAMP 															AS edl_last_update_tms
+		,'TRANS' 																	AS edl_last_update_job_nam
+from edl_stage.plus_sales_customer psc
+where selling_chain_nbr in (4,7)
+!
+rc_check $? "Loading mart transaction_customer_xref table"
+
+
+#cleansing and archival
+bq cp --force analytic_mart.transaction_customer_xref edl_archive.transaction_customer_xref
+rc_check $? "archive copy"
+
+

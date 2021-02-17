@@ -1,0 +1,48 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key CHECK
+
+sql='
+SELECT COUNT(*) cnt
+FROM (
+      SELECT style_key, COUNT(*)
+      FROM analytic_mart.pre_style
+      GROUP BY style_key
+      HAVING COUNT(*)>1
+)
+'
+
+run_validation "$sql" "Unique Key Check"
+
+
+#Completeness CHECK
+
+sql='
+SELECT count(*) cnt FROM 
+(SELECT style_nbr as style_id FROM edl_stage.pre_lu_style_vw
+UNION DISTINCT
+SELECT CAST(style_number AS INT64) style_id FROM edl_stage.pre_sap_style 
+) as s 
+LEFT OUTER JOIN analytic_mart.pre_style a
+ON (a.style_id = s.style_id)
+WHERE a.style_id is NULL
+'
+
+run_validation "$sql" "Completeness Check"
+
+#FK Style_key CHECK in pre_item table
+
+sql='
+SELECT count(*) cnt 
+FROM analytic_mart.pre_item a
+LEFT OUTER JOIN analytic_mart.pre_style i
+ON (a.style_key = i.style_key)
+WHERE a.style_key is NULL
+'
+
+run_validation "$sql" "FK Store_Key Check in pre_item table"
+
+exit ${ERROR_CD:-0}
+

@@ -1,0 +1,147 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Populating landing tables for LB and CA for Sales Transaction Header
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_header.json \
+        edl_landing.lb_sales_transaction_header  \
+        "gs://${default_bucket}/plus/edw/lb_sales_transaction_header*.txt.gz"
+rc_check $? "LB edl_landing for Transaction Header Complete"
+
+
+#Loading in single temporary stage table from Landing tables
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_sales_transaction_header_new --use_legacy_sql=false <<!
+SELECT
+stg.selling_chain_nbr
+,stg.selling_store_nbr
+,stg.sales_order_chain_nbr
+,stg.sales_order_store_nbr
+,stg.transaction_nbr
+,stg.transaction_dt
+,stg.transaction_tm
+,stg.register_nbr
+,stg.record_seq_nbr
+,stg.cashier_nbr
+,stg.manager_nbr
+,stg.employee_nbr
+,stg.layaway_nbr
+,stg.tax_exempt_nbr
+,stg.ship_to_store_nbr
+,stg.demand_order_nbr
+,stg.deferred_payment_amt
+,stg.payment_amt
+,stg.order_nbr
+,stg.order_received_dt
+,stg.order_received_tm
+,stg.chain_reference_cd
+,stg.transaction_type_cd
+,stg.tender_reference_cd
+,stg.return_receipt_ind
+,stg.sales_channel_type_cd
+,stg.email_capture_ind
+,stg.address_capture_ind
+,stg.multi_brand_transaction_ind
+,stg.domestic_order_ind
+,stg.register_type_cd
+,stg.entry_type_cd
+,stg.payment_reference_nbr
+,stg.payment_type_cd
+,stg.transaction_void_ind
+,stg.ship_to_store_conversion_ind
+,stg.create_dt
+,stg.last_update_ts
+,stg.apply_matching_logic_cd
+,stg.customer_nbr
+,stg.tender_primary_group_nm
+,stg.layaway_nbr_crm
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.selling_chain_nbr,lbca.selling_store_nbr, lbca.register_nbr, lbca.transaction_dt, lbca.transaction_nbr
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+cast(trim(l.selling_chain_nbr) as int64) as selling_chain_nbr
+,cast(trim(l.selling_store_nbr) as numeric) as selling_store_nbr
+,cast(trim(l.sales_order_chain_nbr) as int64) as sales_order_chain_nbr
+,cast(trim(l.sales_order_store_nbr) as numeric) as sales_order_store_nbr
+,cast(trim(l.transaction_nbr) as int64) as transaction_nbr
+,case when TRIM(l.transaction_dt)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(l.transaction_dt)) end as transaction_dt
+,l.transaction_tm
+,cast(trim(l.register_nbr) as int64) as register_nbr
+,cast(trim(l.record_seq_nbr) as int64) as record_seq_nbr
+,cast(trim(l.cashier_nbr) as int64) as cashier_nbr
+,cast(trim(l.manager_nbr) as numeric) as manager_nbr
+,l.employee_nbr
+,l.layaway_nbr
+,l.tax_exempt_nbr
+,cast(trim(l.ship_to_store_nbr) as numeric) as ship_to_store_nbr
+,l.demand_order_nbr
+,cast(trim(l.deferred_payment_amt) as numeric) as deferred_payment_amt
+,cast(trim(l.payment_amt) as numeric) as payment_amt
+,cast(trim(l.order_nbr) as numeric) as order_nbr
+,case when TRIM(l.order_received_dt)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(l.order_received_dt)) end as order_received_dt
+,case when TRIM(l.order_received_tm)='' then null
+else ( substr(l.order_received_tm,1,2) ||':'|| substr(l.order_received_tm,3,2) ||':'|| substr(l.order_received_tm,5,2) ) end as order_received_tm
+,cast(trim(l.chain_reference_cd) as int64) as chain_reference_cd
+,l.transaction_type_cd
+,cast(trim(l.tender_reference_cd) as int64) as tender_reference_cd
+,l.return_receipt_ind
+,l.sales_channel_type_cd
+,l.email_capture_ind
+,l.address_capture_ind
+,l.multi_brand_transaction_ind
+,l.domestic_order_ind
+,l.register_type_cd
+,l.entry_type_cd
+,cast(trim(l.payment_reference_nbr) as numeric) as payment_reference_nbr
+,l.payment_type_cd
+,l.transaction_void_ind
+,l.ship_to_store_conversion_ind
+,case when TRIM(l.create_dt)='' then null
+ else PARSE_DATE("%y/%m/%d",TRIM(l.create_dt)) end as create_dt
+,case when TRIM(l.last_update_ts)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",l.last_update_ts,"America/New_York") end as last_update_ts
+,l.apply_matching_logic_cd
+,cast(trim(l.customer_nbr) as int64) as customer_nbr
+,l.tender_primary_group_nm
+,cast(trim(l.layaway_nbr_crm) as numeric) as layaway_nbr_crm
+,case when TRIM(l.extract_ts)='' then null
+else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",l.extract_ts,"America/New_York") end as extract_ts
+ from edl_landing.lb_sales_transaction_header l
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_header_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_sales_transaction_header c
+left join edl_stage.lbca_sales_transaction_header_new w
+    on w.selling_chain_nbr=c.selling_chain_nbr
+    and w.selling_store_nbr=c.selling_store_nbr
+    and w.register_nbr=c.register_nbr
+    and w.transaction_dt=c.transaction_dt
+    and w.transaction_nbr=c.transaction_nbr
+    where w.transaction_nbr is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force edl_stage.plus_sales_transaction_header edl_archive.plus_sales_transaction_header
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_header_new edl_stage.plus_sales_transaction_header
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_header_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_header*.txt.gz*"
+

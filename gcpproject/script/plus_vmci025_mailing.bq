@@ -1,0 +1,164 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/lbca_vmci025_mailing.json \
+          edl_landing.lbca_vmci025_mailing \
+          "gs://${default_bucket}/plus/crm/vmci025_mailing*.txt.gz"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_vmci025_mailing_new --use_legacy_sql=false <<!
+SELECT
+ stg.ID_MAILING                    
+,stg.TX_MAIL_DESC_SHORT            
+,stg.TX_MAIL_DESC_LONG             
+,stg.DA_MAIL_EFF                   
+,stg.DA_MAIL_EXP                   
+,stg.DA_FILE_CREATED               
+,stg.DA_MAILED                     
+,stg.NU_MAX_CUSTS                  
+,stg.IN_DEDUP_TYPE                 
+,stg.DA_RCD_CREATED                
+,stg.DA_RCD_UPDATED                
+,stg.FL_EXCL_EMP                   
+,stg.CD_MAIL_TYPE                  
+,stg.CD_PROCESS_TYPE               
+,stg.DA_STATUS                     
+,stg.TI_STATUS                     
+,stg.TX_STATUS                     
+,stg.NA_JOB                        
+,stg.ID_CHAIN                      
+,stg.CD_GROUP                      
+,stg.CD_OUTPUT_TYPE                
+,stg.ID_USER_CREATED               
+,stg.FL_INCLUDE_ALWAYS             
+,stg.FL_INCLUDE_SEED               
+,stg.FL_INCLUDE_DECOY              
+,stg.FL_INCLUDE_REQUEST            
+,stg.FL_SKIP_COUNTS                
+,stg.DA_PURGE                      
+,stg.ID_LAST_CELL_DONE             
+,stg.TX_INCL_STATES                
+,stg.FL_OK_TO_MAIL_YES_CHKD        
+,stg.FL_OK_TO_MAIL_NO_CHKD         
+,stg.FL_OK_TO_EMAIL_YES_CHKD       
+,stg.FL_OK_TO_EMAIL_NO_CHKD        
+,stg.FL_EXCL_DO_NOT_PROMOTE        
+,stg.TX_INCL_DSFCODES              
+,stg.FL_INCL_MAIL_UNDETERMINED     
+,stg.FL_INCL_EMAIL_UNDETERMINED    
+,stg.CD_CAMPAIGN                   
+,stg.TX_INTIATIVE                  
+,stg.TX_CAMPAIGN_OBJECTIVE         
+,stg.DA_PRELIM_COUNT_DUE           
+,stg.DA_FINAL_COUNT_DUE            
+,stg.NA_MAIL_VENDOR                
+,stg.CD_ADTRAX                     
+,stg.ID_WEEK_MAILING_EFF           
+,stg.NU_REQD_CIRCULATION           
+,stg.DA_DUE_LETTERSHOP             
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_mailing, lbca.ID_CHAIN
+order by lbca.EXTRACT_TS desc) as row_num
+from
+(
+select 
+   cast(trim(c.ID_MAILING)as INT64) as ID_MAILING                   
+,trim(c.TX_MAIL_DESC_SHORT) as TX_MAIL_DESC_SHORT         
+,trim(c.TX_MAIL_DESC_LONG) as TX_MAIL_DESC_LONG              
+,case when TRIM(c.DA_MAIL_EFF)='' then null
+ else TRIM(c.DA_MAIL_EFF) end as DA_MAIL_EFF     
+,case when TRIM(c.DA_MAIL_EXP)='' then null
+ else TRIM(c.DA_MAIL_EXP) end as DA_MAIL_EXP 
+,case when TRIM(c.DA_FILE_CREATED)='' then null
+  else TRIM (c.DA_FILE_CREATED) end as DA_FILE_CREATED 
+,case when TRIM(c.DA_MAILED)='' then null
+ else TRIM(c.DA_MAILED) end as DA_MAILED 
+,trim(c.NU_MAX_CUSTS) as nu_max_custs                
+,trim(c.IN_DEDUP_TYPE) as in_dedup_type                 
+,case when TRIM(c.DA_RCD_CREATED)='' then null
+ else TRIM(c.DA_RCD_CREATED) end as DA_RCD_CREATED             
+,case when TRIM(c.DA_RCD_UPDATED)='' then null
+ else TRIM(c.DA_RCD_UPDATED) end as DA_RCD_UPDATED 
+,trim(c.FL_EXCL_EMP) AS FL_EXCL_EMP          
+,trim(c.CD_MAIL_TYPE) as CD_MAIL_TYPE             
+,trim(c.CD_PROCESS_TYPE) as CD_PROCESS_TYPE   
+,case when TRIM(c.DA_STATUS)='' then null
+ else TRIM(c.DA_STATUS) end as DA_STATUS                     
+,trim(c.TI_STATUS) as TI_STATUS                     
+,trim(c.TX_STATUS) as TX_STATUS                  
+,trim(c.NA_JOB) as NA_JOB   
+,case when TRIM(c.ID_CHAIN)='' then null
+  else cast(trim(c.id_chain) as INT64) end as ID_CHAIN                 
+,trim(c.CD_GROUP) as CD_GROUP                     
+,trim(c.CD_OUTPUT_TYPE) as CD_OUTPUT_TYPE                 
+,trim(c.ID_USER_CREATED) as ID_USER_CREATED              
+,trim(c.FL_INCLUDE_ALWAYS) as FL_INCLUDE_ALWAYS           
+,trim(c.FL_INCLUDE_SEED) as FL_INCLUDE_SEED               
+,trim(c.FL_INCLUDE_DECOY) as FL_INCLUDE_DECOY             
+,trim(c.FL_INCLUDE_REQUEST) as  FL_INCLUDE_REQUEST           
+,trim(c.FL_SKIP_COUNTS) as  FL_SKIP_COUNTS             
+,case when TRIM(c.DA_PURGE)='' then null
+ else TRIM(c.DA_PURGE) end as DA_PURGE                     
+,trim(c.ID_LAST_CELL_DONE) as ID_LAST_CELL_DONE            
+,trim(c.TX_INCL_STATES) as  TX_INCL_STATES               
+,trim(c.FL_OK_TO_MAIL_YES_CHKD) as FL_OK_TO_MAIL_YES_CHKD         
+,trim(c.FL_OK_TO_MAIL_NO_CHKD) as FL_OK_TO_MAIL_NO_CHKD       
+,trim(c.FL_OK_TO_EMAIL_YES_CHKD) as FL_OK_TO_EMAIL_YES_CHKD
+,trim(c.FL_OK_TO_EMAIL_NO_CHKD) as FL_OK_TO_EMAIL_NO_CHKD       
+,trim(c.FL_EXCL_DO_NOT_PROMOTE) as FL_EXCL_DO_NOT_PROMOTE       
+,trim(c.TX_INCL_DSFCODES) as  TX_INCL_DSFCODES           
+,trim(c.FL_INCL_MAIL_UNDETERMINED) as FL_INCL_MAIL_UNDETERMINED     
+,trim(c.FL_INCL_EMAIL_UNDETERMINED) as FL_INCL_EMAIL_UNDETERMINED   
+,trim(c.CD_CAMPAIGN) as CD_CAMPAIGN                   
+,trim(c.TX_INTIATIVE) as TX_INTIATIVE                  
+,trim(c.TX_CAMPAIGN_OBJECTIVE) as TX_CAMPAIGN_OBJECTIVE          
+,case when TRIM(c.DA_PRELIM_COUNT_DUE)='' then null
+ else TRIM(c.DA_PRELIM_COUNT_DUE) end as DA_PRELIM_COUNT_DUE
+,case when TRIM(c.DA_FINAL_COUNT_DUE)='' then null
+ else TRIM(c.DA_FINAL_COUNT_DUE) end as DA_FINAL_COUNT_DUE
+,trim(c.NA_MAIL_VENDOR) as  NA_MAIL_VENDOR               
+,trim(c.CD_ADTRAX) as CD_ADTRAX
+,trim(c.ID_WEEK_MAILING_EFF) as  ID_WEEK_MAILING_EFF          
+,trim(c.NU_REQD_CIRCULATION) as NU_REQD_CIRCULATION
+,case when TRIM(c.DA_DUE_LETTERSHOP)='' then null
+ else TRIM(c.DA_DUE_LETTERSHOP) end as DA_DUE_LETTERSHOP           
+,case when TRIM(c.EXTRACT_TS) ='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",TRIM(c.EXTRACT_TS),"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci025_mailing c
+)lbca
+)stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"             
+
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_vmci025_mailing_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci025_mailing c
+left join edl_stage.plus_vmci025_mailing_new w
+    on w.ID_MAILING=c.ID_MAILING
+    and EXTRACT(date from w.EXTRACT_TS)=EXTRACT(date from c.EXTRACT_TS)
+    where w.ID_MAILING is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci025_mailing edl_archive.plus_vmci025_mailing
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_vmci025_mailing_new edl_stage.plus_vmci025_mailing
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_vmci025_mailing_new
+rc_check $? "drop the temp table"
+
+# This function archives your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci025_mailing*.txt.gz"
+

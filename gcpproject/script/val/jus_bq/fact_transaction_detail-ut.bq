@@ -1,0 +1,41 @@
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,a.line_num
+    ,count(*)
+from jus_stage.fact_transaction_detail a
+group by a.transaction_key 
+    ,a.line_num
+having count(*) > 1
+limit 10
+!
+
+echo 'Transaction count by month'
+bq query --use_legacy_sql=false <<!
+select date_trunc(td.transaction_dt,MONTH) 
+    ,count(distinct td.transaction_key)                             as tran_cnt
+    ,sum(case when t.transaction_key is null then 1 else 0 end)     as tran_dtl_orphan_cnt
+    ,sum(case when i.item_key is null then 1 else 0 end)            as orphan_item_tran_dtl_cnt
+    ,count(distinct case when i.item_key is null 
+                            then td.item_key else null 
+                         end)                                       as orphan_item_cnt
+from jus_stage.fact_transaction_detail td
+left join jus_stage.fact_transaction t 
+    on t.transaction_key = td.transaction_key
+left join jus_stage.dim_item i 
+    on i.item_key = td.item_key
+group by date_trunc(td.transaction_dt,MONTH) 
+order by 1
+!
+
+echo 'fact_transaction no detail check: transaction detail count'
+bq query --use_legacy_sql=false <<!
+select date_trunc(a.transaction_dt,MONTH) 
+    ,sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join (select distinct transaction_key from jus_stage.fact_transaction_detail) b 
+    on a.transaction_key = b.transaction_key
+group by date_trunc(a.transaction_dt,MONTH) 
+order by 1
+!

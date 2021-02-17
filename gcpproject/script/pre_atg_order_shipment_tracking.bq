@@ -1,0 +1,51 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_shipment_tracking_new --use_legacy_sql=false <<!
+SELECT DISTINCT
+           atg.orderid
+          , atg.shipitemrelid
+          , atg.shipitemrelshippinggroupid
+          , atg.shipitemrelcommerceitemid
+          , atg.trackingdetailtrackingnumber
+          , atg.shippingcarrier
+          , atg.shipmentdate
+          , atg.fullfilledlocation
+          , atg.shippedquantity     
+          , CASE WHEN atg.lastmodifieddate = '' 
+                THEN NULL 
+                ELSE PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",atg.lastmodifieddate) 
+            END AS lastmodifieddate
+          , atg.batch_id
+    FROM edl_landing.ann_ann_atg_transactions atg
+    WHERE orderid not like "%.orderid%"
+    AND atg.shipitemrelid IS NOT NULL
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_shipment_tracking_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_atg_order_shipment_tracking c
+left join edl_stage.pre_atg_order_shipment_tracking_new w
+        on  w.orderid = c.orderid
+        and w.lastmodifieddate=c.lastmodifieddate
+	    and COALESCE(w.shipitemrelid, '') = COALESCE(c.shipitemrelid, '')
+        and COALESCE(w.shipitemrelshippinggroupid, '') = COALESCE(c.shipitemrelshippinggroupid, '')
+        and COALESCE(w.shipitemrelcommerceitemid, '') = COALESCE(c.shipitemrelcommerceitemid, '')
+		and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+
+bq cp --force edl_stage.pre_atg_order_shipment_tracking edl_archive.pre_atg_order_shipment_tracking
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_shipment_tracking_new edl_stage.pre_atg_order_shipment_tracking
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_shipment_tracking_new
+rc_check $? "drop the temp table"

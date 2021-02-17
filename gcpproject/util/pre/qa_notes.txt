@@ -1,0 +1,26 @@
+issues:
+Production atg timestamps (staged as strings) were converted to UTC even though they are EST. They will have to be fixed.
+
+implementation steps:
+refresh edl_stage
+refresh analytic_mart
+run fix_pre_aw_transaction_header.bq
+
+
+Bug fix notes:
+bopis - fixed bad path in archive call
+Many atg validation scripts fixed -- bug in time conversion
+
+
+
+
+Check list:
+reset_qa_buckets
+reset_stage.bq
+fix_stage.sh
+go_qa_stage
+run_bq_job - for stage
+run_bq_job - for atg stage
+rebuild_views
+reset_mart.bq
+fix_pre_mart.sh

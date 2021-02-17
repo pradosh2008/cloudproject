@@ -1,0 +1,33 @@
+bq query --replace=true --max_rows 1 --use_legacy_sql=false \
+        --destination_table edl_stage.plus_sales_transaction_header <<!
+select *
+from edl_stage.plus_sales_transaction_header
+where 1 = 0
+!
+bq query --replace=true --max_rows 1 --use_legacy_sql=false \
+        --destination_table edl_stage.plus_sales_transaction_detail <<!
+select *
+from edl_stage.plus_sales_transaction_detail
+where 1 = 0
+!
+
+bq query --replace=true --max_rows 1 --use_legacy_sql=false \
+        --destination_table edl_stage.plus_sales_transaction_discount <<!
+select *
+from edl_stage.plus_sales_transaction_discount
+where 1 = 0
+!
+
+bq query --replace=true --max_rows 1 --use_legacy_sql=false \
+        --destination_table edl_stage.plus_item_sku <<!
+select *
+from edl_stage.plus_item_sku
+where 1 = 0
+!
+
+bq query --replace=true --max_rows 1 --use_legacy_sql=false \
+        --destination_table edl_stage.plus_store <<!
+select *
+from edl_stage.plus_store
+where 1 = 0
+!

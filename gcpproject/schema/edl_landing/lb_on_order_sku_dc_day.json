@@ -1,0 +1,34 @@
+
+[
+    {"mode": "nullable", "name": "chain_nbr"                   , "type": "string"}
+  , {"mode": "nullable", "name": "sku_nbr"                     , "type": "string"}
+  , {"mode": "nullable", "name": "dc_nbr"                      , "type": "string"}
+  , {"mode": "nullable", "name": "purchase_order_nbr"          , "type": "string"}
+  , {"mode": "nullable", "name": "transaction_dt"              , "type": "string"}
+  , {"mode": "nullable", "name": "sales_channel_type_cd"       , "type": "string"}
+  , {"mode": "nullable", "name": "purchase_order_dt"           , "type": "string"}
+  , {"mode": "nullable", "name": "not_before_dt"               , "type": "string"}
+  , {"mode": "nullable", "name": "not_after_dt"                , "type": "string"}
+  , {"mode": "nullable", "name": "otb_eop_dt"                  , "type": "string"}
+  , {"mode": "nullable", "name": "supplier_nbr"                , "type": "string"}
+  , {"mode": "nullable", "name": "unit_cst"                    , "type": "string"}
+  , {"mode": "nullable", "name": "unit_rtl"                    , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_received_qty"       , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_received_rtl"       , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_received_cst"       , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_ordered_qty"        , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_ordered_rtl"        , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_ordered_cst"        , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_open_balance_qty"   , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_open_balance_rtl"   , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_open_balance_cst"   , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_closed_balance_qty" , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_closed_balance_rtl" , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_closed_balance_cst" , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_cancelled_qty"      , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_cancelled_rtl"      , "type": "string"}
+  , {"mode": "nullable", "name": "on_order_cancelled_cst"      , "type": "string"}
+  , {"mode": "nullable", "name": "price_type_cd"               , "type": "string"}
+  , {"mode": "nullable", "name": "last_update_ts"              , "type": "string"}
+]
+

@@ -1,0 +1,63 @@
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Unique Key Check
+sql='select count(*) from (
+select
+ brand_customer_key
+,direct_marketing_cell_key 
+,cell_customer_type_cd 
+,responded_cd 
+,package_id 
+,batch_id 
+,count(1)
+from
+analytic_mart.plus_brand_customer_clcst_gp
+group by brand_customer_key
+,direct_marketing_cell_key 
+,cell_customer_type_cd 
+,responded_cd 
+,package_id 
+,batch_id   
+having count(1)>1 )'
+
+run_validation "$sql" "Unique key  Check"
+
+
+#Null Check
+sql='SELECT COUNT(*) AS cnt
+FROM analytic_mart.plus_brand_customer_clcst_gp
+WHERE 
+ brand_customer_key IS NULL
+or direct_marketing_cell_key IS NULL
+or cell_customer_type_cd IS NULL
+or responded_cd IS NULL
+or package_id IS NULL
+or batch_id IS NULL'
+
+run_validation "$sql" "Null check"
+
+
+
+
+
+#Completeness Check
+sql='select count(1) 
+FROM edl_stage.plus_vmci051_clcst_gp_h_curr c
+INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc
+on c.id_cust = cc.id_cust and cc.id_chain in (4,7)
+LEFT JOIN analytic_mart.plus_brand_customer_clcst_gp pm
+on c.id_cust = pm.brand_customer_id
+and c.id_dir_mkt_cell= pm.direct_marketing_cell_id
+and c.id_dir_mkt_cell= pm.direct_marketing_cell_id 
+and c.fl_responded = pm.responded_cd
+and c.id_package = pm.package_id
+and FORMAT_TIMESTAMP("%E4Y%m%d",c.extract_ts)= pm.batch_id
+where pm.brand_customer_id IS NULL'
+
+run_validation "$sql" "Completeness Check"
+
+
+
+
+

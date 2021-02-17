@@ -1,0 +1,56 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_return_commerceitem_new --use_legacy_sql=false <<!
+    select distinct
+            returnid
+            ,orderid
+            ,commerceitemid
+            ,shippinggroupid
+            ,cast(quantitytoreturn as INT64) as quantitytoreturn
+            ,cast(quantitytoreplace as INT64) as quantitytoreplace
+            ,cast(isreturnshippingrequired as INT64) as isreturnshippingrequired
+            ,cast(quantityreceived as INT64) as quantityreceived
+            ,refundamount
+            ,actualtaxrefunditem
+            ,actualshiprefunditem
+            ,bonusrefund
+            ,batch_id
+    from edl_landing.ann_atg_returns atg
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_return_commerceitem_new --use_legacy_sql=false <<!
+select      c.returnid
+            ,c.orderid
+            ,c.commerceitemid
+            ,c.shippinggroupid
+            ,c.quantitytoreturn
+            ,c.quantitytoreplace
+            ,c.isreturnshippingrequired
+            ,c.quantityreceived
+            ,cast(c.refundamount as numeric) as refundamount
+            ,cast(c.actualtaxrefunditem as numeric) as actualtaxrefunditem
+            ,cast(c.actualshiprefunditem as numeric) as actualshiprefunditem
+            ,cast(c.bonusrefund as numeric) as bonusrefund
+            ,c.batch_id
+from edl_stage.pre_atg_order_return_commerceitem c
+left join edl_stage.pre_atg_order_return_commerceitem_new w
+    on  w.returnid = c.returnid
+    and w.commerceitemid=c.commerceitemid
+    and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_atg_order_return_commerceitem edl_archive.pre_atg_order_return_commerceitem
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_return_commerceitem_new edl_stage.pre_atg_order_return_commerceitem
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_return_commerceitem_new
+rc_check $? "drop the temp table"
+

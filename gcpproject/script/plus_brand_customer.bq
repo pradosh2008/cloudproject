@@ -1,0 +1,154 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load Data from staging table into analytic_mart
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table analytic_mart.plus_brand_customer_new <<!
+SELECT 
+TO_HEX(MD5(concat(case when cc.id_chain =4 then 'CA'
+when cc.id_chain =7 then 'LB' end
+,'|',CAST(c.ID_CUST AS STRING)))) AS brand_customer_key
+, CAST(c.ID_CUST AS STRING) AS brand_customer_id
+, cc.IN_CUST_SOURCE_FIRST AS brand_customer_source_first_num
+, cc.IN_CUST_SOURCE_2ND_FIRST AS brand_customer_source_second_first_num
+, cc.IN_CUST_SOURCE_LAST AS brand_customer_source_last_num
+, cc.IN_CUST_SOURCE_2ND_LAST AS brand_customer_source_second_last_num
+, cc.DA_LAST_TRNS AS last_transaction_dt
+, cc.CD_MAIL AS mail_cd
+, CASE cc.FL_DO_NOT_PROMOTE WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS do_not_promote_ind
+, CASE cc.FL_OK_TO_MAIL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS ok_to_mail_ind
+, TO_HEX(MD5(CONCAT(CASE WHEN cc.ID_CHAIN = 4 THEN 'CA' WHEN cc.ID_CHAIN = 7 THEN 'LB' ELSE NULL END, '|', CAST(cc.ID_STORE AS STRING))))  AS store_key
+, cc.ID_EMP AS emp_id
+, cc.DA_FIRST_TRNS AS first_transaction_dt
+, cc.DA_MAIL_CODE AS mail_code_dt
+, CASE cc.FL_ACTIVE_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS active_houscard_ind
+, CASE cc.FL_HLDR_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS hldr_houscard_ind
+, CASE cc.FL_DECLIN_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS declin_houscard_ind
+, cc.DA_APPLY_HOUSCARD AS apply_houscard_dt
+, CASE cc.FL_ACTIVE_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS active_cobrand_ind
+, CASE cc.FL_HLDR_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS hldr_cobrand_ind
+, CASE cc.FL_CLOSED_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS closed_houscard_ind
+, CASE cc.FL_CLOSED_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS closed_cobrand_ind
+, cc.CD_ACCOUNT_TERM AS account_term_ind
+, CASE cc.FL_SHOPS_JUNIORS WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS shops_juniors_ind
+, CASE cc.FL_SHOPS_MISSES WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS shops_misses_ind
+, CASE cc.FL_SHOPS_PLUS WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS shops_plus_ind
+, cc.FL_OK_TO_PHONE AS ok_to_phone_cd
+, cc.DA_CH_CUST_ADDED AS ch_customer_added_dt
+, cc.FL_OK_TO_STMT_INS AS ok_to_stmt_ins_cd
+, cc.CD_LBO_MIGRATION_STATUS AS lbo_migration_status_cd
+, c.IN_CUST_SOURCE_FIRST AS customer_source_first_num
+, c.IN_CUST_SOURCE_2ND_FIRST AS customer_source_second_num
+, c.IN_CUST_SOURCE_LAST AS customer_source_last_num
+, c.IN_CUST_SOURCE_2ND_LAST AS customer_source_second_last_num
+, c.ID_HOUSEHOLD AS customer_household_id
+, c.ID_ADDRESS AS customer_address_id
+, c.AD_TYPE AS customer_address_type_cd
+, c.AD_RURAL_TYP AS customer_address_rural_type_cd
+, c.NA_COUNTRY AS customer_country_nam
+, c.IN_RC_SOURCE AS customer_rc_source_cd
+, c.IN_AQ_HIGH_RISE_RC AS customer_aq_high_rise_rc_cd
+, c.IN_AQ_FIRM_RC AS customer_aq_firm_rc_num
+, c.CD_AQ_GENERAL_RC AS customer_aq_general_rc_cd
+, c.CD_AQ_FIRM_RC AS customer_aq_firm_rc_cd
+, c.CD_AQ_STRT_DIR_RC AS customer_aq_strt_dir_rc_cd
+, c.CD_AQ_STRT_SUFF_RC AS customer_aq_strt_suff_rc
+, c.CD_AQ_APT_RC AS customer_aq_apt_rc
+, c.CD_AQ_STREET_NM_RC AS customer_aq_street_nm_rc_cd
+, c.CD_AQ_TRAILING_DIR_RC AS customer_aq_trailing_dir_rc_cd
+, c.CD_AQ_POB_RC AS customer_aq_pob_rc_cd
+, c.CD_AQ_RRHC_RC AS customer_aq_rrhc_rc_cd
+, c.CD_AQ_CITY_ST_RC AS customer_aq_city_st_rc_cd
+, c.CD_AQ_STATE_PROV_RC AS customer_aq_state_prov_rc_cd
+, c.CD_AQ_ZIP5_RC AS customer_aq_zip5_rc_cd
+, c.CD_AQ_ZIP4_RC AS customer_aq_zip4_rc_cd
+, c.CD_AQ_ZIPOUT_RC AS customer_aq_zipout_rc_cd
+, c.CD_AQ_DSF_LIST_RC AS customer_aq_dsf_list_rc_cd
+, c.CD_AQ_ADDR_CORRECT_RC AS customer_aq_addr_correct_rc_cd
+, c.CD_AQ_OVERALL_CORRECT_RC AS customer_aq_overall_correct_cd_cd
+, c.CD_AQ_CDQP_CONFIDENCE_RC AS customer_aq_cdqp_confidence_rc_cd
+, c.CD_AQ_DPV_RC AS customer_aq_dpv_rc_cd
+, CASE c.FL_AQ_DPV_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_aq_dpv_rc_ind
+, c.CD_AQ_DPV_FOOTNOTE_LIST_RC AS customer_aq_dpv_footnote_list_rc_cd
+, CASE c.FL_AQ_DPV_CMRA_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_aq_dvp_cmra_rc_ind
+, c.CD_AQ_LACS_RC AS customer_aq_lacs_rc_cd
+, c.IN_AQ_LACS_RC AS customer_aq_lacs_rc_num
+, c.IN_VM_NCOA_MATCH_RC AS customer_vm_ncoa_match_rc_cd
+, c.CD_VM_NCOA_FOOTNOTE_RC AS customer_vm_ncoa_footnote_rc_cd
+, c.CD_VM_NCOA_FWD_TYPE_RC AS customer_vm_ncoa_fwd_type_rc_cd
+, CASE c.FL_VM_NCOA_FWD_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_vm_ncoa_fwd_rc_ind
+, c.CD_NCOA_NIX_ACTION AS customer_ncoa_nix_action_cd
+, c.CD_NCOA_ZIP_CORRCT AS customer_ncoa_zip_corrct_cd
+, c.CD_NCOA_COA_INDEX AS customer_ncoa_coa_index_cd
+, c.CD_NCOA_ADDR_TYPE AS customer_ncoa_addr_type_cd
+, c.CD_NCOA_MATCH AS customer_ncoa_match_cd
+, c.ID_NCOA_VENDOR AS customer_ncoa_vendor_id
+, c.DA_CUST_ADDED AS customer_customer_added_dt
+, CASE c.FL_DECEASED WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_deceased_ind
+, CASE c.FL_TP_CARDHOLDER WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_tp_cardholder_ind
+, c.DA_CUST_MODIFIED AS customer_customer_modified_dt
+, c.IN_ADDR_RELIABLE AS customer_addr_reliable_cd
+, c.ID_CARRIER_RTE AS customer_carrier_rte_id
+, c.ID_DPBC AS customer_dpbc_id
+, c.ID_ELOT AS customer_elot_id
+, c.DA_MOVED AS customer_moved_dt
+, c.CD_CHAIN_REF AS customer_chain_ref_cd
+, c.NU_PRIORITY AS customer_priority_num
+, CASE c.FL_DMA_DONT_MAIL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_dma_dont_mail_ind
+, CASE c.FL_DMA_DONT_CALL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS customer_dma_dont_call_ind
+, c.DA_CUST_VERIFIED AS customer_verified_dt
+, co.ZC_ZIP_5 AS cust_only_zc_zip_5_des
+, co.ZC_ZIP_4 AS cust_only_zc_zip_4_des
+, co.CD_COUNTRY AS cust_only_country_cd
+, co.MO_CUST_ADDED AS cust_only_customer_added_mo
+, co.YR_CUST_ADDED AS cust_only_customer_added_yr
+, CASE co.FL_BRYLANE WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS cust_only_brylane_ind
+, co.ID_HYG_HOUSEHOLD AS cust_only_household_hyg_id
+--, cb.ID_BLOCK_GRP AS cust_block_group_id
+--, cb.CD_CENSUS_STATE AS cust_block_census_state_cd
+--, cb.CD_CENSUS_COUNTY AS cust_block_census_county_cd
+--, cb.CD_CENSUS_TRACT AS cust_block_census_tract_cd
+--, cb.CD_CENSUS_BG AS cust_block_census_bg_cd
+--, cb.CD_CENSUS_MSA AS cust_block_census_msa_cd
+--, cb.CD_CENSUS_MCDCCD AS cust_block_census_mcdccd_cd
+--, cb.CD_CENSUS_PLACE AS cust_block_census_place_cd
+--, cb.CD_CUST_LAT AS cust_block_customer_latitude_cd
+--, cb.CD_CUST_LONG AS cust_block_customer_longitude_cd
+--, cb.CD_CENSUS_BLOCK AS cust_block_census_block_cd
+--, cb.CD_CENSUS_CBSA AS cust_block_census_cbsa_cd
+--, CASE cb.FL_CENSUS_CBSA_METRO WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END AS cust_block_census_cbsa_metro_ind
+--, cb.CD_CENSUS_CSA AS cust_block_census_csa_cd
+--, c.EXTRACT_TS AS extract_tms
+, CURRENT_TIMESTAMP AS edl_create_tms
+, "CRMCUST" AS edl_create_job_nam
+, CURRENT_TIMESTAMP AS edl_last_update_tms
+, "CRMCUST" AS edl_last_update_job_nam
+, CASE WHEN cc.ID_CHAIN = 7 then 'LB' WHEN cc.ID_CHAIN = 4 THEN 'CA' ELSE NULL END AS brand_cd
+, FORMAT_TIMESTAMP('%E4Y%m%d', c.extract_ts) AS batch_id
+FROM edl_stage.plus_vmci019_customer_curr c
+INNER JOIN edl_stage.plus_vmci019_custonly_curr co ON co.ID_CUST = c.ID_CUST
+INNER JOIN edl_stage.plus_vmci105_chain_cust_curr cc ON cc.ID_CUST = c.ID_CUST
+--LEFT OUTER JOIN edl_stage.plus_vmci067_cust_block_curr cb ON cb.ID_CUST = c.ID_CUST
+!
+rc_check $? "Data Loaded from edl_stage to analytic_mart.plus_brand_customer_new table"
+
+
+#Add legacy records from old table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_new --use_legacy_sql=false <<!
+select  c.*
+from analytic_mart.plus_brand_customer c
+left join analytic_mart.plus_brand_customer_new w
+    on  w.brand_customer_key = c.brand_customer_key
+where w.brand_customer_key is null
+!
+rc_check $? "Merged analytic_mart.plus_brand_customer to analytic_mart.plus_brand_customer_new table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.plus_brand_customer edl_archive.plus_brand_customer
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.plus_brand_customer_new analytic_mart.plus_brand_customer
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.plus_brand_customer_new
+rc_check $? "Remove new table "

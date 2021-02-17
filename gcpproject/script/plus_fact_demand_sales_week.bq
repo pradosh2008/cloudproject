@@ -1,0 +1,83 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_demand_sales_week_new --use_legacy_sql=false <<!
+select
+  TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PDSSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PDSSSD.CHAIN_NBR = 7 THEN 'LB' 
+                      END
+                    , '|'
+                    , CAST(CAST(PDSSSD.SKU_NBR as INT64) as STRING))))                           as ITEM_KEY
+, TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PDSSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PDSSSD.CHAIN_NBR = 7 THEN 'LB' 
+                           END
+                    , '|'
+                    , CAST(PDSSSD.STORE_NBR AS STRING))))                                        as STORE_KEY
+, CAST(CASE 
+            WHEN PDSSSD.CHAIN_NBR = 4 THEN 'CA' 
+            WHEN PDSSSD.CHAIN_NBR = 7 THEN 'LB' 
+            END as STRING
+      )                                                                                          as BRAND_CD
+, CAST(CAST(PDSSSD.SKU_NBR as INT64) as STRING)                                                  as SKU_ID
+, CAST(PDSSSD.STORE_NBR AS STRING)                                                               as STORE_ID
+, CAL.FISCAL_WEEK_NBR                                                                            as FISCAL_WEEK_NBR
+, PDSSSD.DEMAND_ORDER_TYPE_CD                                                                    as DEMAND_ORDER_TYPE_CD
+, PDSSSD.SHIP_TO_HOME_OR_STORE_FLG                                                               as SHIP_TO_CD
+, CASE 
+       WHEN PDSSSD.SHIP_TO_HOME_OR_STORE_FLG = 'S' then 'STORE'
+       WHEN PDSSSD.SHIP_TO_HOME_OR_STORE_FLG = 'H' then 'HOME'
+  END                                                                                            as SHIP_TO_DES
+, PDSSSD.PRICE_TYPE_CD                                                                           as PRICE_TYPE_CD
+, SUM(PDSSSD.DEMAND_NET_SALES_QTY)                                                               as DEMAND_NET_SALES_QTY
+, SUM(PDSSSD.DEMAND_NET_SALES_RTL)                                                               as DEMAND_NET_SALES_RTL_AMT
+, SUM(PDSSSD.DEMAND_NET_SALES_CST)                                                               as DEMAND_NET_SALES_CST_AMT
+, SUM(PDSSSD.DEMAND_PRODUCTIVE_SALES_QTY)                                                        as DEMAND_PRODUCTIVE_SALES_QTY
+, SUM(PDSSSD.DEMAND_PRODUCTIVE_SALES_RTL)                                                        as DEMAND_PRODUCTIVE_SALES_RTL_AMT
+, SUM(PDSSSD.DEMAND_PRODUCTIVE_SALES_CST)                                                        as DEMAND_PRODUCTIVE_SALES_CST_AMT
+, SUM(PDSSSD.DEMAND_PRODUCTIVE_TRANS_CNT)                                                        as DEMAND_PRODUCTIVE_TRANS_CNT
+, SUM(PDSSSD.DEMAND_DISCOUNT_MARKDOWN_RTL)                                                       as DEMAND_DISCOUNT_MARKDOWN_RTL_AMT
+, SUM(PDSSSD.DEMAND_MERCH_DISCOUNT_AMT)                                                          as DEMAND_MERCH_DISCOUNT_AMT
+, SUM(PDSSSD.DEMAND_NON_MERCH_DISCOUNT_AMT)                                                      as DEMAND_NON_MERCH_DISCOUNT_AMT
+, SUM(PDSSSD.DEMAND_FEE_AMT)                                                                     as DEMAND_FEE_AMT
+, SUM(PDSSSD.DEMAND_CUSTOMER_PAID_TAX_AMT)                                                       as DEMAND_CUSTOMER_PAID_TAX_AMT
+, SUM(PDSSSD.DEMAND_COMPANY_OWED_TAX_AMT)                                                        as DEMAND_COMPANY_OWED_TAX_AMT
+, SUM(PDSSSD.STORE_FFLLM_NET_SLS_QTY)                                                            as STORE_FFLLM_NET_SALES_QTY
+, SUM(PDSSSD.STORE_FFLLM_NET_SLS_RTL)                                                            as STORE_FFLLM_NET_SALES_RTL_AMT
+, SUM(PDSSSD.STORE_FFLLM_NET_SLS_CST)                                                            as STORE_FFLLM_NET_SALES_CST_AMT
+, SUM(PDSSSD.STORE_FFLLM_PRODTV_SLS_QTY)                                                         as STORE_FFLLM_PRODUCTIVE_SALES_QTY
+, SUM(PDSSSD.STORE_FFLLM_PRODTV_SLS_RTL)                                                         as STORE_FFLLM_PRODUCTIVE_SALES_RTL_AMT
+, SUM(PDSSSD.STORE_FFLLM_PRODTV_SLS_CST)                                                         as STORE_FFLLM_PRODUCTIVE_SALES_CST_AMT
+, SUM(PDSSSD.STORE_PRODUCTIVE_TRANS_CNT)                                                         as STORE_PRODUCTIVE_TRANS_CNT
+, SUM(PDSSSD.DC_FFLLM_NET_SLS_QTY)                                                               as DC_FFLLM_NET_SALES_QTY
+, SUM(PDSSSD.DC_FFLLM_NET_SLS_RTL)                                                               as DC_FFLLM_NET_SALES_RTL_AMT
+, SUM(PDSSSD.DC_FFLLM_NET_SLS_CST)                                                               as DC_FFLLM_NET_SALES_CST_AMT
+, SUM(PDSSSD.DC_FFLLM_PRODTV_SLS_QTY)                                                            as DC_FFLLM_PRODUCTIVE_SALES_QTY
+, SUM(PDSSSD.DC_FFLLM_PRODTV_SLS_RTL)                                                            as DC_FFLLM_PRODUCTIVE_SALES_RTL_AMT
+, SUM(PDSSSD.DC_FFLLM_PRODTV_SLS_CST)                                                            as DC_FFLLM_PRODUCTIVE_SALES_CST_AMT
+, SUM(PDSSSD.DC_PRODUCTIVE_TRANS_CNT)                                                            as DC_PRODUCTIVE_TRANS_CNT
+, CURRENT_TIMESTAMP                                                                              as EDL_CREATE_TMS
+, 'PLUS_FACT_DEMAND_SALES_WEEK'                                                                  as EDL_CREATE_JOB_NAM
+, CURRENT_TIMESTAMP                                                                              as EDL_LAST_UPDATE_TMS
+, 'PLUS_FACT_DEMAND_SALES_WEEK'                                                                  as EDL_LAST_UPDATE_JOB_NAM
+FROM edl_stage.plus_demand_sales_sku_store_day PDSSSD
+JOIN analytic_mart.plus_calendar CAL ON CAL.CALENDAR_DT = PDSSSD.TRANSACTION_DT
+GROUP BY 1,2,3,4,5,6,7,8,9,10
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_demand_sales_week edl_archive.plus_fact_demand_sales_week
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_demand_sales_week_new analytic_mart.plus_fact_demand_sales_week
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_demand_sales_week_new
+rc_check $? "drop the temp table"
+
+

@@ -1,0 +1,189 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote=""  --schema=${schema_path}/edl_landing/lbca_vmci019_custonly.json edl_landing.lbca_vmci019_custonly "gs://${default_bucket}/plus/crm/vmci019_custonly*.txt.gz"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_vmci019_custonly_new --use_legacy_sql=false <<!
+SELECT
+stg.ID_CUST
+,stg.IN_CUST_SOURCE_FIRST
+,stg.IN_CUST_SOURCE_2ND_FIRST
+,stg.IN_CUST_SOURCE_LAST
+,stg.IN_CUST_SOURCE_2ND_LAST
+,stg.ID_HOUSEHOLD
+,stg.ID_ADDRESS
+,stg.AD_TYPE
+,stg.AD_RURAL_TYP
+,stg.ZC_ZIP_5
+,stg.ZC_ZIP_4
+,stg.NA_COUNTRY
+,stg.CD_COUNTRY
+,stg.IN_RC_SOURCE
+,stg.IN_AQ_HIGH_RISE_RC
+,stg.IN_AQ_FIRM_RC
+,stg.CD_AQ_GENERAL_RC
+,stg.CD_AQ_FIRM_RC
+,stg.CD_AQ_STRT_DIR_RC
+,stg.CD_AQ_STRT_SUFF_RC
+,stg.CD_AQ_APT_RC
+,stg.CD_AQ_STREET_NM_RC
+,stg.CD_AQ_TRAILING_DIR_RC
+,stg.CD_AQ_POB_RC
+,stg.CD_AQ_RRHC_RC
+,stg.CD_AQ_CITY_ST_RC
+,stg.CD_AQ_STATE_PROV_RC
+,stg.CD_AQ_ZIP5_RC
+,stg.CD_AQ_ZIP4_RC
+,stg.CD_AQ_ZIPOUT_RC
+,stg.CD_AQ_DSF_LIST_RC
+,stg.CD_AQ_ADDR_CORRECT_RC
+,stg.CD_AQ_OVERALL_CORRECT_RC
+,stg.CD_AQ_CDQP_CONFIDENCE_RC
+,stg.CD_AQ_DPV_RC
+,stg.FL_AQ_DPV_RC
+,stg.CD_AQ_DPV_FOOTNOTE_LIST_RC
+,stg.FL_AQ_DPV_CMRA_RC
+,stg.CD_AQ_LACS_RC
+,stg.IN_AQ_LACS_RC
+,stg.IN_VM_NCOA_MATCH_RC
+,stg.CD_VM_NCOA_FOOTNOTE_RC
+,stg.CD_VM_NCOA_FWD_TYPE_RC
+,stg.FL_VM_NCOA_FWD_RC
+,stg.CD_NCOA_NIX_ACTION
+,stg.CD_NCOA_ZIP_CORRCT
+,stg.CD_NCOA_COA_INDEX
+,stg.CD_NCOA_ADDR_TYPE
+,stg.CD_NCOA_MATCH
+,stg.ID_NCOA_VENDOR
+,stg.DA_CUST_ADDED
+,stg.MO_CUST_ADDED
+,stg.YR_CUST_ADDED
+,stg.FL_DECEASED
+,stg.FL_TP_CARDHOLDER
+,stg.DA_CUST_MODIFIED
+,stg.IN_ADDR_RELIABLE
+,stg.ID_CARRIER_RTE
+,stg.ID_DPBC
+,stg.ID_ELOT
+,stg.DA_MOVED
+,stg.CD_CHAIN_REF
+,stg.NU_PRIORITY
+,stg.FL_DMA_DONT_MAIL
+,stg.FL_DMA_DONT_CALL
+,stg.FL_BRYLANE
+,stg.DA_CUST_VERIFIED
+,stg.ID_HYG_HOUSEHOLD
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST
+order by lbca.EXTRACT_TS desc) as row_num
+from
+(SELECT
+ cast(TRIM(c.ID_CUST) as INT64) ID_CUST
+,TRIM(c.IN_CUST_SOURCE_FIRST) AS IN_CUST_SOURCE_FIRST
+,TRIM(c.IN_CUST_SOURCE_2ND_FIRST) AS IN_CUST_SOURCE_2ND_FIRST
+,TRIM(c.IN_CUST_SOURCE_LAST) AS IN_CUST_SOURCE_LAST
+,TRIM(c.IN_CUST_SOURCE_2ND_LAST) AS IN_CUST_SOURCE_2ND_LAST
+,case when TRIM(c.ID_HOUSEHOLD)='' then null else cast(TRIM(c.ID_HOUSEHOLD) as INT64) end as ID_HOUSEHOLD
+,case when TRIM(c.ID_ADDRESS)='' then null else cast(TRIM(c.ID_ADDRESS) as INT64) end as ID_ADDRESS
+,TRIM(c.AD_TYPE) AS AD_TYPE
+,TRIM(c.AD_RURAL_TYP) AS AD_RURAL_TYP
+,case when TRIM(c.ZC_ZIP_5)='' then null else cast(TRIM(c.ZC_ZIP_5) as INT64) end as ZC_ZIP_5
+,case when TRIM(c.ZC_ZIP_4)='' then null else cast(TRIM(c.ZC_ZIP_4) as INT64) end as ZC_ZIP_4
+,TRIM(c.NA_COUNTRY) AS NA_COUNTRY
+,TRIM(c.CD_COUNTRY) AS CD_COUNTRY
+,TRIM(c.IN_RC_SOURCE) AS IN_RC_SOURCE
+,TRIM(c.IN_AQ_HIGH_RISE_RC) AS IN_AQ_HIGH_RISE_RC
+,TRIM(c.IN_AQ_FIRM_RC) AS IN_AQ_FIRM_RC
+,TRIM(c.CD_AQ_GENERAL_RC) AS CD_AQ_GENERAL_RC
+,TRIM(c.CD_AQ_FIRM_RC) AS CD_AQ_FIRM_RC
+,TRIM(c.CD_AQ_STRT_DIR_RC) AS CD_AQ_STRT_DIR_RC
+,TRIM(c.CD_AQ_STRT_SUFF_RC) AS CD_AQ_STRT_SUFF_RC
+,TRIM(c.CD_AQ_APT_RC) AS CD_AQ_APT_RC
+,TRIM(c.CD_AQ_STREET_NM_RC) AS CD_AQ_STREET_NM_RC
+,TRIM(c.CD_AQ_TRAILING_DIR_RC) AS CD_AQ_TRAILING_DIR_RC
+,TRIM(c.CD_AQ_POB_RC) AS CD_AQ_POB_RC
+,TRIM(c.CD_AQ_RRHC_RC) AS CD_AQ_RRHC_RC
+,TRIM(c.CD_AQ_CITY_ST_RC) AS CD_AQ_CITY_ST_RC
+,TRIM(c.CD_AQ_STATE_PROV_RC) AS CD_AQ_STATE_PROV_RC
+,TRIM(c.CD_AQ_ZIP5_RC) AS CD_AQ_ZIP5_RC
+,TRIM(c.CD_AQ_ZIP4_RC) AS CD_AQ_ZIP4_RC
+,TRIM(c.CD_AQ_ZIPOUT_RC) AS CD_AQ_ZIPOUT_RC
+,TRIM(c.CD_AQ_DSF_LIST_RC) AS CD_AQ_DSF_LIST_RC
+,TRIM(c.CD_AQ_ADDR_CORRECT_RC) AS CD_AQ_ADDR_CORRECT_RC
+,TRIM(c.CD_AQ_OVERALL_CORRECT_RC) AS CD_AQ_OVERALL_CORRECT_RC
+,TRIM(c.CD_AQ_CDQP_CONFIDENCE_RC) AS CD_AQ_CDQP_CONFIDENCE_RC
+,TRIM(c.CD_AQ_DPV_RC) AS CD_AQ_DPV_RC
+,TRIM(c.FL_AQ_DPV_RC) AS FL_AQ_DPV_RC
+,TRIM(c.CD_AQ_DPV_FOOTNOTE_LIST_RC) AS CD_AQ_DPV_FOOTNOTE_LIST_RC
+,TRIM(c.FL_AQ_DPV_CMRA_RC) AS FL_AQ_DPV_CMRA_RC
+,TRIM(c.CD_AQ_LACS_RC) AS CD_AQ_LACS_RC
+,TRIM(c.IN_AQ_LACS_RC) AS IN_AQ_LACS_RC
+,TRIM(c.IN_VM_NCOA_MATCH_RC) AS IN_VM_NCOA_MATCH_RC
+,TRIM(c.CD_VM_NCOA_FOOTNOTE_RC) AS CD_VM_NCOA_FOOTNOTE_RC
+,TRIM(c.CD_VM_NCOA_FWD_TYPE_RC) AS CD_VM_NCOA_FWD_TYPE_RC
+,TRIM(c.FL_VM_NCOA_FWD_RC) AS FL_VM_NCOA_FWD_RC
+,TRIM(c.CD_NCOA_NIX_ACTION) AS CD_NCOA_NIX_ACTION
+,TRIM(c.CD_NCOA_ZIP_CORRCT) AS CD_NCOA_ZIP_CORRCT
+,TRIM(c.CD_NCOA_COA_INDEX) AS CD_NCOA_COA_INDEX
+,TRIM(c.CD_NCOA_ADDR_TYPE) AS CD_NCOA_ADDR_TYPE
+,TRIM(c.CD_NCOA_MATCH) AS CD_NCOA_MATCH
+,TRIM(c.ID_NCOA_VENDOR) AS ID_NCOA_VENDOR
+,case when TRIM(c.DA_CUST_ADDED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_CUST_ADDED)) end as DA_CUST_ADDED
+,case when TRIM(c.MO_CUST_ADDED)='' then null else cast(TRIM(c.MO_CUST_ADDED) as INT64) end as MO_CUST_ADDED
+,case when TRIM(c.YR_CUST_ADDED)='' then null else cast(TRIM(c.YR_CUST_ADDED) as INT64) end as YR_CUST_ADDED
+,c.FL_DECEASED
+,TRIM(c.FL_TP_CARDHOLDER) AS FL_TP_CARDHOLDER
+,case when TRIM(c.DA_CUST_MODIFIED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_CUST_MODIFIED)) end as DA_CUST_MODIFIED
+,TRIM(c.IN_ADDR_RELIABLE) AS IN_ADDR_RELIABLE
+,TRIM(c.ID_CARRIER_RTE) AS ID_CARRIER_RTE
+,case when TRIM(c.ID_DPBC)='' then null else cast(TRIM(c.ID_DPBC) as INT64) end as ID_DPBC
+,TRIM(c.ID_ELOT) AS ID_ELOT
+,case when TRIM(c.DA_MOVED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_MOVED)) end as DA_MOVED
+,case when TRIM(c.CD_CHAIN_REF)='' then null else cast(TRIM(c.CD_CHAIN_REF) as INT64) end as CD_CHAIN_REF
+,case when TRIM(c.NU_PRIORITY)='' then null else cast(TRIM(c.NU_PRIORITY) as INT64) end as NU_PRIORITY
+,TRIM(c.FL_DMA_DONT_MAIL) AS FL_DMA_DONT_MAIL
+,TRIM(c.FL_DMA_DONT_CALL) AS FL_DMA_DONT_CALL
+,TRIM(c.FL_BRYLANE) AS FL_BRYLANE
+,case when TRIM(c.DA_CUST_VERIFIED)='' then null
+ else PARSE_DATE("%Y-%m-%d",TRIM(c.DA_CUST_VERIFIED)) end as DA_CUST_VERIFIED
+,case when TRIM(c.ID_HYG_HOUSEHOLD)='' then null else cast(TRIM(c.ID_HYG_HOUSEHOLD) as INT64) end as ID_HYG_HOUSEHOLD
+,case when TRIM(c.EXTRACT_TS)='' then null
+ else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",c.EXTRACT_TS,"America/New_York") end as EXTRACT_TS
+from edl_landing.lbca_vmci019_custonly c
+) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_vmci019_custonly_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_vmci019_custonly c
+left join edl_stage.lbca_vmci019_custonly_new w
+   on w.ID_CUST=c.ID_CUST
+    where w.ID_CUST is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_vmci019_custonly edl_archive.plus_vmci019_custonly
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_vmci019_custonly_new edl_stage.plus_vmci019_custonly
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_vmci019_custonly_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/plus/crm/vmci019_custonly*.txt.gz"
+

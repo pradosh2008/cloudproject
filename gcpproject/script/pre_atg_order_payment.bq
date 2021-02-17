@@ -1,0 +1,195 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_payment_new --use_legacy_sql=false <<!
+select distinct  
+               orderid
+               ,case when lastmodifieddate = '' 
+                     then null else PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) 
+                end as lastmodifieddate
+               ,paymentgroupid
+               ,paymentmethod
+               ,encryptedcreditcardnumber
+               ,creditcardtype
+               ,digitalwalletid
+               ,digitalwallettype
+               ,creditcardbillingaddressprefix
+               ,creditcardbillingaddressfirstname
+               ,creditcardbillingaddressmiddlename
+               ,creditcardbillingaddresslastname
+               ,creditcardbillingaddresssuffix
+               ,creditcardbillingaddresscompanyname
+               ,creditcardbillingaddressjobtitle
+               ,creditcardbillingaddresspobox
+               ,creditcardbillingaddressaddress1
+               ,creditcardbillingaddressaddress2
+               ,creditcardbillingaddressaddress3
+               ,creditcardbillingaddresscity
+               ,creditcardbillingaddresscountry
+               ,creditcardbillingaddresspostalcode
+               ,creditcardbillingaddressemail
+               ,creditcardbillingaddressphonenumber
+               ,creditcardbillingaddressstateaddress
+               ,creditcardbillingaddresscounty
+               ,creditcardbillingaddressfaxnumber
+               ,creditcardnumber
+               ,expirationmonth
+               ,expirationdayofmonth
+               ,expirationyear
+               ,amountcredited
+               ,paymentgroupamount
+               ,case when paymentgroupsubmitteddate = '' 
+                        then null 
+                        else PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",paymentgroupsubmitteddate) 
+                end as paymentgroupsubmitteddate
+               ,paymentgroupcurrencycode
+               ,paymentgroupstate
+               ,paymentgroupclasstype
+               ,amountauthorized
+               ,amountdebited
+               ,paymentgroupstatedetail
+               ,paymentgroupspecialinstructions
+               ,authorizationstatus
+               ,debitstatus
+               ,creditstatus
+               ,preauthcompletecalls
+               ,tendertype
+               ,tendersubtype
+               ,payerid
+               ,paypaltransactionid
+               ,paypalbillingaddressprefix
+               ,paypalbillingaddressfirstname
+               ,paypalbillingaddressmiddlename
+               ,paypalbillingaddresslastname
+               ,paypalbillingaddresssuffix
+               ,paypalbillingaddresscompanyname
+               ,paypalbillingaddressjobtitle
+               ,paypalbillingaddresspobox
+               ,paypalbillingaddressaddress1
+               ,paypalbillingaddressaddress2
+               ,paypalbillingaddressaddress3
+               ,paypalbillingaddresscity
+               ,paypalbillingaddresscountry
+               ,paypalbillingaddresspostalcode
+               ,paypalbillingaddressemail
+               ,paypalbillingaddressphonenumber
+               ,paypalbillingaddressstateaddress
+               ,paypalbillingaddresscounty
+               ,paypalbillingaddressfaxnumber
+               ,giftcardtransactionid
+               ,giftcertificateprofileid
+               ,storecreditprofileid
+               ,storecreditnumber
+               ,payorderrelpaymentgroupid
+               ,orderref
+               ,relationshippayorderrelamount
+               ,batch_id
+    from edl_landing.ann_ann_atg_transactions atg
+	--where orderid not like "%.orderid%"
+    
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_payment_new --use_legacy_sql=false <<!
+select 
+               c.orderid
+               ,c.lastmodifieddate
+               ,c.paymentgroupid
+               ,c.paymentmethod
+               ,c.encryptedcreditcardnumber
+               ,c.creditcardtype
+               ,c.digitalwalletid
+               ,c.digitalwallettype
+               ,c.creditcardbillingaddressprefix
+               ,c.creditcardbillingaddressfirstname
+               ,c.creditcardbillingaddressmiddlename
+               ,c.creditcardbillingaddresslastname
+               ,c.creditcardbillingaddresssuffix
+               ,c.creditcardbillingaddresscompanyname
+               ,c.creditcardbillingaddressjobtitle
+               ,c.creditcardbillingaddresspobox
+               ,c.creditcardbillingaddressaddress1
+               ,c.creditcardbillingaddressaddress2
+               ,c.creditcardbillingaddressaddress3
+               ,c.creditcardbillingaddresscity
+               ,c.creditcardbillingaddresscountry
+               ,c.creditcardbillingaddresspostalcode
+               ,c.creditcardbillingaddressemail
+               ,c.creditcardbillingaddressphonenumber
+               ,c.creditcardbillingaddressstateaddress
+               ,c.creditcardbillingaddresscounty
+               ,c.creditcardbillingaddressfaxnumber
+               ,c.creditcardnumber
+               ,c.expirationmonth
+               ,c.expirationdayofmonth
+               ,c.expirationyear
+               ,cast(c.amountcredited as numeric) as  amountcredited
+               ,cast(c.paymentgroupamount/100 as numeric) as paymentgroupamount
+               ,c.paymentgroupsubmitteddate
+               ,c.paymentgroupcurrencycode
+               ,c.paymentgroupstate
+               ,c.paymentgroupclasstype
+               ,cast(c.amountauthorized as numeric) as amountauthorized
+               ,cast(c.amountdebited/100 as numeric) as amountdebited
+               ,c.paymentgroupstatedetail
+               ,c.paymentgroupspecialinstructions
+               ,c.authorizationstatus
+               ,c.debitstatus
+               ,c.creditstatus
+               ,c.preauthcompletecalls
+               ,c.tendertype
+               ,c.tendersubtype
+               ,c.payerid
+               ,c.paypaltransactionid
+               ,c.paypalbillingaddressprefix
+               ,c.paypalbillingaddressfirstname
+               ,c.paypalbillingaddressmiddlename
+               ,c.paypalbillingaddresslastname
+               ,c.paypalbillingaddresssuffix
+               ,c.paypalbillingaddresscompanyname
+               ,c.paypalbillingaddressjobtitle
+               ,c.paypalbillingaddresspobox
+               ,c.paypalbillingaddressaddress1
+               ,c.paypalbillingaddressaddress2
+               ,c.paypalbillingaddressaddress3
+               ,c.paypalbillingaddresscity
+               ,c.paypalbillingaddresscountry
+               ,c.paypalbillingaddresspostalcode
+               ,c.paypalbillingaddressemail
+               ,c.paypalbillingaddressphonenumber
+               ,c.paypalbillingaddressstateaddress
+               ,c.paypalbillingaddresscounty
+               ,c.paypalbillingaddressfaxnumber
+               ,c.giftcardtransactionid
+               ,c.giftcertificateprofileid
+               ,c.storecreditprofileid
+               ,c.storecreditnumber
+               ,c.payorderrelpaymentgroupid
+               ,c.orderref
+               ,c.relationshippayorderrelamount
+               ,c.batch_id
+               
+from edl_stage.pre_atg_order_payment c
+left join edl_stage.pre_atg_order_payment_new w
+    on  w.orderid = c.orderid
+    and w.lastmodifieddate = c.lastmodifieddate
+        and COALESCE(w.paymentgroupid, '') = COALESCE(c.paymentgroupid, '')
+        and w.batch_id=c.batch_id
+where w.orderid is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+
+bq cp --force edl_stage.pre_atg_order_payment edl_archive.pre_atg_order_payment
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_atg_order_payment_new edl_stage.pre_atg_order_payment
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.pre_atg_order_payment_new
+rc_check $? "drop the temp table"
+

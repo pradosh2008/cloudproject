@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.bq_job_status_new --use_legacy_sql=false <<!
+select runDate
+    ,runDateSeq + cast(seq/100 as numeric) as runSeq
+    ,ctlFileName
+    ,bqScriptName
+    ,logFileName
+    ,runStatus
+    ,errorMsg
+from (
+select runDate
+    ,cast(regexp_extract(logFileName,r"20\d+") as numeric) as runDateSeq
+    ,ctlFileName
+    ,bqScriptName
+    ,logFileName
+    ,runStatus
+    ,errorMsg
+    ,dense_rank() over (partition by rundate
+                        order by logFileName
+                    )                                   as seq
+from edl_stage.bq_job_status
+)
+order by 2
+!
+rc_check $? "Build bq_jbo_satus_new"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force edl_stage.bq_job_status edl_archive.bq_job_status
+rc_check $? "Archive copy"
+bq cp --force edl_stage.bq_job_status_new edl_stage.bq_job_status
+rc_check $? "Copy new table "
+bq rm --force edl_stage.bq_job_status_new
+rc_check $? "Remove bq_job_status_new table "
+
+
+

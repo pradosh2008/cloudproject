@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq cp --force edl_conform.store analytic_mart.dim_store
+rc_check $? "Mart table loaded dim_store"

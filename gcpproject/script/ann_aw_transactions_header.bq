@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=CSV --quote='' --field_delimiter="|"           \
+        --schema=${schema_path}/edl_landing/ann_aw_transactions_header.json \
+        edl_landing.ann_ann_aw_transactions_header                         \
+        "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_HEADER_*.dat"
+rc_check $? "Load edl_landing"
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+SELECT if_entry_no
+    ,interface_control_flag
+    ,record_type
+    ,store_no
+    ,register_no
+    ,parse_date("%m/%d/%Y",transaction_date)                                    as transaction_date
+    ,parse_timestamp("%m/%d/%Y %H:%M:%S",entry_date_time,"America/Chicago")    as entry_date_time
+    ,transaction_series
+    ,transaction_no
+    ,cashier_no
+    ,transaction_category
+    ,tender_total/100                                                           as tender_total
+    ,transaction_void_flag
+    ,exception_flag
+    ,deposit_declaration_flag
+    ,closeout_flag
+    ,media_count_flag
+    ,tax_override_flag
+    ,pos_tax_jurisdiction
+    ,employee_no
+    ,transaction_remark
+    ,updated_by_user_name
+    ,company_no
+    ,till_no
+    ,batch_id
+from (select c.*
+        ,max(c.batch_id) over (partition by c.if_entry_no) as max_batch_id
+    from edl_landing.ann_ann_aw_transactions_header c
+) curr
+where curr.max_batch_id = curr.batch_id
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_aw_transaction_header c
+left join edl_landing.ann_ann_aw_transactions_header w
+    on  w.if_entry_no = c.if_entry_no
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+bq cp --force edl_stage.pre_aw_transaction_header edl_archive.pre_aw_transaction_header
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_ann_aw_transactions_header_new edl_stage.pre_aw_transaction_header
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_ann_aw_transactions_header_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_HEADER_*.dat"

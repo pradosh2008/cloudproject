@@ -1,0 +1,227 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" --quote=""  --schema=${schema_path}/edl_landing/lbca_tmci997_esp_outbound.json edl_landing.lbca_tmci997_esp_outbound "gs://${default_bucket}/plus/crm/tmci997_esp_outbound*.txt.gz"
+rc_check $? "Load edl_landing for LBCA Complete"
+#loading the temporary table in staging ( it has both new and updated records)
+
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.plus_tmci997_esp_outbound_new --use_legacy_sql=false <<!
+SELECT
+stg.id_chain
+,stg.id_email
+,stg.id_cust
+,stg.cd_email_srce_initial
+,stg.cd_email_srce_recent
+,stg.cd_plcc_status_lb
+,stg.cd_plcc_status_ca
+,stg.cd_plcc_status_fb
+,case when stg.da_premier_exp_fb='2000-01-01' then '1900-01-01' else da_premier_exp_fb end as da_premier_exp_fb
+,stg.fl_perk_status
+,case when stg.da_perk_exp_ca='2000-01-01' then '1900-01-01' else da_perk_exp_ca end as da_perk_exp_ca
+,stg.fl_opt_in_em_lb
+,stg.fl_opt_in_em_lbo
+,stg.fl_opt_in_em_ca
+,stg.fl_opt_in_em_sonsi
+,stg.fl_opt_in_em_fb
+,stg.fl_opt_in_dm
+,stg.fl_opt_in_pa
+,stg.fl_opt_in_td
+,stg.id_store_near_any_ch
+,stg.nu_dist_near_any_ch
+,stg.id_store_near_this_ch
+,stg.nu_dist_near_this_ch
+,stg.fl_employee
+,stg.fl_cust_international
+,stg.id_store_loyalty
+,case when stg.da_em_opt_in_1st='2000-01-01' then '1900-01-01' else da_em_opt_in_1st end as da_em_opt_in_1st
+,stg.cd_life_cycle
+,stg.cd_cust_segment
+,case when stg.da_ecomm_1st_purch='2000-01-01' then '1900-01-01' else da_ecomm_1st_purch end as da_ecomm_1st_purch
+,case when stg.da_store_1st_purch='2000-01-01' then '1900-01-01' else da_store_1st_purch end as da_store_1st_purch
+,case when stg.da_1st_purch='2000-01-01' then '1900-01-01' else da_1st_purch end as da_1st_purch
+,case when stg.da_ecomm_last_purch='2000-01-01' then '1900-01-01' else da_ecomm_last_purch end as da_ecomm_last_purch
+,case when stg.da_store_last_purch='2000-01-01' then '1900-01-01' else da_store_last_purch end as da_store_last_purch
+,case when stg.da_credit_last_purch='2000-01-01' then '1900-01-01' else da_credit_last_purch end as da_credit_last_purch
+,stg.pc_store_rev_12m
+,stg.am_sales_net_12m
+,stg.am_margin_net_12m
+,stg.qu_txns_net_12m
+,stg.pc_margin_12m
+,stg.fl_petite_buyer
+,stg.fl_talls_buyer
+,stg.id_size_tops
+,stg.id_size_bottoms
+,stg.id_size_shoes
+,stg.id_size_dress
+,stg.id_size_bra
+,stg.pc_clearance_3m
+,stg.fl_clearance_buyer_13m
+,case when stg.da_last_purch_acrs_24m='2000-01-01' then '1900-01-01' else da_last_purch_acrs_24m end as da_last_purch_acrs_24m
+,case when stg.da_last_purch_active_24m='2000-01-01' then '1900-01-01' else da_last_purch_active_24m end as da_last_purch_active_24m
+,case when stg.da_last_purch_bra_24m='2000-01-01' then '1900-01-01' else da_last_purch_bra_24m end as da_last_purch_bra_24m
+,case when stg.da_last_purch_casual_24m='2000-01-01' then '1900-01-01' else da_last_purch_casual_24m end as da_last_purch_casual_24m
+,case when stg.da_last_purch_denim_24m='2000-01-01' then '1900-01-01' else da_last_purch_denim_24m end as da_last_purch_denim_24m
+,case when stg.da_last_purch_dress_24m='2000-01-01' then '1900-01-01' else da_last_purch_dress_24m end as da_last_purch_dress_24m
+,case when stg.da_last_purch_knits_24m='2000-01-01' then '1900-01-01' else da_last_purch_knits_24m end as da_last_purch_knits_24m
+,case when stg.da_last_purch_hosry_24m='2000-01-01' then '1900-01-01' else da_last_purch_hosry_24m end as da_last_purch_hosry_24m
+,case when stg.da_last_purch_jewlry_24m='2000-01-01' then '1900-01-01' else da_last_purch_jewlry_24m end as da_last_purch_jewlry_24m
+,case when stg.da_last_purch_outerwr_24m='2000-01-01' then '1900-01-01' else da_last_purch_outerwr_24m end as da_last_purch_outerwr_24m
+,case when stg.da_last_purch_panties_24m='2000-01-01' then '1900-01-01' else da_last_purch_panties_24m end as da_last_purch_panties_24m
+,case when stg.da_last_purch_shapewr_24m='2000-01-01' then '1900-01-01' else da_last_purch_shapewr_24m end as da_last_purch_shapewr_24m
+,case when stg.da_last_purch_shoes_24m='2000-01-01' then '1900-01-01' else da_last_purch_shoes_24m end as da_last_purch_shoes_24m
+,case when stg.da_last_purch_sleepwr_24m='2000-01-01' then '1900-01-01' else da_last_purch_sleepwr_24m end as da_last_purch_sleepwr_24m
+,case when stg.da_last_purch_spanx_24m='2000-01-01' then '1900-01-01' else da_last_purch_spanx_24m end as da_last_purch_spanx_24m
+,case when stg.da_last_purch_sweater_24m='2000-01-01' then '1900-01-01' else da_last_purch_sweater_24m end as da_last_purch_sweater_24m
+,case when stg.da_last_purch_swimwear_24m='2000-01-01' then '1900-01-01' else da_last_purch_swimwear_24m end as da_last_purch_swimwear_24m
+,case when stg.da_last_purch_wtw_24m='2000-01-01' then '1900-01-01' else da_last_purch_wtw_24m end as da_last_purch_wtw_24m
+,case when stg.da_last_purch_wmn_tops_24m='2000-01-01' then '1900-01-01' else da_last_purch_wmn_tops_24m end as da_last_purch_wmn_tops_24m
+,case when stg.da_last_purch_bttms_24m='2000-01-01' then '1900-01-01' else da_last_purch_bttms_24m end as da_last_purch_bttms_24m
+,case when stg.da_last_purch_innerwr_24m='2000-01-01' then '1900-01-01' else da_last_purch_innerwr_24m end as da_last_purch_innerwr_24m
+,case when stg.da_last_purch_coats_24m='2000-01-01' then '1900-01-01' else da_last_purch_coats_24m end as da_last_purch_coats_24m
+,case when stg.da_last_purch_social_24m='2000-01-01' then '1900-01-01' else da_last_purch_social_24m end as da_last_purch_social_24m
+,case when stg.da_last_purch_misc_24m='2000-01-01' then '1900-01-01' else da_last_purch_misc_24m end as da_last_purch_misc_24m
+,case when stg.da_last_open='2000-01-01' then '1900-01-01' else da_last_open end as da_last_open
+,case when stg.da_last_clicked='2000-01-01' then '1900-01-01' else da_last_clicked end as da_last_clicked
+,stg.da_tmci997_created
+,stg.da_tmci997_updated
+,case when stg.da_em_opt_in_last='2000-01-01' then '1900-01-01' else da_em_opt_in_last end as da_em_opt_in_last
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_chain,lbca.id_email,lbca.id_cust
+order by lbca.extract_ts desc) as row_num
+from
+(SELECT
+case when TRIM(id_chain)='' then null 
+else cast(TRIM(id_chain)  as INT64) end as id_chain
+,case when TRIM(id_email)='' then null 
+else cast(TRIM(id_email)  as INT64) end as id_email
+,case when TRIM(id_cust)='' then null 
+else cast(TRIM(id_cust)  as INT64) end as id_cust
+,TRIM(cd_email_srce_initial) as cd_email_srce_initial
+,TRIM(cd_email_srce_recent) as cd_email_srce_recent
+,TRIM(cd_plcc_status_lb) as  cd_plcc_status_lb
+,TRIM(cd_plcc_status_ca) as  cd_plcc_status_ca
+,TRIM(cd_plcc_status_fb) as  cd_plcc_status_fb
+,case when TRIM(da_premier_exp_fb)='' then null else PARSE_DATE("%y/%m/%d",da_premier_exp_fb) end as da_premier_exp_fb
+,TRIM(fl_perk_status) as fl_perk_status
+,case when TRIM(da_perk_exp_ca)='' then null else PARSE_DATE("%y/%m/%d",da_perk_exp_ca) end as da_perk_exp_ca
+,TRIM(fl_opt_in_em_lb) as fl_opt_in_em_lb
+,TRIM(fl_opt_in_em_lbo) as fl_opt_in_em_lbo
+,TRIM(fl_opt_in_em_ca) as  fl_opt_in_em_ca
+,TRIM(fl_opt_in_em_sonsi) as fl_opt_in_em_sonsi
+,TRIM(fl_opt_in_em_fb) as  fl_opt_in_em_fb
+,TRIM(fl_opt_in_dm) as fl_opt_in_dm
+,TRIM(fl_opt_in_pa) as  fl_opt_in_pa
+,TRIM(fl_opt_in_td) as  fl_opt_in_td
+,case when TRIM(id_store_near_any_ch)='' then null 
+else cast(TRIM(id_store_near_any_ch)  as INT64) end as id_store_near_any_ch
+,case when TRIM(nu_dist_near_any_ch)='' then null 
+else cast(TRIM(nu_dist_near_any_ch)  as numeric) end as nu_dist_near_any_ch
+,case when TRIM(id_store_near_this_ch)='' then null 
+else cast(TRIM(id_store_near_this_ch)  as INT64) end as id_store_near_this_ch
+,case when TRIM(nu_dist_near_this_ch)='' then null 
+else cast(TRIM(nu_dist_near_this_ch)  as numeric) end as nu_dist_near_this_ch
+,TRIM(fl_employee) as fl_employee
+,TRIM(fl_cust_international) as fl_cust_international
+,case when TRIM(id_store_loyalty)='' then null 
+else cast(TRIM(id_store_loyalty)  as INT64) end as id_store_loyalty
+,case when TRIM(da_em_opt_in_1st)='' then null else PARSE_DATE("%y/%m/%d",da_em_opt_in_1st) end as da_em_opt_in_1st
+,TRIM(cd_life_cycle) as  cd_life_cycle
+,TRIM(cd_cust_segment) as cd_cust_segment
+,case when TRIM(da_ecomm_1st_purch)='' then null else PARSE_DATE("%y/%m/%d",da_ecomm_1st_purch) end as da_ecomm_1st_purch
+,case when TRIM(da_store_1st_purch)='' then null else PARSE_DATE("%y/%m/%d",da_store_1st_purch) end as da_store_1st_purch
+,case when TRIM(da_1st_purch)='' then null else PARSE_DATE("%y/%m/%d",da_1st_purch) end as da_1st_purch
+,case when TRIM(da_ecomm_last_purch)='' then null else PARSE_DATE("%y/%m/%d",da_ecomm_last_purch) end as da_ecomm_last_purch
+,case when TRIM(da_store_last_purch)='' then null else PARSE_DATE("%y/%m/%d",da_store_last_purch) end as da_store_last_purch
+,case when TRIM(da_credit_last_purch)='' then null else PARSE_DATE("%y/%m/%d",da_credit_last_purch) end as da_credit_last_purch
+,case when TRIM(pc_store_rev_12m)='' then null 
+else cast(TRIM(pc_store_rev_12m)  as numeric) end as pc_store_rev_12m
+,case when TRIM(am_sales_net_12m)='' then null 
+else cast(TRIM(am_sales_net_12m)  as numeric) end as am_sales_net_12m
+,case when TRIM(am_margin_net_12m)='' then null 
+else cast(TRIM(am_margin_net_12m)  as numeric) end as am_margin_net_12m
+,case when TRIM(qu_txns_net_12m)='' then null 
+else cast(TRIM(qu_txns_net_12m)  as int64) end as qu_txns_net_12m
+,case when TRIM(pc_margin_12m)='' then null 
+else cast(TRIM(pc_margin_12m)  as numeric) end as pc_margin_12m
+,TRIM(fl_petite_buyer) as fl_petite_buyer
+,TRIM(fl_talls_buyer) as fl_talls_buyer
+,case when TRIM(id_size_tops)='' then null 
+else cast(TRIM(id_size_tops)  as INT64) end as id_size_tops
+,case when TRIM(id_size_bottoms)='' then null 
+else cast(TRIM(id_size_bottoms)  as INT64) end as id_size_bottoms
+,case when TRIM(id_size_shoes)='' then null 
+else cast(TRIM(id_size_shoes)  as INT64) end as id_size_shoes
+,case when TRIM(id_size_dress)='' then null 
+else cast(TRIM(id_size_dress)  as INT64) end as id_size_dress
+,case when TRIM(id_size_bra)='' then null 
+else cast(TRIM(id_size_bra)  as INT64) end as id_size_bra
+,case when TRIM(pc_clearance_3m)='' then null 
+else cast(TRIM(pc_clearance_3m)  as numeric) end as pc_clearance_3m
+,TRIM(fl_clearance_buyer_13m) as fl_clearance_buyer_13m
+,case when TRIM(da_last_purch_acrs_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_acrs_24m) end as da_last_purch_acrs_24m
+,case when TRIM(da_last_purch_active_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_active_24m) end as da_last_purch_active_24m
+,case when TRIM(da_last_purch_bra_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_bra_24m) end as da_last_purch_bra_24m
+,case when TRIM(da_last_purch_casual_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_casual_24m) end as da_last_purch_casual_24m
+,case when TRIM(da_last_purch_denim_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_denim_24m) end as da_last_purch_denim_24m
+,case when TRIM(da_last_purch_dress_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_dress_24m) end as da_last_purch_dress_24m
+,case when TRIM(da_last_purch_knits_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_knits_24m) end as da_last_purch_knits_24m
+,case when TRIM(da_last_purch_hosry_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_hosry_24m) end as da_last_purch_hosry_24m
+,case when TRIM(da_last_purch_jewlry_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_jewlry_24m) end as da_last_purch_jewlry_24m
+,case when TRIM(da_last_purch_outerwr_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_outerwr_24m) end as da_last_purch_outerwr_24m
+,case when TRIM(da_last_purch_panties_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_panties_24m) end as da_last_purch_panties_24m
+,case when TRIM(da_last_purch_shapewr_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_shapewr_24m) end as da_last_purch_shapewr_24m
+,case when TRIM(da_last_purch_shoes_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_shoes_24m) end as da_last_purch_shoes_24m
+,case when TRIM(da_last_purch_sleepwr_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_sleepwr_24m) end as da_last_purch_sleepwr_24m
+,case when TRIM(da_last_purch_spanx_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_spanx_24m) end as da_last_purch_spanx_24m
+,case when TRIM(da_last_purch_sweater_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_sweater_24m) end as da_last_purch_sweater_24m
+,case when TRIM(da_last_purch_swimwear_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_swimwear_24m) end as da_last_purch_swimwear_24m
+,case when TRIM(da_last_purch_wtw_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_wtw_24m) end as da_last_purch_wtw_24m
+,case when TRIM(da_last_purch_wmn_tops_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_wmn_tops_24m) end as da_last_purch_wmn_tops_24m
+,case when TRIM(da_last_purch_bttms_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_bttms_24m) end as da_last_purch_bttms_24m
+,case when TRIM(da_last_purch_innerwr_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_innerwr_24m) end as da_last_purch_innerwr_24m
+,case when TRIM(da_last_purch_coats_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_coats_24m) end as da_last_purch_coats_24m
+,case when TRIM(da_last_purch_social_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_social_24m) end as da_last_purch_social_24m
+,case when TRIM(da_last_purch_misc_24m)='' then null else PARSE_DATE("%y/%m/%d",da_last_purch_misc_24m) end as da_last_purch_misc_24m
+,case when TRIM(da_last_open)='' then null else PARSE_DATE("%y/%m/%d",da_last_open) end as da_last_open
+,case when TRIM(da_last_clicked)='' then null else PARSE_DATE("%y/%m/%d",da_last_clicked) end as da_last_clicked
+,case when da_tmci997_created='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",da_tmci997_created,"America/New_York") end as da_tmci997_created
+,case when da_tmci997_updated='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",da_tmci997_updated,"America/New_York") end as da_tmci997_updated
+,case when TRIM(da_em_opt_in_last)='' then null else PARSE_DATE("%y/%m/%d",da_em_opt_in_last) end as da_em_opt_in_last
+,case when extract_ts='' then null else PARSE_TIMESTAMP("%Y-%m-%d %H:%M:%S",extract_ts,"America/New_York") end as extract_ts
+from edl_landing.lbca_tmci997_esp_outbound) lbca
+) stg
+where stg.row_num = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_tmci997_esp_outbound_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.plus_tmci997_esp_outbound c
+left join edl_stage.plus_tmci997_esp_outbound_new w
+    on  w.id_chain=c.id_chain
+    and w.id_email=c.id_email
+    and w.id_cust=c.id_cust
+    where w.id_cust is null
+
+!
+rc_check $? "append legacy records into the temp table"
+#cleansing and archival
+bq cp --force edl_stage.plus_tmci997_esp_outbound edl_archive.plus_tmci997_esp_outbound
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_tmci997_esp_outbound_new edl_stage.plus_tmci997_esp_outbound
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_tmci997_esp_outbound_new
+rc_check $? "drop the temp table"
+
+# Following function is only stubbed in it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/plus/crm/tmci997_esp_outbound*.txt.gz"
+
+
+
+

@@ -1,0 +1,121 @@
+#!/usr/bin/bash
+. $HOME/lib/set_env.sh
+. $HOME/lib/common.sh
+
+#defaults and variable initialization
+script_name=`basename ${0}`
+bucket_name=${default_bucket}
+status_code="Ready"
+data_root="/${env_data_root}"
+usage="Usage: ${script_name} [-h] [-p project_name] [-b bucket_name] data_path "
+
+##### Parse command line #####
+#
+while getopts hb:p: OPT; do
+    case "$OPT" in
+        h)
+            echo $usage
+            echo "Copy all files in data_path to Google Cloud Storage
+    -h) Display this help text.
+    -p) Specify a Google project other than the service accounts default 
+    -b) Specify a Google storage bucket other than the default - $bucket_name
+    This script loads all files matching the '*.*' pattern from the given data path to a 
+  matching path on Google storage (note: ${data_root} is not part of the gs path). It only 
+  reads from directories in the ${data_root} file system. The data_path parameter can include 
+  ${data_root} or be relative to ${data_root}, but if you include ${data_root}, you need to use
+  the correct path for the environment you are in (dev,prod,etc). 
+  After copying to Google storage the script moves all files matching the *.* pattern to a 
+  zipped tar archive named after the day the job ran. For a scheduled interface, the archive 
+  file will be overwritten every week. This archive scheme is not appropriate for an integration
+  job that runs multiple times a day. USE CAUTION if run manually more than once in a day for 
+  the same directory.
+    Example:
+        gsload pre/sap
+            -copies all '*.*' files from ${data_root}/pre/sap to ${bucket_name}/pre/sap
+        All of these executions do the same thing
+            gsload ${data_root}/pre/sap 
+            gsload data/pre/sap #Assuming execution in the prod service account
+                                #If run in the dev service account, returns the following error
+                                #  unknown directory: /data/dev/data/pre/sap
+    Conventions: 
+        Each integration will have its own directory under ${data_root}
+        All files in the integration will move to a matching directory in the Google Bucket
+        Each batch integration can not run more than once a day
+        If the archive scheme is modified to support intraday schedules, the intraday feeds will
+        never run in parallel
+"
+            exit 0
+            ;;
+        p)  project_name=$OPTARG
+            ;;
+        b)  bucket_name=$OPTARG
+            ;;
+        \?) # getopts issues an error message
+            echo $usage 
+            echo "gsload -h usage explanation"
+            exit 1
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`    # Remove the switches we parsed above.
+if [ $# -eq 0 ]; then
+    echo $usage
+    echo "gsload -h usage explanation"
+    exit 1
+fi
+
+##### Define local functions #####
+#
+archive_data_files() {
+    local archive_src=$1
+    local day=`date +%a`
+
+    if [ ! -d ${archive_src}/arc ]; then
+        mkdir ${archive_src}/arc 
+    fi
+    cd $archive_src
+    tar -czvf ${archive_src}/arc/${day}.tar.gz *.*
+    rc_check $? 'archive_data_files'
+
+}
+stage_kickoff() {
+    local stage_orch_script="${data_dir//\//_}.sh"
+
+    if [ -x ${script_path}/${stage_orch_script} ]; then
+        echo "Kicking off, ${stage_orch_script}, stage orchestration script..."
+        ${script_path}/${stage_orch_script}
+        rc_check $? "Kick off $stage_orch_script stage orchestration script"
+    else
+        echo "Stage orchestration script not found: ${stage_orch_script}"
+    fi
+}
+
+##### Main #####
+#
+# Set variables
+
+data_dir=${1#*$env_data_root} #remove data prefex if it exists
+data_dir=${data_dir#\/} #remove leading / if it exists
+data_dir=${data_dir%\/} #remove trailing / if it exists
+echo "data_dir: $data_dir"
+echo "data_root: $data_root"
+echo "project_name: $project_name"
+echo "bucket_name: $bucket_name"
+exec_log ${script_name}_${data_dir//\//-}
+
+if [ -n "${project_name}" ]; then
+    gsopt="-o GSUtil:default_project_id=${project_name}"
+fi
+if [ -d ${data_root}/${data_dir} ]; then
+    #gsutil -m ${gsopt} cp ${data_root}/${data_dir}/*.* gs://${bucket_name}/${data_dir}
+    find ${data_root}/${data_dir} -maxdepth 1 ! -type d -print | \
+        gsutil -m ${gsopt} cp -I gs://${bucket_name}/${data_dir}
+    rc_check $? 'gsutil-copy'
+    archive_data_files "${data_root}/${data_dir}"
+    rm -f ${data_root}/${data_dir}/*.*
+    rc_check $? "rm-${data_dir}"
+    stage_kickoff $data_dir
+else
+    echo "Error - unknown directory: ${data_root}/${data_dir}"
+    exit 1
+fi

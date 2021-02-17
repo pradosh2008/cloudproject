@@ -1,0 +1,182 @@
+[
+	{
+		"name": "chain_id",
+		"type": "string"
+	},
+	{
+		"name": "store_id",
+		"type": "string"
+	},
+	{
+		"name": "week_id",
+		"type": "string"
+	},
+	{
+		"name": "style_id",
+		"type": "string"
+	},
+	{
+		"name": "color_id",
+		"type": "string"
+	},
+	{
+		"name": "size_id",
+		"type": "string"
+	},
+	{
+		"name": "sku_id",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_inv_u",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_inv_r",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_inv_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_inv_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_it_u",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_it_r",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_it_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_it_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "store_receipt_u",
+		"type": "string"
+	},
+	{
+		"name": "store_receipt_r",
+		"type": "string"
+	},
+	{
+		"name": "store_receipt_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "store_receipt_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "bop_mkd_store_it_u",
+		"type": "string"
+	},
+	{
+		"name": "bop_mkd_store_it_r",
+		"type": "string"
+	},
+	{
+		"name": "bop_mkd_store_it_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "bop_mkd_store_it_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "dmos_u",
+		"type": "string"
+	},
+	{
+		"name": "dmos_r",
+		"type": "string"
+	},
+	{
+		"name": "dmos_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "dmos_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_out_u",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_out_r",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_out_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_out_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_in_u",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_in_r",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_in_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "store_trans_in_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "bop_alloc_notship_inv_u",
+		"type": "string"
+	},
+	{
+		"name": "bop_alloc_notship_inv_r",
+		"type": "string"
+	},
+	{
+		"name": "bop_alloc_notship_c_actual",
+		"type": "string"
+	},
+	{
+		"name": "bop_alloc_notship_c_valued",
+		"type": "string"
+	},
+	{
+		"name": "mkd_issue_u",
+		"type": "string"
+	},
+	{
+		"name": "mkd_issue_r",
+		"type": "string"
+	},
+	{
+		"name": "mkd_issue_c",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_mkd_it_u",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_mkd_it_r",
+		"type": "string"
+	},
+	{
+		"name": "bop_store_mkd_it_c_actual",
+		"type": "string"
+	}
+]

@@ -1,0 +1,61 @@
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_style_fix --use_legacy_sql=false <<!
+select style_key
+    ,style_id
+    ,style_des
+    ,division_id
+    ,department_cd
+    ,department_des
+    ,department_category_cd
+    ,class_cd
+    ,class_des
+    ,merch_category_cd
+    ,merch_category_des
+    ,vendor_cd
+    ,vendor_nam
+    ,intern_excl_ind
+    ,intern_tallstyle_ind
+    ,markdown_week_num
+    ,exit_week_num
+    ,gift_wrap_ind
+    ,season_cd
+    ,season_des
+    ,storeset_cd
+    ,storeset_des
+    ,purch_org_cd
+    ,ean_upc_des
+    ,missy_style_num
+    ,petite_style_num
+    ,tall_style_num
+    ,fabric_profile_cd
+    ,fabric_profile_des
+    ,silhouette_profile_cd
+    ,silhouette_profile_des
+    ,top_silhouette_des
+    ,neckline_des
+    ,sleeve_len_des
+    ,novelty_des
+    ,end_use_des
+    ,pyramid_des
+    ,plus_style_num
+    ,batch_id
+from (select s.*
+        ,row_number() over (partition by s.style_key) rownum
+    from analytic_mart.pre_style s
+) csm
+where rownum = 1
+!
+rc_check $? "Load fix table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.pre_style edl_archive.pre_style
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.pre_style_fix analytic_mart.pre_style
+rc_check $? "Copy fix table "
+bq rm --force analytic_mart.pre_style_fix
+rc_check $? "Remove fix table "
+
+

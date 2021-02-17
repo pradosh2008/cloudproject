@@ -1,0 +1,434 @@
+[
+  {
+    "name": "eventidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "description", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "status", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "startdatetime", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "enddatetime", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "startdailytime", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "enddailytime", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday1", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday2", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday3", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday4", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday5", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday6", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "applyday7", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_eventidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_setidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_description", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_descreceipt", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_operatorflag", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_deallimit", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_pricebase", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_discountrule", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_customertype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promostacking", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_donotaffecttax", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promoevalphase", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_customerchoice", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_forcenonpromotable", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotypeindicator", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_multiplierpointslimit", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_randomnthvalue", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_bonuspointsstacking", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_discountvaluelimit", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_giftcardvaluelimit", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_continuity", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_transtype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_printstyle", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_stackingresolution", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_itemizeacrosscomponents", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_setexclusiveflags", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_checkexclusiveflags", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_priorlist", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_upsellcomponentstarget", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_couponsasinstances", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_eventidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_setidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_compidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_targettype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_targetvalue", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_discounttype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_discountvalue", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_discountqty", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_discountbase", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_exclusivityrule", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_amountthresholdtype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsformula", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsbonus", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_giftcardamount", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsnumber", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_messagepri", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsmultiplier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_bonuspointstype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_hostpointstype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsredeemed1", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_loyaltypointsredeemed2", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_giftcardissuedandloaded", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_strcoupaffectthreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_strcoupaffectreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_vdrcoupaffectthreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_vdrcoupaffectreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_itmredeemaffectthreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_itmredeemaffectreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_trnredeemaffectthreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_trnredeemaffectreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_priceaccuracythreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_priceaccuracyreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_manualdiscountthreshold", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_manualdiscountreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_bonuspointsbywgt", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_vendorpercentage", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_vendorreferenceid", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_storereferenceid", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_giftcardtype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_giftcarditemized", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_targetvalueupsell", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_priorupsell", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_couponissuanceaction", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_couponmaxuses", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_eventidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_setidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_compidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_memberidentifier", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_memberstatus", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_membertype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_membervaluemin", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_amountmin", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_amountmax", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_memberclearance", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_pointable", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_promotable", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_discountable1", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_discountable2", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_skutype", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_discountvalue", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_discountable3", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_discountable4", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_getsreward", 
+    "type": "STRING"
+  }, 
+  {
+    "name": "promotionset_promotionsetcomponent_promotionsetmember_memberprefix", 
+    "type": "STRING"
+  }
+]

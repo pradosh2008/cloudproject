@@ -1,0 +1,212 @@
+
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_fact_subclass_store_day_new --use_legacy_sql=false <<!
+select 
+  TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PSSD.CHAIN_NBR = 7 THEN 'LB' 
+                      END
+                    , '|'
+                    , CAST(PSSD.SUBCLASS_NBR as STRING))))  as SUBCLASS_KEY
+, TO_HEX(MD5(CONCAT(  CASE 
+                           WHEN PSSD.CHAIN_NBR = 4 THEN 'CA' 
+                           WHEN PSSD.CHAIN_NBR = 7 THEN 'LB' 
+                           END
+                    , '|'
+                    , CAST(PSSD.STORE_NBR as STRING))))     as STORE_KEY
+, CAST(CASE 
+            WHEN PSSD.CHAIN_NBR = 4 THEN 'CA' 
+            WHEN PSSD.CHAIN_NBR = 7 THEN 'LB' 
+            END as STRING
+      )                                                     as BRAND_CD
+, CAST(PSSD.SUBCLASS_NBR as STRING)                         as SUBCLASS_ID
+, CAST(PSSD.STORE_NBR as STRING)                            as STORE_ID
+, PSSD.TRANSACTION_DT                                       as TRANSACTION_DT
+, PSSD.SALES_CHANNEL_TYPE_CD                                as SALES_CHANNEL_TYPE_CD
+, PSSD.PRICE_TYPE_CD                                        as PRICE_TYPE_CD
+, PSSD.STORE_ON_HAND_QTY                                    as STORE_ON_HAND_QTY
+, PSSD.STORE_ON_HAND_RTL                                    as STORE_ON_HAND_RTL_AMT
+, PSSD.STORE_ON_HAND_CST                                    as STORE_ON_HAND_CST_AMT
+, PSSD.STORE_ON_HAND_REGULAR_QTY                            as STORE_ON_HAND_REGULAR_QTY
+, PSSD.STORE_ON_HAND_REGULAR_RTL                            as STORE_ON_HAND_REGULAR_RTL_AMT
+, PSSD.STORE_ON_HAND_REGULAR_CST                            as STORE_ON_HAND_REGULAR_CST_AMT
+, PSSD.STORE_ON_HAND_MARKUP_QTY                             as STORE_ON_HAND_MARKUP_QTY
+, PSSD.STORE_ON_HAND_MARKUP_RTL                             as STORE_ON_HAND_MARKUP_RTL_AMT
+, PSSD.STORE_ON_HAND_MARKUP_CST                             as STORE_ON_HAND_MARKUP_CST_AMT
+, PSSD.STORE_ON_HAND_MARKDOWN_QTY                           as STORE_ON_HAND_MARKDOWN_QTY
+, PSSD.STORE_ON_HAND_MARKDOWN_RTL                           as STORE_ON_HAND_MARKDOWN_RTL_AMT
+, PSSD.STORE_ON_HAND_MARKDOWN_CST                           as STORE_ON_HAND_MARKDOWN_CST_AMT
+, PSSD.STORE_ON_HAND_PROMO_QTY                              as STORE_ON_HAND_PROMO_QTY
+, PSSD.STORE_ON_HAND_PROMO_RTL                              as STORE_ON_HAND_PROMO_RTL_AMT
+, PSSD.STORE_ON_HAND_PROMO_CST                              as STORE_ON_HAND_PROMO_CST_AMT
+, PSSD.STORE_ON_HAND_CLRNCE_QTY                             as STORE_ON_HAND_CLRNCE_QTY
+, PSSD.STORE_ON_HAND_CLRNCE_RTL                             as STORE_ON_HAND_CLRNCE_RTL_AMT
+, PSSD.STORE_ON_HAND_CLRNCE_CST                             as STORE_ON_HAND_CLRNCE_CST_AMT
+, PSSD.STORE_NON_SELLABLE_QTY                               as STORE_NON_SELLABLE_QTY
+, PSSD.STORE_NON_SELLABLE_RTL                               as STORE_NON_SELLABLE_RTL_AMT
+, PSSD.STORE_NON_SELLABLE_CST                               as STORE_NON_SELLABLE_CST_AMT
+, PSSD.STORE_MARKUP_QTY                                     as STORE_MARKUP_QTY
+, PSSD.STORE_MARKUP_RTL                                     as STORE_MARKUP_RTL_AMT
+, PSSD.STORE_MARKUP_CST                                     as STORE_MARKUP_CST_AMT
+, PSSD.STORE_MARKDOWN_QTY                                   as STORE_MARKDOWN_QTY
+, PSSD.STORE_MARKDOWN_RTL                                   as STORE_MARKDOWN_RTL_AMT
+, PSSD.STORE_MARKDOWN_CST                                   as STORE_MARKDOWN_CST_AMT
+, PSSD.PROMO_MARKDOWN_QTY                                   as PROMO_MARKDOWN_QTY
+, PSSD.PROMO_MARKDOWN_RTL                                   as PROMO_MARKDOWN_RTL_AMT
+, PSSD.PROMO_MARKDOWN_CST                                   as PROMO_MARKDOWN_CST_AMT
+, PSSD.STORE_CLRNCE_MARKDOWN_QTY                            as STORE_CLRNCE_MARKDOWN_QTY
+, PSSD.STORE_CLRNCE_MARKDOWN_RTL                            as STORE_CLRNCE_MARKDOWN_RTL_AMT
+, PSSD.STORE_CLRNCE_MARKDOWN_CST                            as STORE_CLRNCE_MARKDOWN_CST_AMT
+, PSSD.STORE_RECEIPT_QTY                                    as STORE_RECEIPT_QTY
+, PSSD.STORE_RECEIPT_RTL                                    as STORE_RECEIPT_RTL_AMT
+, PSSD.STORE_RECEIPT_CST                                    as STORE_RECEIPT_CST_AMT
+, PSSD.STORE_DIRECT_RECEIPT_QTY                             as STORE_DIRECT_RECEIPT_QTY
+, PSSD.STORE_DIRECT_RECEIPT_RTL                             as STORE_DIRECT_RECEIPT_RTL_AMT
+, PSSD.STORE_DIRECT_RECEIPT_CST                             as STORE_DIRECT_RECEIPT_CST_AMT
+, PSSD.STORE_TRANSFER_IN_QTY                                as STORE_TRANSFER_IN_QTY
+, PSSD.STORE_TRANSFER_IN_RTL                                as STORE_TRANSFER_IN_RTL_AMT
+, PSSD.STORE_TRANSFER_IN_CST                                as STORE_TRANSFER_IN_CST_AMT
+, PSSD.STORE_TRANSFER_OUT_QTY                               as STORE_TRANSFER_OUT_QTY
+, PSSD.STORE_TRANSFER_OUT_RTL                               as STORE_TRANSFER_OUT_RTL_AMT
+, PSSD.STORE_TRANSFER_OUT_CST                               as STORE_TRANSFER_OUT_CST_AMT
+, PSSD.STORE_MOOS_QTY                                       as STORE_MOOS_QTY
+, PSSD.STORE_MOOS_RTL                                       as STORE_MOOS_RTL_AMT
+, PSSD.STORE_MOOS_CST                                       as STORE_MOOS_CST_AMT
+, PSSD.STORE_ADJUSTMENT_QTY                                 as STORE_ADJUSTMENT_QTY
+, PSSD.STORE_ADJUSTMENT_RTL                                 as STORE_ADJUSTMENT_RTL_AMT
+, PSSD.STORE_ADJUSTMENT_CST                                 as STORE_ADJUSTMENT_CST_AMT
+, PSSD.STORE_DAMAGE_QTY                                     as STORE_DAMAGE_QTY
+, PSSD.STORE_DAMAGE_RTL                                     as STORE_DAMAGE_RTL_AMT
+, PSSD.STORE_DAMAGE_CST                                     as STORE_DAMAGE_CST_AMT
+, PSSD.STORE_RTV_QTY                                        as STORE_RTV_QTY
+, PSSD.STORE_RTV_RTL                                        as STORE_RTV_RTL_AMT
+, PSSD.STORE_RTV_CST                                        as STORE_RTV_CST_AMT
+, PSSD.STORE_OPEN_CLAIM_QTY                                 as STORE_OPEN_CLAIM_QTY
+, PSSD.STORE_OPEN_CLAIM_RTL                                 as STORE_OPEN_CLAIM_RTL_AMT
+, PSSD.STORE_OPEN_CLAIM_CST                                 as STORE_OPEN_CLAIM_CST_AMT
+, PSSD.RETURN_QTY                                           as RETURN_QTY
+, PSSD.RETURN_RTL                                           as RETURN_RTL_AMT
+, PSSD.RETURN_CST                                           as RETURN_CST_AMT
+, PSSD.NET_SALES_QTY                                        as NET_SALES_QTY
+, PSSD.NET_SALES_RTL                                        as NET_SALES_RTL_AMT
+, PSSD.NET_SALES_CST                                        as NET_SALES_CST_AMT
+, PSSD.NET_SALES_REGULAR_QTY                                as NET_SALES_REGULAR_QTY
+, PSSD.NET_SALES_REGULAR_RTL                                as NET_SALES_REGULAR_RTL_AMT
+, PSSD.NET_SALES_REGULAR_CST                                as NET_SALES_REGULAR_CST_AMT
+, PSSD.NET_SALES_MARKUP_QTY                                 as NET_SALES_MARKUP_QTY
+, PSSD.NET_SALES_MARKUP_RTL                                 as NET_SALES_MARKUP_RTL_AMT
+, PSSD.NET_SALES_MARKUP_CST                                 as NET_SALES_MARKUP_CST_AMT
+, PSSD.NET_SALES_MARKDOWN_QTY                               as NET_SALES_MARKDOWN_QTY
+, PSSD.NET_SALES_MARKDOWN_RTL                               as NET_SALES_MARKDOWN_RTL_AMT
+, PSSD.NET_SALES_MARKDOWN_CST                               as NET_SALES_MARKDOWN_CST_AMT
+, PSSD.NET_SALES_PROMO_QTY                                  as NET_SALES_PROMO_QTY
+, PSSD.NET_SALES_PROMO_RTL                                  as NET_SALES_PROMO_RTL_AMT
+, PSSD.NET_SALES_PROMO_CST                                  as NET_SALES_PROMO_CST_AMT
+, PSSD.NET_SALES_CLRNCE_QTY                                 as NET_SALES_CLRNCE_QTY
+, PSSD.NET_SALES_CLRNCE_RTL                                 as NET_SALES_CLRNCE_RTL_AMT
+, PSSD.NET_SALES_CLRNCE_CST                                 as NET_SALES_CLRNCE_CST_AMT
+, PSSD.SALES_EMPLOYEE_DISCOUNT_QTY                          as SALES_EMPLOYEE_DISCOUNT_QTY
+, PSSD.SALES_EMPLOYEE_DISCOUNT_RTL                          as SALES_EMPLOYEE_DISCOUNT_RTL_AMT
+, PSSD.SALES_EMPLOYEE_DISCOUNT_CST                          as SALES_EMPLOYEE_DISCOUNT_CST_AMT
+, PSSD.SALES_ORDER_QTY                                      as SALES_ORDER_QTY
+, PSSD.SALES_ORDER_RTL                                      as SALES_ORDER_RTL_AMT
+, PSSD.SALES_ORDER_CST                                      as SALES_ORDER_CST_AMT
+, PSSD.STORE_PRE_ALLOCATED_QTY                              as STORE_PRE_ALLOCATED_QTY
+, PSSD.STORE_PRE_ALLOCATED_RTL                              as STORE_PRE_ALLOCATED_RTL_AMT
+, PSSD.STORE_PRE_ALLOCATED_CST                              as STORE_PRE_ALLOCATED_CST_AMT
+, PSSD.STORE_ALLOCATED_QTY                                  as STORE_ALLOCATED_QTY
+, PSSD.STORE_ALLOCATED_RTL                                  as STORE_ALLOCATED_RTL_AMT
+, PSSD.STORE_ALLOCATED_CST                                  as STORE_ALLOCATED_CST_AMT
+, PSSD.STORE_CARTON_SHORT_QTY                               as STORE_CARTON_SHORT_QTY
+, PSSD.STORE_CARTON_SHORT_RTL                               as STORE_CARTON_SHORT_RTL_AMT
+, PSSD.STORE_CARTON_SHORT_CST                               as STORE_CARTON_SHORT_CST_AMT
+, PSSD.STORE_SHIPMENT_QTY                                   as STORE_SHIPMENT_QTY
+, PSSD.STORE_SHIPMENT_RTL                                   as STORE_SHIPMENT_RTL_AMT
+, PSSD.STORE_SHIPMENT_CST                                   as STORE_SHIPMENT_CST_AMT
+, PSSD.STORE_TRANSFER_RESERVED_QTY                          as STORE_TRANSFER_RESERVED_QTY
+, PSSD.STORE_TRANSFER_RESERVED_RTL                          as STORE_TRANSFER_RESERVED_RTL_AMT
+, PSSD.STORE_TRANSFER_RESERVED_CST                          as STORE_TRANSFER_RESERVED_CST_AMT
+, PSSD.STORE_TRANSFER_EXPECTED_QTY                          as STORE_TRANSFER_EXPECTED_QTY
+, PSSD.STORE_TRANSFER_EXPECTED_RTL                          as STORE_TRANSFER_EXPECTED_RTL_AMT
+, PSSD.STORE_TRANSFER_EXPECTED_CST                          as STORE_TRANSFER_EXPECTED_CST_AMT
+, PSSD.STORE_IN_TRANSIT_QTY                                 as STORE_IN_TRANSIT_QTY
+, PSSD.STORE_IN_TRANSIT_RTL                                 as STORE_IN_TRANSIT_RTL_AMT
+, PSSD.STORE_IN_TRANSIT_CST                                 as STORE_IN_TRANSIT_CST_AMT
+, PSSD.STORE_CUSTOMER_RESERVED_QTY                          as STORE_CUSTOMER_RESERVED_QTY
+, PSSD.STORE_CUSTOMER_RESERVED_RTL                          as STORE_CUSTOMER_RESERVED_RTL_AMT
+, PSSD.STORE_CUSTOMER_RESERVED_CST                          as STORE_CUSTOMER_RESERVED_CST_AMT
+, PSSD.STORE_PROJECTED_SHRINK_QTY                           as STORE_PROJECTED_SHRINK_QTY
+, PSSD.STORE_PROJECTED_SHRINK_RTL                           as STORE_PROJECTED_SHRINK_RTL_AMT
+, PSSD.STORE_PROJECTED_SHRINK_CST                           as STORE_PROJECTED_SHRINK_CST_AMT
+, PSSD.STORE_PHYS_INV_PRELIM_CNT_QTY                        as STORE_PHYS_INV_PRELIM_CNT_QTY
+, PSSD.STORE_PHYS_INV_PRELIM_CNT_RTL                        as STORE_PHYS_INV_PRELIM_CNT_RTL_AMT
+, PSSD.STORE_PHYS_INV_PRELIM_CNT_CST                        as STORE_PHYS_INV_PRELIM_CNT_CST_AMT
+, PSSD.STORE_PHYS_INV_FINAL_CNT_QTY                         as STORE_PHYS_INV_FINAL_CNT_QTY
+, PSSD.STORE_PHYS_INV_FINAL_CNT_RTL                         as STORE_PHYS_INV_FINAL_CNT_RTL_AMT
+, PSSD.STORE_PHYS_INV_FINAL_CNT_CST                         as STORE_PHYS_INV_FINAL_CNT_CST_AMT
+, PSSD.STR_PHYS_INV_PRELIM_SHRNK_CST                        as STR_PHYS_INV_PRELIM_SHRNK_CST_AMT
+, PSSD.STR_PHYS_INV_PRELIM_SHRNK_QTY                        as STR_PHYS_INV_PRELIM_SHRNK_QTY
+, PSSD.STR_PHYS_INV_PRELIM_SHRNK_RTL                        as STR_PHYS_INV_PRELIM_SHRNK_RTL_AMT
+, PSSD.STORE_PHYS_INV_FINAL_SHRNK_CST                       as STORE_PHYS_INV_FINAL_SHRNK_CST_AMT
+, PSSD.STORE_PHYS_INV_FINAL_SHRNK_QTY                       as STORE_PHYS_INV_FINAL_SHRNK_QTY
+, PSSD.STORE_PHYS_INV_FINAL_SHRNK_RTL                       as STORE_PHYS_INV_FINAL_SHRNK_RTL_AMT
+, PSSD.STORE_RECEIPT_HIST_QTY                               as STORE_RECEIPT_HIST_QTY
+, PSSD.STORE_RECEIPT_HIST_RTL                               as STORE_RECEIPT_HIST_RTL_AMT
+, PSSD.STORE_RECEIPT_HIST_CST                               as STORE_RECEIPT_HIST_CST_AMT
+, PSSD.PERM_MD_CALC_RTL                                     as PERM_MD_CALC_RTL_AMT
+, PSSD.PERM_MD_CALC_QTY                                     as PERM_MD_CALC_QTY
+, PSSD.PERM_MD_CALC_CST                                     as PERM_MD_CALC_CST_AMT
+, PSSD.STORE_TO_DC_TRANSFER_OUT_QTY                         as STORE_TO_DC_TRANSFER_OUT_QTY
+, PSSD.STORE_TO_DC_TRANSFER_OUT_RTL                         as STORE_TO_DC_TRANSFER_OUT_RTL_AMT
+, PSSD.STORE_TO_DC_TRANSFER_OUT_CST                         as STORE_TO_DC_TRANSFER_OUT_CST_AMT
+, PSSD.STORE_TO_STORE_IN_TRANSIT_QTY                        as STORE_TO_STORE_IN_TRANSIT_QTY
+, PSSD.STORE_TO_STORE_IN_TRANSIT_RTL                        as STORE_TO_STORE_IN_TRANSIT_RTL_AMT
+, PSSD.STORE_TO_STORE_IN_TRANSIT_CST                        as STORE_TO_STORE_IN_TRANSIT_CST_AMT
+, PSSD.STORE_TO_STORE_TRANSFER_IN_QTY                       as STORE_TO_STORE_TRANSFER_IN_QTY
+, PSSD.STORE_TO_STORE_TRANSFER_IN_RTL                       as STORE_TO_STORE_TRANSFER_IN_RTL_AMT
+, PSSD.STORE_TO_STORE_TRANSFER_IN_CST                       as STORE_TO_STORE_TRANSFER_IN_CST_AMT
+, PSSD.STORE_TO_STORE_TRASFR_OUT_QTY                        as STORE_TO_STORE_TRASFR_OUT_QTY
+, PSSD.STORE_TO_STORE_TRASFR_OUT_RTL                        as STORE_TO_STORE_TRASFR_OUT_RTL_AMT
+, PSSD.STORE_TO_STORE_TRASFR_OUT_CST                        as STORE_TO_STORE_TRASFR_OUT_CST_AMT
+, PSSD.STORE_TO_STORE_PRE_ALOCD_QTY                         as STORE_TO_STORE_PRE_ALOCD_QTY
+, PSSD.STORE_TO_STORE_PRE_ALOCD_RTL                         as STORE_TO_STORE_PRE_ALOCD_RTL_AMT
+, PSSD.STORE_TO_STORE_PRE_ALOCD_CST                         as STORE_TO_STORE_PRE_ALOCD_CST_AMT
+, PSSD.STORE_TO_STORE_ALLOCATED_QTY                         as STORE_TO_STORE_ALLOCATED_QTY
+, PSSD.STORE_TO_STORE_ALLOCATED_RTL                         as STORE_TO_STORE_ALLOCATED_RTL_AMT
+, PSSD.STORE_TO_STORE_ALLOCATED_CST                         as STORE_TO_STORE_ALLOCATED_CST_AMT
+, PSSD.DC_TO_STORE_IN_TRANSIT_QTY                           as DC_TO_STORE_IN_TRANSIT_QTY
+, PSSD.DC_TO_STORE_IN_TRANSIT_RTL                           as DC_TO_STORE_IN_TRANSIT_RTL_AMT
+, PSSD.DC_TO_STORE_IN_TRANSIT_CST                           as DC_TO_STORE_IN_TRANSIT_CST_AMT
+, PSSD.DC_TO_STORE_TRANSFER_IN_QTY                          as DC_TO_STORE_TRANSFER_IN_QTY
+, PSSD.DC_TO_STORE_TRANSFER_IN_RTL                          as DC_TO_STORE_TRANSFER_IN_RTL_AMT
+, PSSD.DC_TO_STORE_TRANSFER_IN_CST                          as DC_TO_STORE_TRANSFER_IN_CST_AMT
+, PSSD.DC_TO_STORE_PRE_ALLOCATED_QTY                        as DC_TO_STORE_PRE_ALLOCATED_QTY
+, PSSD.DC_TO_STORE_PRE_ALLOCATED_RTL                        as DC_TO_STORE_PRE_ALLOCATED_RTL_AMT
+, PSSD.DC_TO_STORE_PRE_ALLOCATED_CST                        as DC_TO_STORE_PRE_ALLOCATED_CST_AMT
+, PSSD.DC_TO_STORE_ALLOCATED_QTY                            as DC_TO_STORE_ALLOCATED_QTY
+, PSSD.DC_TO_STORE_ALLOCATED_RTL                            as DC_TO_STORE_ALLOCATED_RTL_AMT
+, PSSD.DC_TO_STORE_ALLOCATED_CST                            as DC_TO_STORE_ALLOCATED_CST_AMT
+, CURRENT_TIMESTAMP                                         as EDL_CREATE_TMS
+, 'PLUS_FACT_SUBCLASS_STORE_DAY'                            as EDL_CREATE_JOB_NAM
+, CURRENT_TIMESTAMP                                         as EDL_LAST_UPDATE_TMS
+, 'PLUS_FACT_SUBCLASS_STORE_DAY'                            as EDL_LAST_UPDATE_JOB_NAM
+from edl_stage.plus_subclass_store_day PSSD
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_fact_subclass_store_day edl_archive.plus_fact_subclass_store_day
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_fact_subclass_store_day_new analytic_mart.plus_fact_subclass_store_day
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.plus_fact_subclass_store_day_new
+rc_check $? "drop the temp table"
+
+

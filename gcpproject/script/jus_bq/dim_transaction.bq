@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_transaction_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_transaction c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_transaction_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_transaction c
+left join jus_stage.work_dim_transaction w
+    on  w.transaction_key = c.transaction_key
+where w.transaction_key is null
+!
+bq cp --force jus_stage.dim_transaction edl_archive.dim_transaction
+bq cp --force jus_stage.dim_transaction_new jus_stage.dim_transaction
+bq rm --force jus_stage.dim_transaction_new

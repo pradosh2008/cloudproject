@@ -1,0 +1,75 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lb_on_order_sku_dc_day.json \
+        edl_landing.lb_on_order_sku_dc_day \
+        " gs://${default_bucket}/plus/edw/lb_ON_ORDER_SKU_DC_DAY*.txt.gz"
+rc_check $? "EDL_LANDING load for lb_on_order_sku_dc_day Complete"
+
+#loading the temporary table in staging
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table edl_stage.plus_on_order_sku_dc_day_new --use_legacy_sql=false <<!
+SELECT
+  cast(trim(d.chain_nbr) as int64)                                                                      as chain_nbr
+, trim(d.sku_nbr)                                                                                       as sku_nbr
+, cast(trim(d.dc_nbr) as numeric)                                                                       as dc_nbr
+, cast(trim(d.purchase_order_nbr) as int64)                                                             as purchase_order_nbr
+, case when trim(d.transaction_dt)   = '' then null else parse_date("%Y-%m-%d",d.transaction_dt)    end as transaction_dt
+, trim(d.sales_channel_type_cd)                                                                         as sales_channel_type_cd
+, case when trim(d.purchase_order_dt)= '' then null else parse_date("%Y-%m-%d",d.purchase_order_dt) end as purchase_order_dt
+, case when trim(d.not_before_dt)    = '' then null else parse_date("%Y-%m-%d",d.not_before_dt)     end as not_before_dt
+, case when trim(d.not_after_dt)     = '' then null else parse_date("%Y-%m-%d",d.not_after_dt)      end as not_after_dt
+, case when trim(d.otb_eop_dt)       = '' then null else parse_date("%Y-%m-%d",d.otb_eop_dt)        end as otb_eop_dt
+, cast(trim(d.supplier_nbr) as int64)                                                                   as supplier_nbr
+, cast(trim(d.unit_cst) as numeric)                                                                     as unit_cst
+, cast(trim(d.unit_rtl) as numeric)                                                                     as unit_rtl
+, cast(trim(d.on_order_received_qty) as int64)                                                          as on_order_received_qty
+, cast(trim(d.on_order_received_rtl) as numeric)                                                        as on_order_received_rtl
+, cast(trim(d.on_order_received_cst) as numeric)                                                        as on_order_received_cst
+, cast(trim(d.on_order_ordered_qty) as int64)                                                           as on_order_ordered_qty
+, cast(trim(d.on_order_ordered_rtl) as numeric)                                                         as on_order_ordered_rtl
+, cast(trim(d.on_order_ordered_cst) as numeric)                                                         as on_order_ordered_cst
+, cast(trim(d.on_order_open_balance_qty) as int64)                                                      as on_order_open_balance_qty
+, cast(trim(d.on_order_open_balance_rtl) as numeric)                                                    as on_order_open_balance_rtl
+, cast(trim(d.on_order_open_balance_cst) as numeric)                                                    as on_order_open_balance_cst
+, cast(trim(d.on_order_closed_balance_qty) as int64)                                                    as on_order_closed_balance_qty
+, cast(trim(d.on_order_closed_balance_rtl) as numeric)                                                  as on_order_closed_balance_rtl
+, cast(trim(d.on_order_closed_balance_cst) as numeric)                                                  as on_order_closed_balance_cst
+, cast(trim(d.on_order_cancelled_qty) as int64)                                                         as on_order_cancelled_qty
+, cast(trim(d.on_order_cancelled_rtl) as numeric)                                                       as on_order_cancelled_rtl
+, cast(trim(d.on_order_cancelled_cst) as numeric)                                                       as on_order_cancelled_cst
+, trim(d.price_type_cd)                                                                                 as price_type_cd
+, case when trim(d.last_update_ts) = '' then null else parse_date("%Y-%m-%d",d.last_update_ts)      end as last_update_ts
+FROM edl_landing.lb_on_order_sku_dc_day d
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_on_order_sku_dc_day_new --use_legacy_sql=false <<!
+select stg.*
+from edl_stage.plus_on_order_sku_dc_day stg
+WHERE stg.transaction_dt NOT IN (
+  SELECT
+  w.transaction_dt
+  FROM edl_stage.plus_on_order_sku_dc_day_new w
+  group by w.transaction_dt
+)
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_on_order_sku_dc_day edl_archive.plus_on_order_sku_dc_day
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_on_order_sku_dc_day_new edl_stage.plus_on_order_sku_dc_day
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_on_order_sku_dc_day_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/edw/lb_ON_ORDER_SKU_DC_DAY*.txt.gz"
+
+

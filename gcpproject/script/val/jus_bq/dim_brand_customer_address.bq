@@ -1,0 +1,16 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_brand_customer_address_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_brand_customer_address c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --allow_large_results --append_table --destination_table jus_stage.dim_brand_customer_address_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_brand_customer_address c
+left join jus_stage.work_dim_brand_customer_address w
+    on w.brand_customer_address_key = c.brand_customer_address_key
+where w.brand_customer_address_key is null
+!
+bq cp --force jus_stage.dim_brand_customer_address edl_archive.dim_brand_customer_address
+bq cp --force jus_stage.dim_brand_customer_address_new jus_stage.dim_brand_customer_address
+bq rm --force jus_stage.dim_brand_customer_address_new

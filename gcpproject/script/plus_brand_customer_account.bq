@@ -1,0 +1,78 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Load Data from staging table into analytic_mart
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table analytic_mart.plus_brand_customer_account_new <<!
+SELECT 
+TO_HEX(MD5(concat(CASE WHEN ccust.ID_CHAIN = 4 THEN 'CA'
+                       WHEN ccust.ID_CHAIN = 7 THEN 'LB'
+                       ELSE NULL END
+                       ,'|',CAST(cc.ID_CUST AS STRING)
+                )))                         AS brand_customer_key
+, CAST(cc.ID_CUST AS STRING)                AS brand_customer_id  
+, cc.ID_ACCOUNT AS account_id
+, cc.CD_CCARD_PROCESS_STATUS                AS ccard_process_status_cd
+, cc.CD_BANK_CARD_TYPE                      AS bank_card_type_cd
+, cc.IN_BANK_CARD_SRCE                      AS brand_card_source_cd
+, cc.DA_BANK_CARD_ADDED                     AS band_card_added_dt
+, cc.IN_FB_ACCT_TYPE                        AS fb_account_type_cd
+, CASE cc.FL_ACCOUNT_CLOSED WHEN 'Y' THEN 1 
+                            WHEN 'N' THEN 0
+                            ELSE NULL END   AS account_closed_ind
+, CASE cc.FL_ACCOUNT_ACTIVE WHEN 'Y' THEN 1 
+                            WHEN 'N' THEN 0
+                            ELSE NULL END   AS account_active_ind
+, cc.CD_ACCOUNT_TERM                        AS account_term_cd
+, cc.DA_APPLY_HOUSCARD                      AS apply_housecard_dt
+, cc.IN_CUST_SOURCE_2ND                     AS customer_source_second_cd
+, cc.CD_BNK_CRD_SUBTYPE                     AS bank_card_subtype_cd
+, cc.DA_CARD_ISSUED                         AS card_issued_dt
+, cc.DA_TMCI015_ROW_UPDATED                 AS tmci015_row_updated_dt
+--, cc.extract_ts                             AS extract_tms
+, CURRENT_TIMESTAMP                         AS edl_create_tms
+, 'CRMCUST'                                 AS edl_create_job_nam         
+, CURRENT_TIMESTAMP                         AS edl_last_update_tms          
+, 'CRMCUST'                                 AS edl_last_update_job_nam            
+, CASE WHEN cc.id_chain= 7 then 'LB' 
+       WHEN cc.id_chain = 4 THEN 'CA' 
+       ELSE NULL END                        AS brand_cd
+, FORMAT_TIMESTAMP('%E4Y%m%d', cc.extract_ts) AS batch_id
+FROM (
+        SELECT ccard.*
+        , cct.ID_CHAIN 
+        FROM edl_stage.plus_vmci015_cust_ccard_curr ccard
+        INNER JOIN edl_stage.plus_vmci016_ccard_type cct 
+            ON cct.CD_BANK_CARD_TYPE = ccard.CD_BANK_CARD_TYPE 
+            AND cct.ID_CHAIN IN (4,7)
+) cc
+        INNER JOIN edl_stage.plus_vmci019_customer_curr cust 
+            ON cust.ID_CUST = cc.ID_CUST
+        INNER JOIN edl_stage.plus_vmci105_chain_cust_curr ccust 
+            ON ccust.ID_CUST = cust.ID_CUST
+            AND ccust.ID_CHAIN = cc.ID_CHAIN
+!
+rc_check $? "Data Loaded from edl_stage to analytic_mart.plus_brand_customer_account_new table"
+
+
+#Add legacy records from old table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_account_new --use_legacy_sql=false <<!
+select  c.*
+from analytic_mart.plus_brand_customer_account c
+left join analytic_mart.plus_brand_customer_account_new w
+    on  w.brand_customer_key = c.brand_customer_key
+    and w.account_id = c.account_id
+    and w.ccard_process_status_cd = c.ccard_process_status_cd
+where w.brand_customer_key is null
+!
+rc_check $? "Merged analytic_mart.plus_brand_customer_account to analytic_mart.plus_brand_customer_account_new table"
+
+#COPY DATA FROM ACTUAL TABLE
+bq cp --force analytic_mart.plus_brand_customer_account edl_archive.plus_brand_customer_account
+rc_check $? "Archive copy"
+bq cp --force analytic_mart.plus_brand_customer_account_new analytic_mart.plus_brand_customer_account
+rc_check $? "Copy new table "
+bq rm --force analytic_mart.plus_brand_customer_account_new
+rc_check $? "Remove new table "

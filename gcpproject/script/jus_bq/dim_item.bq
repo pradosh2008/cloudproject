@@ -1,0 +1,24 @@
+#until dim_item review, will not process item updates - just add new items
+bq cp --force jus_stage.dim_item edl_archive.dim_item
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_item --use_legacy_sql=false <<!
+select w.*
+from jus_stage.work_dim_item w
+left join jus_stage.dim_item c
+    on  c.item_key = w.item_key
+where c.item_key is null
+!
+#Load new and updated into new table
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_item_new --use_legacy_sql=false <<!
+#SELECT c.*
+#from jus_stage.work_dim_item c
+#!
+#Add legacy records from old table
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_item_new --use_legacy_sql=false <<!
+#select c.*
+#from jus_stage.dim_item c
+#left join jus_stage.work_dim_item w
+    #on  w.item_key = c.item_key
+#where w.item_key is null
+#!
+#bq cp --force jus_stage.dim_item_new jus_stage.dim_item
+#bq rm --force jus_stage.dim_item_new

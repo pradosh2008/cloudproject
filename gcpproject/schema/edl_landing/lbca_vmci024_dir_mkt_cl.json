@@ -1,0 +1,147 @@
+[
+  {
+    "name": "ID_DIR_MKT_CELL",
+    "type": "string"
+  },
+  {
+    "name": "TX_CELL_DESC_SHORT",
+    "type": "string"
+  },
+  {
+    "name": "DA_RCD_CREATED",
+    "type": "string"
+  },
+  {
+    "name": "DA_RCD_UPDATED",
+    "type": "string"
+  },
+  {
+    "name": "FL_QRY_UPDATED",
+    "type": "string"
+  },
+  {
+    "name": "IN_CELL_TYPE",
+    "type": "string"
+  },
+  {
+    "name": "IN_CONTROL_TYPE",
+    "type": "string"
+  },
+  {
+    "name": "TX_CELL_DESC_LON",
+    "type": "string"
+  },
+  {
+    "name": "ID_MAILING",
+    "type": "string"
+  },
+  {
+    "name": "NU_VERSIONS",
+    "type": "string"
+  },
+  {
+    "name": "ID_QRY",
+    "type": "string"
+  },
+  {
+    "name": "NU_PRIORITY",
+    "type": "string"
+  },
+  {
+    "name": "NU_RAW_CUSTS",
+    "type": "string"
+  },
+  {
+    "name": "NU_SELECTED_CUSTS",
+    "type": "string"
+  },
+  {
+    "name": "NU_DEDUPED_CUSTS",
+    "type": "string"
+  },
+  {
+    "name": "NU_CONTROL_CUSTS",
+    "type": "string"
+  },
+  {
+    "name": "PC_CONTROL_CUSTS",
+    "type": "string"
+  },
+  {
+    "name": "NU_NOT_MAILED",
+    "type": "string"
+  },
+  {
+    "name": "NU_OUTPUT",
+    "type": "string"
+  },
+  {
+    "name": "FL_RUN_QUERY",
+    "type": "string"
+  },
+  {
+    "name": "DA_STATUS",
+    "type": "string"
+  },
+  {
+    "name": "TI_STATUS",
+    "type": "string"
+  },
+  {
+    "name": "TX_STATUS",
+    "type": "string"
+  },
+  {
+    "name": "NA_JOB",
+    "type": "string"
+  },
+  {
+    "name": "ID_CHAIN",
+    "type": "string"
+  },
+  {
+    "name": "CD_GROUP",
+    "type": "string"
+  },
+  {
+    "name": "ID_USER_CREATED",
+    "type": "string"
+  },
+  {
+    "name": "CD_CELL",
+    "type": "string"
+  },
+  {
+    "name": "ID_CONTROL_CELL",
+    "type": "string"
+  },
+  {
+    "name": "ID_OFFER_LIST",
+    "type": "string"
+  },
+  {
+    "name": "DA_PROMO_START",
+    "type": "string"
+  },
+  {
+    "name": "DA_PROMO_EXPIRE",
+    "type": "string"
+  },
+  {
+    "name": "TX_CREATIVE_TYPE",
+    "type": "string"
+  },
+  {
+    "name": "AM_AD_UNIT_COST",
+    "type": "string"
+  },
+  {
+    "name": "ID_FLOWCHART",
+    "type": "string"
+  },
+  {
+     "name": "EXTRACT_TS",
+     "type": "string"
+  }
+
+]

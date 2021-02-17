@@ -1,0 +1,57 @@
+bq --quiet --headless --format csv query <<! 
+    select 'pre_acc_df_prod_hier ', max(batch_id) from edl_stage_0219.pre_acc_df_prod_hier 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_ann_ann_bi_transaction_fpnfp ', max(batch_id) from edl_stage_0219.pre_ann_ann_bi_transaction_fpnfp 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_ann_calendar ', max(batch_id) from edl_stage_0219.pre_ann_calendar 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_commerceItem ', max(batch_id) from edl_stage_0219.pre_atg_order_commerceItem 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_commerceitemadjustments ', max(batch_id) from edl_stage_0219.pre_atg_order_commerceitemadjustments 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_commerceitemcoupons ', max(batch_id) from edl_stage_0219.pre_atg_order_commerceitemcoupons 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_header ', max(batch_id) from edl_stage_0219.pre_atg_order_header 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_payment ', max(batch_id) from edl_stage_0219.pre_atg_order_payment 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_return ', max(batch_id) from edl_stage_0219.pre_atg_order_return 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_return_commerceitem ', max(batch_id) from edl_stage_0219.pre_atg_order_return_commerceitem 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_return_method ', max(batch_id) from edl_stage_0219.pre_atg_order_return_method 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_shipment ', max(batch_id) from edl_stage_0219.pre_atg_order_shipment 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_atg_order_shipment_tracking ', max(batch_id) from edl_stage_0219.pre_atg_order_shipment_tracking 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_discount_detail ', max(batch_id) from edl_stage_0219.pre_aw_transaction_discount_detail 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_header ', max(batch_id) from edl_stage_0219.pre_aw_transaction_header 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_line ', max(batch_id) from edl_stage_0219.pre_aw_transaction_line 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_linenotes ', max(batch_id) from edl_stage_0219.pre_aw_transaction_linenotes 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_merch_detail ', max(batch_id) from edl_stage_0219.pre_aw_transaction_merch_detail 
+!
+bq --quiet --headless --format csv query <<! 
+    select 'pre_aw_transaction_return_detail ', max(batch_id) from edl_stage_0219.pre_aw_transaction_return_detail 
+!

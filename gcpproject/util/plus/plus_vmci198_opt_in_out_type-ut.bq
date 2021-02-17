@@ -1,0 +1,37 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+echo 'Table Row Count'
+bq query --use_legacy_sql=false <<!
+select count(1) as row_count
+    from edl_stage.plus_vmci198_opt_in_out_type
+!
+rc_check $? "Record Count Check"
+
+echo 'Data Between Staging and Landing'
+bq query --use_legacy_sql=false <<!
+select sum(case when a.cd_opt_in_out is null then 0 else 1 end)   as match_count
+      ,sum(case when a.cd_opt_in_out is null then 1 else 0 end)   as orphan_count
+from edl_stage.plus_vmci198_opt_in_out_type a
+left join edl_landing.plus_vmci198_opt_in_out_type b
+    on a.cd_opt_in_out = b.cd_opt_in_out
+!
+rc_check $? "Missing Record Check"
+
+
+echo 'Record Comparision Between the landing and staging'
+bq query --use_legacy_sql=false <<!
+Select * from ( 
+Select * from edl_landing.plus_vmci198_opt_in_out_type 
+Union all 
+Select * from edl_stage.plus_vmci198_opt_in_out_type 
+) cmpr
+ order by cd_opt_in_out
+!
+rc_check $? "Data Comparision"
+
+
+

@@ -1,0 +1,79 @@
+[
+	{
+		"name": "cd_bank_card_type",
+		"type": "string"
+	},
+	{
+		"name": "id_chain",
+		"type": "string"
+    },
+	{
+		"name": "tx_bank_card_type",
+		"type": "string"
+	},
+	{
+		"name": "fl_housecard",
+		"type": "string"
+	},
+	{
+		"name": "fl_cobrand",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_hc_act",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_co_act",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_hc_cls",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_co_cls",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_hc_dnp",
+		"type": "string"
+	},
+	{
+		"name": "fl_updt_co_dnp",
+		"type": "string"
+	},
+	{
+		"name": "fl_populate_tmci115",
+		"type": "string"
+	},
+	{
+		"name": "fl_apply_account_term",
+		"type": "string"
+	},
+	{
+		"name": "fl_outbound",
+		"type": "string"
+	},
+	{
+		"name": "cd_parent_type",
+		"type": "string"
+	},
+	{
+		"name": "cd_ctype_process_status",
+		"type": "string"
+	},
+	{
+		"name": "fl_foreign_key",
+		"type": "string"
+	},
+	{
+		"name": "fl_horizon_score",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "string"
+	}
+
+]

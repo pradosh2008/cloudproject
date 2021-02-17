@@ -1,0 +1,87 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Creating table in landing dataset
+bq load --replace=true --source_format=CSV --field_delimiter="|" --quote="" \
+        --schema=${schema_path}/edl_landing/ann_sap_promo.json \
+        edl_landing.ann_ann_sap_promo \
+        "gs://${default_bucket}/pre/sapd/ANN_SAP_PROMO_*.dat"
+rc_check $? "Load edl_landing"
+
+#Loading edl_stage table from edl_landing dataset
+#Loading all batch_ids from GCP Bucket
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sap_promo_new --use_legacy_sql=false <<!
+SELECT
+  parse_DATE("%Y%m%d",date_time) as date_time,  
+  promo_num,
+  promo_desc,
+  cast(salesorg as INT64) as salesorg,
+  cast(distribution_channel as INT64) as distribution_channel,
+  parse_DATE("%Y%m%d",valid_from) AS valid_from,
+  parse_DATE("%Y%m%d",valid_to) AS valid_to,
+  base_tack,
+  offer,
+  benefit,
+  maxcount,
+  disc_price,
+  cast(req_min_value as NUMERIC)as req_min_value,
+  coupon,
+  detail,
+  active_loc,
+  loc_desc,
+  cast(site_count as INT64) as site_count,
+  deal_categ,
+  artc_grpnr_pre,
+  artc_grpnr_pre_desc,
+  mat_quan,
+  matnr_bene,
+  matnr_bene_desc,
+  quan_bene,
+  grpnr_excl,
+  grpnr_excl_desc,
+  crname,
+  cast(mktg_aggr as INT64) as mktg_aggr,
+  cast(test_aggr as INT64) as test_aggr,
+  cast(evt_aggr as INT64) as evt_aggr,
+  parse_DATE("%Y%m%d",crdate) AS crdate,
+  chname,
+  parse_DATE("%Y%m%d",chdate) AS chdate,
+  case when submitdt='00000000' then null
+  else parse_DATE("%Y%m%d",submitdt) end as submitdt,
+  submitby,
+  till_description,
+  batch_id
+FROM
+(select c.*
+        ,max(c.batch_id) over (partition by c.promo_num) as max_batch_id
+    from edl_landing.ann_ann_sap_promo c
+) curr
+where curr.max_batch_id = curr.batch_id  
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+##MERGE or UPSERT new edl_stage table from existing table
+bq query --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_sap_promo_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_sap_promo_new c
+left join edl_landing.ann_ann_sap_promo w
+    on  w.promo_num = c.promo_num
+where w.promo_num is null
+!
+rc_check $? "append legacy records into the temp table"
+
+
+##cleansing and archival
+bq cp --force edl_stage.pre_sap_promo edl_archive.pre_sap_promo
+rc_check $? "archive copy"
+bq cp --force edl_stage.pre_sap_promo_new edl_stage.pre_sap_promo
+rc_check $? "replace the staging table with the new table"
+bq rm --force edl_stage.pre_sap_promo_new
+rc_check $? "drop the deduped temp table"
+
+# Following function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/pre/sapd/ANN_SAP_PROMO_*.dat"
+
+

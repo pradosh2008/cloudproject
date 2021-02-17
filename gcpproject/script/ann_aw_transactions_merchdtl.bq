@@ -1,0 +1,97 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --quote='' --field_delimiter="|" --schema=${schema_path}/edl_landing/ann_aw_transactions_merchdtl.json edl_landing.ann_aw_transactions_merchdtl  "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL*"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.ann_aw_transactions_merchdtl_new --use_legacy_sql=false <<!
+SELECT if_entry_no,
+interface_control_flag,
+record_type,
+line_id,
+merchandise_category,
+upc_lookup_division,
+upc_no,
+sku_id,
+style_reference_id,
+class_code,
+subclass_code,
+pos_identifier_type,
+pos_identifier,
+pos_dept_class,
+units,
+salesperson,
+salesperson2,
+cast(ticket_price/100 as numeric) ticket_price,
+cast(sold_at_price/100 as numeric) sold_at_price,
+price_override,
+upc_missing_in_pos_iplu_flag,
+scanned,
+upc_on_file,
+plu_price,
+origination_store_no,
+source_store_no,
+fulfillment_store_no,
+batch_id
+ from (select c.*
+        ,max(c.batch_id) over (partition by c.if_entry_no) as max_batch_id
+    from edl_landing.ann_aw_transactions_merchdtl c
+) curr
+where curr.max_batch_id = curr.batch_id
+
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_aw_transactions_merchdtl_new --use_legacy_sql=false <<!
+select
+c.if_entry_no,
+c.interface_control_flag,
+c.record_type,
+c.line_id,
+c.merchandise_category,
+c.upc_lookup_division,
+c.upc_no,
+c.sku_id,
+c.style_reference_id,
+c.class_code,
+c.subclass_code,
+c.pos_identifier_type,
+c.pos_identifier,
+c.pos_dept_class,
+c.units,
+c.salesperson,
+c.salesperson2,
+cast(c.ticket_price as numeric) ticket_price,
+cast(c.sold_at_price as numeric) sold_at_price,
+c.price_override,
+c.upc_missing_in_pos_iplu_flag,
+c.scanned,
+c.upc_on_file,
+c.plu_price,
+c.origination_store_no,
+c.source_store_no,
+c.fulfillment_store_no,
+c.batch_id
+from edl_stage.pre_aw_transaction_merch_detail c
+left join edl_stage.ann_aw_transactions_merchdtl_new w
+    on  w.if_entry_no = c.if_entry_no
+    AND w.line_id = c.line_id
+    where w.if_entry_no is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_aw_transaction_merch_detail edl_archive.pre_aw_transaction_merch_detail
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_aw_transactions_merchdtl_new edl_stage.pre_aw_transaction_merch_detail
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_aw_transactions_merchdtl_new
+rc_check $? "drop the temp table"
+
+archive_bucket_files "gs://${default_bucket}/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL*"
+

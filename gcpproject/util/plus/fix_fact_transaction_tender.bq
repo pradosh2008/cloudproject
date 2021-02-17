@@ -1,0 +1,52 @@
+#!/usr/bin/bash
+
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --use_legacy_sql=false <<!
+create table analytic_mart.fact_transaction_tender_dedup as
+with trans_tenderCTE as
+(
+select ftf.*
+,row_number() over (partition by transaction_key,tender_line_num order by transaction_key,tender_line_num,edl_create_tms desc) as dupnum
+from analytic_mart.fact_transaction_tender ftf
+)
+select
+transaction_key
+,tender_line_num
+,cast(tender_amt as numeric) as tender_amt
+,tender_expiration_dt
+,tender_cd
+,tender_reference_num
+,tender_void_ind
+,deferred_billing_dt
+,paypal_order_id
+,tender_salesperson_key
+,authorization_id
+,authorize_key_ind
+,deferred_billing_plan_id
+,open_charge_ind
+,charge_application_status_cd
+,state_cd
+,record_create_tm
+,edl_create_tms
+,edl_create_job_nam
+,edl_last_update_tms
+,edl_last_update_job_nam
+,brand_cd
+from trans_tenderCTE
+where dupnum = 1
+!
+rc_check $? "Fix dedup and columns from float to numeric"
+
+
+bq cp --force analytic_mart.fact_transaction_tender edl_archive.fact_transaction_tender
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_tender_dedup analytic_mart.fact_transaction_tender
+rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart.fact_transaction_tender_dedup
+rc_check $? "drop the temp table"
+
+

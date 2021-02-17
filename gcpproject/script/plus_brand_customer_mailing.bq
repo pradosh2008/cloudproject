@@ -1,0 +1,155 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --replace=true --destination_table analytic_mart.plus_brand_customer_mailing_new --use_legacy_sql=false <<!
+select
+ o.mailing_key
+,o.mailing_id
+,o.mail_short_desc
+,o.mail_long_desc
+,o.mail_effective_dt
+,o.mail_expired_dt
+,o.file_created_dt
+,o.mailed_dt
+,o.max_custs_num
+,o.dedup_type_cd
+,o.record_created_dt
+,o.record_updated_dt
+,o.excl_emp_ind
+,o.mail_type_cd
+,o.process_type_cd
+,o.status_cd
+,o.status_ind
+,o.status_desc
+,o.job_nam
+,o.group_cd
+,o.output_type_cd
+,o.user_created_id
+,o.include_always_ind
+,o.include_seed_ind
+,o.include_decoy_ind
+,o.include_request_ind
+,o.skip_counts_ind
+,o.purge_dt
+,o.last_cell_done_id
+,o.incl_states_nm
+,o.ok_to_mail_yes_checked_cd
+,o.ok_to_mail_no_check_cd
+,o.ok_to_email_yes_checked_cd
+,o.ok_to_email_no_checked_cd
+,o.excl_no_not_promote_cd
+,o.include_dsfcodes_desc
+,o.include_mail_undertermined_cd
+,o.include_email_undetermined_cd
+,o.campaign_cd
+,o.initiative_desc
+,o.campaign_objective_desc
+,o.prelim_count_due_dt
+,o.final_count_due_dt
+,o.mail_vendor_nm
+,o.adtrax_cd
+,o.week_mailing_eff_id
+,o.reqd_circulation_desc
+,o.due_lettershop_dt
+,o.batch_id
+,o.edl_create_tms
+,o.edl_create_job_nam
+,o.edl_last_update_tms
+,o.edl_last_update_job_nam
+,o.brand_cd
+from
+(
+SELECT
+  TO_HEX( MD5( CONCAT(CASE
+          WHEN m.id_chain = 4 THEN 'CA'
+          WHEN m.id_chain = 7 THEN 'LB' END ,"|"
+        ,m.id_mailing))) AS mailing_key
+,m.ID_MAILING                         AS   mailing_id
+,m.TX_MAIL_DESC_SHORT                 AS   mail_short_desc
+,m.TX_MAIL_DESC_LONG                  AS   mail_long_desc
+,cast(m.DA_MAIL_EFF as DATE)          AS   mail_effective_dt
+,cast(m.DA_MAIL_EXP as DATE)          AS   mail_expired_dt
+,cast(m.DA_FILE_CREATED as DATE)      AS   file_created_dt
+,cast(m.DA_MAILED  as DATE)           AS   mailed_dt
+,m.NU_MAX_CUSTS                       AS   max_custs_num
+,m.IN_DEDUP_TYPE                      AS   dedup_type_cd
+,cast(m.DA_RCD_CREATED as DATE)       AS   record_created_dt
+,cast(m.DA_RCD_UPDATED as DATE)       AS   record_updated_dt
+,m.FL_EXCL_EMP                        AS   excl_emp_ind
+,m.CD_MAIL_TYPE                       AS   mail_type_cd
+,m.CD_PROCESS_TYPE                    AS   process_type_cd
+,m.DA_STATUS                          AS   status_cd
+,m.TI_STATUS                          AS   status_ind
+,m.TX_STATUS                          AS   status_desc
+,m.NA_JOB                             AS   job_nam
+,m.CD_GROUP                           AS   group_cd
+,m.CD_OUTPUT_TYPE                     AS   output_type_cd
+,m.ID_USER_CREATED                    AS   user_created_id
+,m.FL_INCLUDE_ALWAYS                  AS   include_always_ind
+,m.FL_INCLUDE_SEED                    AS   include_seed_ind
+,m.FL_INCLUDE_DECOY                   AS   include_decoy_ind
+,m.FL_INCLUDE_REQUEST                 AS   include_request_ind
+,m.FL_SKIP_COUNTS                     AS   skip_counts_ind
+,cast(m.DA_PURGE as DATE)             AS   purge_dt
+,m.ID_LAST_CELL_DONE                  AS   last_cell_done_id
+,m.TX_INCL_STATES                     AS   incl_states_nm
+,m.FL_OK_TO_MAIL_YES_CHKD             AS   ok_to_mail_yes_checked_cd
+,m.FL_OK_TO_MAIL_NO_CHKD              AS   ok_to_mail_no_check_cd
+,m.FL_OK_TO_EMAIL_YES_CHKD            AS   ok_to_email_yes_checked_cd
+,m.FL_OK_TO_EMAIL_NO_CHKD             AS   ok_to_email_no_checked_cd
+,m.FL_EXCL_DO_NOT_PROMOTE             AS   excl_no_not_promote_cd
+,m.TX_INCL_DSFCODES                   AS   include_dsfcodes_desc
+,m.FL_INCL_MAIL_UNDETERMINED          AS   include_mail_undertermined_cd
+,m.FL_INCL_EMAIL_UNDETERMINED         AS   include_email_undetermined_cd
+,m.CD_CAMPAIGN                        AS   campaign_cd
+,m.TX_INTIATIVE                       AS   initiative_desc
+,m.TX_CAMPAIGN_OBJECTIVE              AS   campaign_objective_desc
+,cast(m.DA_PRELIM_COUNT_DUE as DATE)  AS   prelim_count_due_dt
+,cast(m.DA_FINAL_COUNT_DUE  as DATE)  AS   final_count_due_dt
+,m.NA_MAIL_VENDOR                     AS   mail_vendor_nm
+,m.CD_ADTRAX                          AS   adtrax_cd
+,m.ID_WEEK_MAILING_EFF                AS   week_mailing_eff_id
+,m.NU_REQD_CIRCULATION                AS   reqd_circulation_desc
+,cast(m.DA_DUE_LETTERSHOP as DATE)    AS   due_lettershop_dt
+,FORMAT_TIMESTAMP('%E4Y%m%d',m.extract_ts) AS batch_id
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'CRMCUST' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'CRMCUST' AS edl_last_update_job_nam
+, CASE
+    WHEN m.id_chain = 4 THEN 'CA'
+    WHEN m.id_chain = 7 THEN 'LB'
+END
+  AS brand_cd
+FROM
+  edl_stage.plus_vmci025_mailing_curr m
+where m.id_chain in (4,7)
+) as o
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_mailing_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_mailing c
+left join analytic_mart.plus_brand_customer_mailing_new w
+    on w.mailing_key =c.mailing_key
+    where w.mailing_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_brand_customer_mailing edl_archive.plus_brand_customer_mailing
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_mailing_new analytic_mart.plus_brand_customer_mailing
+rc_check $? "replace the temp table as the stage table"
+bq rm --force analytic_mart.plus_brand_customer_mailing_new
+rc_check $? "drop the temp table"
+
+

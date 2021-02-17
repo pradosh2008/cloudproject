@@ -1,0 +1,57 @@
+[
+  {
+    "mode": "NULLABLE", 
+    "name": "CD_OPT_IN_OUT", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "TX_OPT_IN_OUT", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "DA_TMCI198_CREATED", 
+    "type": "DATE"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_OPT_AGG_TYPE", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "FL_SEND_ECOMM", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_ADDTL_KEY1", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_ADDTL_KEY2", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_ADDTL_KEY3", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "IN_ADDTL_KEY4", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "FL_GENERIC_FEED", 
+    "type": "STRING"
+  }, 
+  {
+    "mode": "NULLABLE", 
+    "name": "FL_ISM", 
+    "type": "STRING"
+  }
+]

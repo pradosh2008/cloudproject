@@ -1,0 +1,65 @@
+#!/usr/bin/bash
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query --replace=true --max_rows 1 --allow_large_results --destination_table analytic_mart.fact_transaction_fee_new --use_legacy_sql=false <<!
+SELECT
+  TO_HEX( MD5( CONCAT(case when stf.selling_chain_nbr = 4 THEN 'CA|'
+                           when stf.selling_chain_nbr = 7 THEN 'LB|' end
+                     ,stf.selling_store_nbr,"|"
+                     ,stf.register_nbr,"|"
+                     ,stf.transaction_dt,"|"
+                     ,stf.transaction_nbr ))) AS transaction_key,
+  stf.fee_seq_nbr AS transaction_fee_line_num,
+  stf.fee_nbr as fee_cd,
+  stf.fee_amt AS fee_amt,
+  cast(0.0 as numeric) AS discount_amt, -- RJ - no hard coding 0 for amount , Karthik needs to check why its not there in stage
+  stf.non_merch_tax_type AS non_merchandise_tax_type_cd,
+  stf.non_merch_prorated_tax_amt AS non_merchandise_prorated_tax_amt,
+  stf.non_merch_tax_amt  AS non_merchandise_tax_amt,
+  CURRENT_TIMESTAMP AS edl_create_tms,
+  'TRANS' AS edl_create_job_nam,
+  CURRENT_TIMESTAMP AS edl_last_update_tms,
+  'TRANS' AS edl_last_update_job_nam,
+  case when stf.selling_chain_nbr = 4 THEN 'CA'
+       when stf.selling_chain_nbr = 7 THEN 'LB' end AS brand_cd
+FROM
+  edl_stage.plus_sales_transaction_fee stf
+!
+rc_check $? "load stage tables"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_fee_new --use_legacy_sql=false <<!
+select c.transaction_key
+      ,c.transaction_fee_line_num
+      ,cast(c.fee_cd as string) as fee_cd
+      ,c.fee_amt as fee_amt
+      ,c.discount_amt as discount_amt
+      ,c.non_merchandise_tax_type_cd
+      ,c.non_merchandise_prorated_tax_amt
+      ,c.non_merchandise_tax_amt
+      ,c.edl_create_tms
+      ,c.edl_create_job_nam
+      ,c.edl_last_update_tms
+      ,c.edl_last_update_job_nam
+      ,c.brand_cd
+from analytic_mart.fact_transaction_fee c
+left join analytic_mart.fact_transaction_fee_new w
+    on  w.transaction_key = c.transaction_key
+    and w.transaction_fee_line_num = c.transaction_fee_line_num
+    and w.brand_cd = c.brand_cd
+where w.transaction_key is null
+!
+rc_check $? "append legacy records into the temp table"
+
+
+#cleansing and archival
+bq cp --force analytic_mart.fact_transaction_fee edl_archive.fact_transaction_fee
+rc_check $? "archive copy"
+bq cp --force analytic_mart.fact_transaction_fee_new analytic_mart.fact_transaction_fee
+rc_check $? "replace the temp table as the analytic_mart table"
+bq rm --force analytic_mart.fact_transaction_fee_new
+rc_check $? "drop the temp table"
+
+

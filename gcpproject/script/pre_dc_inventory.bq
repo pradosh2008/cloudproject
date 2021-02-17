@@ -1,0 +1,46 @@
+#This is a a temporary step
+bq rm --force edl_stage.pre_dc_inventory
+
+bq load --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 --quote="" \
+        --schema=/home/gcpinteg/script/dcinventoryschema.json edl_landing.ann_sku_dc_inventory \
+        'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_DC_INVENTORY_*.txt'
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_dc_inventory --use_legacy_sql=false <<!
+select
+chain_id
+,dc_id
+,selling_loc_id
+,cast(week_id as INT64) as week_id
+,style_id
+,color_id
+,size_id
+,sku_id
+,cast(bop_dc_inv_u as  int64)    as    bop_dc_inv_unit_cnt
+,cast(bop_dc_inv_r as numeric)    as    bop_dc_inv_retail_amt
+,cast(bop_dc_inv_c_actual as numeric)    as    bop_dc_inv_actual_cost_amt
+,cast(bop_dc_inv_c_valued as numeric)    as    bop_dc_inv_valued_cost_amt
+,cast(bop_dc_to_dc_it_u as  int64)    as    bop_dc_to_dc_it_unit_cnt
+,cast(bop_dc_to_dc_it_r as  numeric)    as    bop_dc_to_dc_it_retail_amt
+,cast(bop_dc_to_dc_it_c_actual as  numeric)    as    bop_dc_to_dc_it_actual_cost_amt
+,cast(bop_dc_to_dc_it_c_valued as  numeric)    as    bop_dc_to_dc_it_valued_cost_amt
+,cast(dc_receipt_u as  int64)    as    dc_receipt_unit_cnt
+,cast(dc_receipt_d as  numeric)    as    dc_receipt_d_valued_cost_amt
+,cast(dc_receipt_c_actual as  numeric)    as    dc_receipt_actual_cost_amt
+,cast(dc_receipt_c_valued as  numeric)    as    dc_receipt_valued_cost_amt
+,cast(bop_mkd_dc_inv_u as  int64)    as    bop_mkd_dc_inv_unit_cnt
+,cast(bop_mkd_dc_inv_r as  numeric)    as    bop_mkd_dc_inv_retail_amt
+,cast(bop_mkd_dc_inv_u_actual as  numeric)    as    bop_mkd_dc_inv_actual_unit_amt
+,cast(bop_mkd_dc_inv_c_value as  numeric)    as    bop_mkd_dc_inv_value_cost_amt
+,cast(dc_dmos_u as  int64)    as    dc_dmos_unit_cnt
+,cast(dc_dmos_r as  numeric)    as    dc_dmos_retail_amt
+,cast(dc_dmos_c_actual as  numeric)    as    dc_dmos_actual_cost_amt
+,cast(dc_dmos_c_valued as  numeric)    as    dc_dmos_valued_cost_amt
+,cast(dc_mkd_u as  int64)    as    dc_mkd_unit_cnt
+,cast(dc_mkd_r as  numeric)    as    dc_mkd_retail_amt
+,cast(dc_mkd_c as  numeric)    as    dc_mkd_cost_amt
+,cast(rtv_inv_u as  int64)    as    rtv_inv_unit_cnt
+,cast(rtv_inv_r as  numeric)    as    rtv_inv_retail_amt
+,cast(rtv_inv_c_actual as  numeric)    as    rtv_inv_actual_cost_amt
+,cast(rtv_inv_c_valued as  numeric)    as    rtv_inv_valued_cost_amt
+from edl_landing.ann_sku_dc_inventory
+!

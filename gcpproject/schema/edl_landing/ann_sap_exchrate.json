@@ -1,0 +1,10 @@
+[
+  {
+    "name": "sap_exchrate_src", 
+    "type": "STRING"
+  },
+  {
+    "name": "batch_id",
+    "type": "INTEGER"
+  }
+]

@@ -1,0 +1,320 @@
+[
+	{
+		"name": "ID_CHAIN",
+		"type": "string"
+	},
+	{
+		"name": "ID_EMAIL",
+		"type": "string"
+	},
+	{
+		"name": "ID_CUST",
+		"type": "string"
+	},
+	{
+		"name": "CD_EMAIL_SRCE_INITIAL",
+		"type": "string"
+	},
+	{
+		"name": "CD_EMAIL_SRCE_RECENT",
+		"type": "string"
+	},
+	{
+		"name": "CD_PLCC_STATUS_LB",
+		"type": "string"
+	},
+	{
+		"name": "CD_PLCC_STATUS_CA",
+		"type": "string"
+	},
+	{
+		"name": "CD_PLCC_STATUS_FB",
+		"type": "string"
+	},
+	{
+		"name": "DA_PREMIER_EXP_FB",
+		"type": "string"
+	},
+	{
+		"name": "FL_PERK_STATUS",
+		"type": "string"
+	},
+	{
+		"name": "DA_PERK_EXP_CA",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_EM_LB",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_EM_LBO",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_EM_CA",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_EM_SONSI",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_EM_FB",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_DM",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_PA",
+		"type": "string"
+	},
+	{
+		"name": "FL_OPT_IN_TD",
+		"type": "string"
+	},
+	{
+		"name": "ID_STORE_NEAR_ANY_CH",
+		"type": "string"
+	},
+	{
+		"name": "NU_DIST_NEAR_ANY_CH",
+		"type": "string"
+	},
+	{
+		"name": "ID_STORE_NEAR_THIS_CH",
+		"type": "string"
+	},	
+	{
+		"name": "NU_DIST_NEAR_THIS_CH",
+		"type": "string"
+	},
+	{
+		"name": "FL_EMPLOYEE",
+		"type": "string"
+	},
+	{
+		"name": "FL_CUST_INTERNATIONAL",
+		"type": "string"
+	},
+	{
+		"name": "ID_STORE_LOYALTY",
+		"type": "string"
+	},
+	{
+		"name": "DA_EM_OPT_IN_1ST",
+		"type": "string"
+	},
+	{
+		"name": "CD_LIFE_CYCLE",
+		"type": "string"
+	},
+	{
+		"name": "CD_CUST_SEGMENT",
+		"type": "string"
+	},
+	{
+		"name": "DA_ECOMM_1ST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "DA_STORE_1ST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "DA_1ST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "DA_ECOMM_LAST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "DA_STORE_LAST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "DA_CREDIT_LAST_PURCH",
+		"type": "string"
+	},
+	{
+		"name": "PC_STORE_REV_12M",
+		"type": "string"
+	},
+	{
+		"name": "AM_SALES_NET_12M",
+		"type": "string"
+	},
+	{
+		"name": "AM_MARGIN_NET_12M",
+		"type": "string"
+	},
+	{
+		"name": "QU_TXNS_NET_12M",
+		"type": "string"
+	},
+	{		
+		"name": "PC_MARGIN_12M",
+		"type": "string"
+	},
+	{
+		"name": "FL_PETITE_BUYER",
+		"type": "string"
+	},
+	{
+		"name": "FL_TALLS_BUYER",
+		"type": "string"
+	},
+	{
+		"name": "ID_SIZE_TOPS",
+		"type": "string"
+	},
+	{
+		"name": "ID_SIZE_BOTTOMS",
+		"type": "string"
+	},
+	{
+		"name": "ID_SIZE_SHOES",
+		"type": "string"
+	},
+	{
+		"name": "ID_SIZE_DRESS",
+		"type": "string"
+	},
+	{
+		"name": "ID_SIZE_BRA",
+		"type": "string"
+	},
+	{
+		"name": "PC_CLEARANCE_3M",
+		"type": "string"
+	},
+	{
+		"name": "FL_CLEARANCE_BUYER_13M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_ACRS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_ACTIVE_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_BRA_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_CASUAL_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_DENIM_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_DRESS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_KNITS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_HOSRY_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_JEWLRY_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_OUTERWR_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_PANTIES_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SHAPEWR_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SHOES_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SLEEPWR_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SPANX_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SWEATER_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SWIMWEAR_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_WTW_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_WMN_TOPS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_BTTMS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_INNERWR_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_COATS_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_SOCIAL_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_PURCH_MISC_24M",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_OPEN",
+		"type": "string"
+	},
+	{
+		"name": "DA_LAST_CLICKED",
+		"type": "string"
+	},
+	{
+		"name": "DA_TMCI997_CREATED",
+		"type": "string"
+	},
+	{
+		"name": "DA_TMCI997_UPDATED",
+		"type": "string"
+	},
+	{
+		"name": "DA_EM_OPT_IN_LAST",
+		"type": "string"
+	},
+	{
+		"name": "EXTRACT_TS",
+		"type": "string"
+	}
+
+		
+]

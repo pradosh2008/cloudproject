@@ -1,0 +1,110 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/ann_sap_style.json \
+        edl_landing.ann_sap_style \
+        "gs://${default_bucket}/pre/sapwm/ANN_SAP_STYLE_*.dat"
+rc_check $? "Load edl_landing"
+
+#loading the temporary table in staging
+bq query  --max_rows 1 --allow_large_results --destination_table edl_stage.ann_sap_style_new --use_legacy_sql=false <<!
+SELECT 
+    c.date_time
+    , c.style_number
+    , c.style_desc
+    , c.dept
+    , c.class
+    , c.vendor_number
+    , c.intern_excl
+    , c.intern_tallstyle
+    , c.markdwn_week
+    , c.exit_week
+    , c.gift_wrap
+    , c.season 
+    , c.season_desc
+    , c.storeset
+    , c.storeset_desc
+    , c.merch_catg
+    , c.merch_catg_desc
+    , c.purch_org
+    , c.ean_upc
+    , c.missy_style
+    , c.petite_style
+    , c.tall_style
+    , c.fabric_profile_value
+    , c.fabric_profile_desc
+    , c.silhouette_profile_value
+    , c.silhouette_profile_desc
+    , c.top_silhouette
+    , c.neckline
+    , c.sleeve_len
+    , c.novelty
+    , c.end_use
+    , c.pyramid
+    , c.plus_style
+    , c.batch_id
+from edl_landing.ann_sap_style c
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_sap_style_new --use_legacy_sql=false <<!
+SELECT 
+    c.date_time
+    , c.style_number
+    , c.style_desc
+    , c.dept
+    , c.class
+    , c.vendor_number
+    , c.intern_excl
+    , c.intern_tallstyle
+    , c.markdwn_week
+    , c.exit_week
+    , c.gift_wrap
+    , c.season 
+    , c.season_desc
+    , c.storeset
+    , c.storeset_desc
+    , c.merch_catg
+    , c.merch_catg_desc
+    , c.purch_org
+    , c.ean_upc
+    , c.missy_style
+    , c.petite_style
+    , c.tall_style
+    , c.fabric_profile_value
+    , c.fabric_profile_desc
+    , c.silhouette_profile_value
+    , c.silhouette_profile_desc
+    , c.top_silhouette
+    , c.neckline
+    , c.sleeve_len
+    , c.novelty
+    , c.end_use
+    , c.pyramid
+    , c.plus_style
+    , c.batch_id 
+FROM edl_stage.pre_sap_style c
+WHERE c.batch_id NOT IN (
+  SELECT
+    w.batch_id
+  FROM
+    edl_stage.ann_sap_style_new w
+    group by w.batch_id
+)
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_sap_style edl_archive.pre_sap_style
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_sap_style_new edl_stage.pre_sap_style
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_sap_style_new
+rc_check $? "drop the temp table"
+
+# This function is only stubbed in – it runs but currently does not archive your files
+archive_bucket_files "gs://${default_bucket}/pre/sapwm/ANN_SAP_STYLE_*.dat"

@@ -1,0 +1,87 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --quote='' --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/plus_sku_dc_inventory.json \
+        edl_landing.plus_sku_dc_inventory \
+        " gs://${default_bucket}/plus/inventory/lb_ACC_DF_SKU_DC_INVENTORY_*.txt.gz"
+rc_check $? "EDL_LANDING load for plus_sku_dc_inventory Complete"
+
+#loading the temporary table in staging
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.plus_sku_dc_inventory_new --use_legacy_sql=false <<!
+SELECT 
+  TRIM(dc.chain_id)                                                                                                                                     AS chain_id
+, TRIM(dc.dc_id)                                                                                                                                        AS dc_id
+, TRIM(dc.selling_loc_id)                                                                                                                               AS selling_loc_id
+, CAST(TRIM(dc.week_id) as INT64)                                                                                                                       AS week_id
+, TRIM(dc.sku_id)                                                                                                                                       AS sku_id
+, TRIM(dc.style_id)                                                                                                                                     AS style_id
+, TRIM(dc.color_id)                                                                                                                                     AS color_id
+, TRIM(dc.size_id)                                                                                                                                      AS size_id
+, CASE WHEN TRIM(dc.bop_dc_inv_unit_cnt)             = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.bop_dc_inv_unit_cnt)             AS INT64)   END AS bop_dc_inv_unit_cnt
+, CASE WHEN TRIM(dc.bop_dc_inv_retail_amt)           = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_inv_retail_amt)           AS NUMERIC) END AS bop_dc_inv_retail_amt
+, CASE WHEN TRIM(dc.bop_dc_inv_actual_cost_amt)      = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_inv_actual_cost_amt)      AS NUMERIC) END AS bop_dc_inv_actual_cost_amt
+, CASE WHEN TRIM(dc.bop_dc_inv_valued_cost_amt)      = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_inv_valued_cost_amt)      AS NUMERIC) END AS bop_dc_inv_valued_cost_amt
+, CASE WHEN TRIM(dc.bop_dc_to_dc_it_unit_cnt)        = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.bop_dc_to_dc_it_unit_cnt)        AS INT64)   END AS bop_dc_to_dc_it_unit_cnt
+, CASE WHEN TRIM(dc.bop_dc_to_dc_it_retail_amt)      = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_to_dc_it_retail_amt)      AS NUMERIC) END AS bop_dc_to_dc_it_retail_amt
+, CASE WHEN TRIM(dc.bop_dc_to_dc_it_actual_cost_amt) = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_to_dc_it_actual_cost_amt) AS NUMERIC) END AS bop_dc_to_dc_it_actual_cost_amt
+, CASE WHEN TRIM(dc.bop_dc_to_dc_it_valued_cost_amt) = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_dc_to_dc_it_valued_cost_amt) AS NUMERIC) END AS bop_dc_to_dc_it_valued_cost_amt
+, CASE WHEN TRIM(dc.dc_receipt_unit_cnt)             = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.dc_receipt_unit_cnt)             AS INT64)   END AS dc_receipt_unit_cnt
+, CASE WHEN TRIM(dc.dc_receipt_d_cost_amt)           = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_receipt_d_cost_amt)           AS NUMERIC) END AS dc_receipt_d_cost_amt
+, CASE WHEN TRIM(dc.dc_receipt_actual_cost_amt)      = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_receipt_actual_cost_amt)      AS NUMERIC) END AS dc_receipt_actual_cost_amt
+, CASE WHEN TRIM(dc.dc_receipt_valued_cost_amt)      = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_receipt_valued_cost_amt)      AS NUMERIC) END AS dc_receipt_valued_cost_amt
+, CASE WHEN TRIM(dc.bop_mkd_dc_inv_unit_cnt)         = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.bop_mkd_dc_inv_unit_cnt)         AS INT64)   END AS bop_mkd_dc_inv_unit_cnt
+, CASE WHEN TRIM(dc.bop_mkd_dc_inv_retail_amt)       = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_mkd_dc_inv_retail_amt)       AS NUMERIC) END AS bop_mkd_dc_inv_retail_amt
+, CASE WHEN TRIM(dc.bop_mkd_dc_inv_actual_cost_amt)  = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_mkd_dc_inv_actual_cost_amt)  AS NUMERIC) END AS bop_mkd_dc_inv_actual_cost_amt
+, CASE WHEN TRIM(dc.bop_mkd_dc_inv_valued_cost_amt)  = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.bop_mkd_dc_inv_valued_cost_amt)  AS NUMERIC) END AS bop_mkd_dc_inv_valued_cost_amt
+, CASE WHEN TRIM(dc.dc_dmos_unit_cnt)                = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.dc_dmos_unit_cnt)                AS INT64)   END AS dc_dmos_unit_cnt
+, CASE WHEN TRIM(dc.dc_dmos_retail_amt)              = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_dmos_retail_amt)              AS NUMERIC) END AS dc_dmos_retail_amt
+, CASE WHEN TRIM(dc.dc_dmos_actual_cost_amt)         = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_dmos_actual_cost_amt)         AS NUMERIC) END AS dc_dmos_actual_cost_amt
+, CASE WHEN TRIM(dc.dc_dmos_valued_cost_amt)         = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_dmos_valued_cost_amt)         AS NUMERIC) END AS dc_dmos_valued_cost_amt
+, CASE WHEN TRIM(dc.dc_mkd_unit_cnt)                 = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.dc_mkd_unit_cnt)                 AS INT64)   END AS dc_mkd_unit_cnt
+, CASE WHEN TRIM(dc.dc_mkd_retail_amt)               = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_mkd_retail_amt)               AS NUMERIC) END AS dc_mkd_retail_amt
+, CASE WHEN TRIM(dc.dc_mkd_cost_amt)                 = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.dc_mkd_cost_amt)                 AS NUMERIC) END AS dc_mkd_cost_amt
+, CASE WHEN TRIM(dc.rtv_inv_unit_cnt)                = '' THEN CAST(NULL as INT64)   ELSE CAST(TRIM(dc.rtv_inv_unit_cnt)                AS INT64)   END AS rtv_inv_unit_cnt
+, CASE WHEN TRIM(dc.rtv_inv_retail_amt)              = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.rtv_inv_retail_amt)              AS NUMERIC) END AS rtv_inv_retail_amt
+, CASE WHEN TRIM(dc.rtv_inv_actual_cost_amt)         = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.rtv_inv_actual_cost_amt)         AS NUMERIC) END AS rtv_inv_actual_cost_amt
+, CASE WHEN TRIM(dc.rtv_inv_valued_cost_amt)         = '' THEN CAST(NULL as NUMERIC) ELSE CAST(TRIM(dc.rtv_inv_valued_cost_amt)         AS NUMERIC) END AS rtv_inv_valued_cost_amt
+FROM edl_landing.plus_sku_dc_inventory dc
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_sku_dc_inventory_new --use_legacy_sql=false <<!
+select stg.*
+from edl_stage.plus_sku_dc_inventory stg
+left join (
+            select 
+              dc_id
+            , sku_id
+            , week_id
+            from edl_stage.plus_sku_dc_inventory_new
+            group by 1,2,3
+          ) temp
+          ON  TEMP.dc_id   = STG.dc_id
+          AND TEMP.sku_id  = STG.sku_id
+          AND TEMP.week_id = STG.week_id
+where TEMP.week_id is null
+
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+#cleansing and archival
+bq cp --force edl_stage.plus_sku_dc_inventory edl_archive.plus_sku_dc_inventory
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_sku_dc_inventory_new edl_stage.plus_sku_dc_inventory
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_sku_dc_inventory_new
+rc_check $? "drop the temp table"
+
+##Archive Files in Bucket which are processed or Consumed
+archive_bucket_files "gs://${default_bucket}/plus/inventory/lb_ACC_DF_SKU_DC_INVENTORY_*.txt.gz"
+
+
