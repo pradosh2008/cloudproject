@@ -1,0 +1,79 @@
+[
+	{
+		"source_table_name": "vmci015_cust_ccard",
+		"fields":[
+	{
+		"name": "id_cust",
+		"type": "int"
+	},
+	{
+		"name": "id_account",
+		"type": "string"
+	},
+	{
+		"name": "cd_ccard_process_status",
+		"type": "string"
+	},
+	{
+		"name": "cd_bank_card_type",
+		"type": "string"
+	},
+	{
+		"name": "in_bank_card_srce",
+		"type": "string"
+	},
+	{
+		"name": "da_bank_card_added",
+		"type": "date"
+	},
+	{
+		"name": "in_fb_acct_type",
+		"type": "string"
+	},
+	{
+		"name": "fl_account_closed",
+		"type": "string"
+	},
+	{
+		"name": "fl_account_active",
+		"type": "string"
+	},
+	{
+		"name": "cd_account_term",
+		"type": "string"
+	},
+	{
+		"name": "da_apply_houscard",
+		"type": "date"
+	},
+	{
+		"name": "in_cust_source_2nd",
+		"type": "string"
+	},
+	{
+		"name": "cd_bnk_crd_subtype",
+		"type": "string"
+	},
+	{
+		"name": "da_card_issued",
+		"type": "date"
+	},
+	{
+		"name": "da_tmci015_row_updated",
+		"type": "date"
+	},
+	{
+		"name": "id_account_prefix",
+		"type": "int"
+	},
+	{
+		"name": "id_account_suffix",
+		"type": "int"
+	},
+	{
+		"name": "extract_ts",
+		"type": "timestamp"
+	}
+]
+}
+]

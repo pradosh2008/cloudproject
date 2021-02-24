@@ -1,0 +1,69 @@
+#Incremental Load
+
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from foundationutil import *
+
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Pass Job Name
+job_name=args['JOB_NAME']
+
+# specify source table name  and target table name
+source_tbl='vmci051_clcst_gp_h'
+target_tbl='plus_vmci051_clcst_gp_h'
+
+#Specify the data will get load loaded in which folder in target bucket
+target_prefix='//plus//crm'
+source_prefix='//plus//crm'
+
+#If the table needs to be partitioned , specify the partition key columns
+partitionKeys=[]
+
+# specify primary key and foreign key columns name
+
+map_keyval = {'plus_vmci051_clcst_gp_h_key':['id_cust','id_dir_mkt_cell','cd_cell_cust_type','fl_responded','id_package'], 
+              'plus_vmci024_dir_mkt_cl_key':['id_dir_mkt_cell'], 
+			  'plus_vmci019_customer_key':['id_cust']}
+
+#Build foundation frame  to get existing data into  foundation frame
+fdn_hash_df=read_fdn(target_prefix,target_tbl,spark)
+
+#  Clean source  df 
+inc_clean_df=clean_sourcedf(source_prefix,source_tbl,spark)
+
+#Add Hash value to incremental df
+inc_hash_df=calc_rowhash(inc_clean_df)
+
+# Compare incremental df to foundation to df for  capturing incremental records 
+inc_leftjoined_fdn_df=inc_leftjoin_fdn(fdn_hash_df,inc_hash_df)
+
+# Call base frame with incremental frame
+base_sdf=create_base_frame(inc_leftjoined_fdn_df
+                            ,map_keyval
+                            ,glueContext
+                            ,spark
+                            ,job_name
+                            ,source_tbl
+                            ,audit_cols=['foundation_program_nam','foundation_insert_tms'])
+
+# so pass base_sdf ot target_sdf based on the previous to this write function
+status=write_to_sink(base_sdf,target_tbl,partitionKeys,glueContext,target_prefix)
+
+
+#moving to archive
+move_to_archive(status,source_prefix,source_tbl)
+
+job.commit()

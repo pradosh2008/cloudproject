@@ -1,0 +1,92 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci172_chain_cust_email.fxp
+*
+* Description: Export customer email attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.vmci172_chain_cust_email_caa_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(163))
+FROM(
+SELECT 'CD_DBL_OPT_IN|CD_EMAIL|DA_EM_CUST_VERIFIED|DA_EMAIL_CODE|DA_EMAIL_CREATED|DA_EMAIL_UPDATED|FL_HABEAS_COMPL|FL_OK_TO_EMAIL|ID_CHAIN|ID_CUST|ID_EMAIL|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT
+CAST(SRC.CD_DBL_OPT_IN AS CHAR(1)),'|' (CHAR(1)),
+CAST(SRC.CD_EMAIL AS CHAR(1)),'|' (CHAR(1)),
+CAST(SRC.DA_EM_CUST_VERIFIED AS CHAR(10)),'|' (CHAR(1)),
+CAST(SRC.DA_EMAIL_CODE AS CHAR(10)),'|' (CHAR(1)),
+CAST(SRC.DA_EMAIL_CREATED AS CHAR(10)),'|' (CHAR(1)),
+CAST(SRC.DA_EMAIL_UPDATED AS CHAR(10)),'|' (CHAR(1)),
+CAST(SRC.FL_HABEAS_COMPL AS CHAR(1)),'|' (CHAR(1)),
+CAST(SRC.FL_OK_TO_EMAIL AS CHAR(1)),'|' (CHAR(1)),
+CAST(SRC.ID_CHAIN AS CHAR(4)),'|' (CHAR(1)),
+CAST(SRC.ID_CUST AS CHAR(11)),'|' (CHAR(1)),
+CAST(SRC.ID_EMAIL AS CHAR(11)),'|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP  AS CHAR(19))
+from DMMCIPI04.VMCI172_CHAIN_CUST_EMAIL  SRC
+INNER JOIN (
+SELECT ID_CUST FROM DVZEKE.VMCI105_CHAIN_CUST WHERE ID_CHAIN IN (7) GROUP BY 1
+) CC
+ON SRC.ID_CUST=CC.ID_CUST
+;
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci172_chain_cust_email_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table VMCI105_CHAIN_CUST" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci172_chain_cust_email_$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping or transferring the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression and file transfer step completed!"
+
+
+
+echo -------------------------------------------------------------
+echo "PROCESSING COMPLETE for exp_caa_vmci172_chain_cust_email.fxp "
+echo -------------------------------------------------------------
+
+
+

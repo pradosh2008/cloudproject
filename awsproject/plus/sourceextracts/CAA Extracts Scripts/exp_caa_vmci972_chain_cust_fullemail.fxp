@@ -1,0 +1,80 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci972_chain_cust_fullemail.fxp
+*
+* Description: Export customer email attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 05/19/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.vmci972_chain_cust_fullemail_caa_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST(COLUMNNAME AS CHAR(138))
+FROM(
+SELECT 'ID_CHAIN|ID_CUST|ID_EMAIL|AD_EMAIL_FULL|CD_EMAIL_STYLE|DA_EMAIL_CREATED|FL_PRIMARY_EMAIL|DA_EM_CUST_VERIFIED|FL_EMAIL_VALID|EXTRACT_TS' AS COLUMNNAME
+) A;
+
+SELECT 
+CAST (ID_CHAIN                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (ID_CUST                        AS CHAR(11)),'|' (CHAR(1)),
+CAST (ID_EMAIL                       AS CHAR(11)),'|' (CHAR(1)),
+CAST (OREPLACE(OREPLACE (AD_EMAIL_FULL,'|',''),'"','')                AS CHAR(65)),'|' (CHAR(1)),
+CAST (CD_EMAIL_STYLE                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (CAST (DA_EMAIL_CREATED  AS DATE FORMAT 'YYYY-MM-DD')            AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_PRIMARY_EMAIL               AS CHAR(1)),'|' (CHAR(1)),
+CAST (CAST (DA_EM_CUST_VERIFIED AS DATE FORMAT 'YYYY-MM-DD')          AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_EMAIL_VALID                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP AS CHAR(19))
+FROM DMMCIPI04.VMCI972_CHAIN_CUST_FULLEMAIL
+WHERE ID_CHAIN IN (7) 
+AND (  DA_EM_CUST_VERIFIED BETWEEN '$BEGIN_DT' AND '$END_DT' OR DA_EMAIL_CREATED  BETWEEN '$BEGIN_DT' AND '$END_DT')
+;
+
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci972_chain_cust_fullemail$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  DMMCIPI04.VMCI972_CHAIN_CUST_FULLEMAIL " 
+      exit 1 
+   fi
+
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci972_chain_cust_fullemail$DATE.txt 
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------

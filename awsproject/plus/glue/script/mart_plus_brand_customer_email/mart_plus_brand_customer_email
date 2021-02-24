@@ -1,0 +1,173 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci172_chain_cust_email','plus_vmci019_customer','plus_vmci972_chain_cust_fullemail','plus_vmci173_full_email_address','plus_vmci173_full_email_addr_status']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+
+target_tbl='plus_brand_customer_email'
+target_prefix='/plus'
+#partitionKeys=[]
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""select
+  cce.plus_vmci105_chain_cust_key                                            as brand_customer_key
+, cce.plus_vmci172_chain_cust_email_key                                      as brand_customer_email_key
+, cce.plus_vmci173_full_email_address_key                                    as email_key
+, cce.id_email                                                               as email_id
+, cce.id_cust                                                                as brand_customer_id
+, cce.id_chain                                                               as chain_id
+, cce.cd_dbl_opt_in                                                          as dbl_opt_in_cd
+, cce.cd_email                                                               as email_cd
+, ccf.da_em_cust_verified                                                    as em_customer_verified_dt
+, cce.da_email_code                                                          as email_code_dt
+, cce.da_email_created                                                       as email_created_dt
+, cce.da_email_updated                                                       as email_updated_dt
+, case 
+       when trim(cce.fl_habeas_compl)='Y' then 1
+       when trim(cce.fl_habeas_compl)='N' then 0
+       else NULL 
+  end                                                                        as habeas_compl_ind
+, case 
+       when trim(cce.fl_ok_to_email) in ('Y','U') then 1
+       when trim(cce.fl_ok_to_email)='N' then 0
+       else NULL 
+       end                                                                   as ok_to_email_ind
+, cce.extract_ts                                                             as chain_cust_email_extract_tms
+, ccf.ad_email_full                                                          as full_email_addr
+-- Column not available in foundation table (plus_vmci972_chain_cust_fullemail), ccf.id_domain as domain_id
+, ccf.cd_email_style                                                         as email_style_cd
+, case 
+       when trim(ccf.cd_email_style)='A' then 'AOL'
+       when trim(ccf.cd_email_style)='P' then 'PLAIN TEXT'
+       when trim(ccf.cd_email_style)='H' then 'HTML'
+       when trim(ccf.cd_email_style)='T' then 'Plain Text'
+       else NULL 
+       end                                                                   as email_style_des
+, case 
+       when trim(ccf.fl_primary_email)='Y' then 1
+       when trim(ccf.fl_primary_email)='N' then 0
+       else NULL 
+       end                                                                   as primary_email_ind
+, case 
+       when trim(ccf.fl_email_valid)='Y' then 1
+       when trim(ccf.fl_email_valid)='N' then 0
+       else NULL 
+       end                                                                   as email_valid_ind
+, ccf.extract_ts                                                             as chain_cust_fullemail_extract_tms
+, fea.ad_email                                                               as email_addr
+, fea.ad_email_domain                                                        as email_domain_addr
+, fea.id_email_domain                                                        as email_domain_id
+, fea.nu_bb_soft                                                             as bb_soft_num
+, fea.nu_bb_hard                                                             as bb_hard_num
+, fea.da_tmci173_created                                                     as tmci173_created_dt
+, fea.da_tmci173_updated                                                     as tmci173_updated_dt
+, fea.in_cust_source_first                                                   as customer_source_first_num
+, fea.in_cust_source_2nd_first                                               as customer_source_second_first_num
+, fea.in_cust_source_last                                                    as customer_source_last_num
+, fea.in_cust_source_2nd_last                                                as customer_source_second_last_num
+, fea.cd_email_invalid                                                       as email_invalid_cd
+, fea.da_first_hard_bb                                                       as first_hard_bb_dt
+, fea.da_last_hard_bb                                                        as last_hard_bb_dt
+, fea.da_first_soft_bb                                                       as first_soft_bb_dt
+, fea.da_last_soft_bb                                                        as last_soft_bb_dt
+, fea.extract_ts                                                             as full_email_addr_extract_tms
+, feas.da_last_bb                                                            as last_bb_dt
+, case 
+       when trim(feas.fl_email_bb_valid)='Y' then 1
+       when trim(feas.fl_email_bb_valid)='N' then 0
+       else NULL 
+       end                                                                   as email_bb_valid_ind
+, case 
+       when trim(feas.fl_hard_bb_valid)='Y' then 1
+       when trim(feas.fl_hard_bb_valid)='N' then 0
+       else NULL 
+       end                                                                   as hard_bb_valid_ind
+, case 
+       when trim(feas.fl_soft_bb_valid)='Y' then 1
+       when trim(feas.fl_soft_bb_valid)='N' then 0
+       else NULL 
+       end                                                                   as soft_bb_valid_ind
+, feas.extract_ts                                                            as full_email_addr_status_extract_tms
+-- , lco.ts_last_click                                                          as last_click_tms
+-- , lco.ts_last_open                                                           as last_open_tms
+-- , lco.da_last_click                                                          as last_click_dt
+-- , lco.da_last_open                                                           as last_open_dt
+, case 
+            when cce.id_chain = 7 then 'LB'
+            when cce.id_chain = 4 then 'CA'
+            else NULL 
+  end                                                                        as brand_cd
+  ,cce.extract_ts as source_extract_ts 
+  ,"mart_plus_brand_customer_email"   as mart_job_nam
+,current_timestamp() as mart_insert_tms
+from 
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci172_chain_cust_email_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci172_chain_cust_email)sub_c
+	where sub_c.row_num =1)  cce
+inner join 
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci019_customer_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci019_customer)sub_c
+	where sub_c.row_num =1)  
+	cc   on  cce.id_cust   = cc.id_cust
+left outer join 
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci972_chain_cust_full_email_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci972_chain_cust_fullemail)sub_c
+	where sub_c.row_num =1) ccf  on  cce.id_chain  = ccf.id_chain
+                                                                            and cce.id_cust   = ccf.id_cust
+                                                                            and cce.id_email  = ccf.id_email
+left outer join
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci173_full_email_address_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci173_full_email_address)sub_c
+	where sub_c.row_num =1)fea  on  cce.id_email  = fea.id_email
+left outer join 
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci173_full_email_addr_status_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci173_full_email_addr_status)sub_c
+	where sub_c.row_num =1) feas on  feas.id_email = fea.id_email
+
+where cce.id_chain in (4,7) 
+""")
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

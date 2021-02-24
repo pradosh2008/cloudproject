@@ -1,0 +1,103 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci105_chain_cust.fxp
+*
+* Description: Export customer chain attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 01/20/2020  V.Kalathil      Initial Script
+* 10/30/2020  V.Kalathil      Changed code  to pull only  LB customers
+*****************************************************************/
+ 
+.LOGTABLE  $DB_WORK.vmci105_chain_cust_caa_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(495))
+FROM(
+SELECT TRIM('ID_CHAIN|ID_CUST|DA_LAST_TRNS|CD_MAIL|FL_DO_NOT_PROMOTE|FL_OK_TO_MAIL|ID_STORE|ID_EMP|DA_FIRST_TRNS|DA_MAIL_CODE|FL_ACTIVE_HOUSCARD|FL_HLDR_HOUSCARD|FL_DECLIN_HOUSCARD|DA_APPLY_HOUSCARD|FL_ACTIVE_COBRAND|FL_HLDR_COBRAND|FL_CLOSED_HOUSCARD|FL_CLOSED_COBRAND|CD_ACCOUNT_TERM|FL_SHOPS_JUNIORS|FL_SHOPS_MISSES|FL_SHOPS_PLUS|FL_OK_TO_PHONE|DA_CH_CUST_ADDED|FL_OK_TO_STMT_INS|IN_CUST_SOURCE_FIRST|IN_CUST_SOURCE_2ND_FIRST|IN_CUST_SOURCE_LAST|IN_CUST_SOURCE_2ND_LAST|CD_LBO_MIGRATION_STATUS|EXTRACT_TS')
+AS COLUMNNAME
+)A ;
+
+SELECT 
+CAST (ID_CHAIN                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (ID_CUST                        AS CHAR(11)),'|' (CHAR(1)),
+CAST (DA_LAST_TRNS                   AS CHAR(10)),'|' (CHAR(1)),
+CAST (CD_MAIL                        AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_DO_NOT_PROMOTE              AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OK_TO_MAIL                  AS CHAR(1)),'|' (CHAR(1)),
+CAST (ID_STORE                       AS CHAR(6)),'|' (CHAR(1)),
+CAST (ID_EMP                         AS CHAR(11)),'|' (CHAR(1)),
+CAST (DA_FIRST_TRNS                  AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_MAIL_CODE                   AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_ACTIVE_HOUSCARD             AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_HLDR_HOUSCARD               AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_DECLIN_HOUSCARD             AS CHAR(1)),'|' (CHAR(1)),
+CAST (DA_APPLY_HOUSCARD              AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_ACTIVE_COBRAND              AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_HLDR_COBRAND                AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_CLOSED_HOUSCARD             AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_CLOSED_COBRAND              AS CHAR(1)),'|' (CHAR(1)),
+CAST (CD_ACCOUNT_TERM                AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_SHOPS_JUNIORS               AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_SHOPS_MISSES                AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_SHOPS_PLUS                  AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OK_TO_PHONE                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (DA_CH_CUST_ADDED               AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_OK_TO_STMT_INS              AS CHAR(1)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE_FIRST           AS CHAR(2)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE_2ND_FIRST       AS CHAR(2)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE_LAST            AS CHAR(2)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE_2ND_LAST        AS CHAR(2)),'|' (CHAR(1)),
+CAST (CD_LBO_MIGRATION_STATUS        AS CHAR(4)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP AS CHAR(19))
+FROM DVZEKE.VMCI105_CHAIN_CUST WHERE  ID_CHAIN IN (7) ;
+
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci105_chain_cust$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  DVZEKE.VMCI105_CHAIN_CUST " 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci105_chain_cust$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+

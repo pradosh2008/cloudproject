@@ -1,0 +1,97 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_sales_merch_department.fxp
+*
+* Description: Export Merchandise department details for CAA.
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri	    Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.SALES_MERCH_DEPARTMENT_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(348))
+     FROM(
+     SELECT
+'DEPARTMENT_NBR|CHAIN_NBR|DIVISION_NBR|GROUP_NBR|DEPARTMENT_NM|BUYER_NBR|MERCH_NBR|MAX_AVERAGE_CENTER_NBR|PURCHASE_AMT|BUDGET_MARKUP_AMT|TOTAL_MARKET_AMT|BUDGET_INTAKE_PCT|AVERAGE_TOLERENCE_PCT|PROFIT_CALC_TYPE_IND|MARKUP_CALC_TYPE_IND|OTB_CALC_TYPE_IND|DEPARTMENT_VAT_INCLUDE_IND|START_DT|END_DT|LAST_UPDATE_TS|ACTIVE_DEPARTMENT_IND|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT
+CAST (CAST (DEPARTMENT_NBR AS DECIMAL(6,0) FORMAT '-(22)9')    AS CHAR(6)),'|' (CHAR(1)),
+CAST(CHAIN_NBR AS CHAR(6)), '|' (CHAR(1)),
+CAST (CAST (DIVISION_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|'(CHAR(1)),
+CAST (CAST (GROUP_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|'(CHAR(1)),
+CAST(DEPARTMENT_NM AS CHAR(30)), '|' (CHAR(1)),
+CAST (CAST (BUYER_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|'(CHAR(1)),
+CAST (CAST (MERCH_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|'(CHAR(1)),
+CAST (CAST (MAX_AVERAGE_CENTER_NBR AS DECIMAL(5,0) FORMAT '-(22)9')    AS CHAR(5)),'|' (CHAR(1)),
+CAST (CAST (PURCHASE_AMT AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|' (CHAR(1)),
+CAST (CAST (BUDGET_MARKUP_AMT AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|' (CHAR(1)),
+CAST (CAST (TOTAL_MARKET_AMT AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|' (CHAR(1)),
+CAST (CAST (BUDGET_INTAKE_PCT AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|' (CHAR(1)),
+CAST (CAST (AVERAGE_TOLERENCE_PCT AS DECIMAL(12,0) FORMAT '-(22)9')    AS CHAR(12)),'|' (CHAR(1)),
+CAST(PROFIT_CALC_TYPE_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(MARKUP_CALC_TYPE_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(OTB_CALC_TYPE_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(DEPARTMENT_VAT_INCLUDE_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(START_DT AS CHAR(10)), '|' (CHAR(1)),
+CAST(END_DT AS CHAR(10)), '|' (CHAR(1)),
+CAST(LAST_UPDATE_TS AS CHAR(19)),'|' (CHAR(1)),
+CAST(ACTIVE_DEPARTMENT_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM
+$DB_RPT.MERCH_DEPARTMENT;
+
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_merch_department_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table MERCH_DEPARTMENT" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_merch_department_$DATE.txt 
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+

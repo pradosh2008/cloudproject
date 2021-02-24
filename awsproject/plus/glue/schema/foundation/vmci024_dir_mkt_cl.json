@@ -1,0 +1,116 @@
+[
+	{
+		"source_table_name": "vmci024_dir_mkt_cl",
+		"fields":[
+		{
+        "name": "ID_DIR_MKT_CELL               ",
+        "type": "int"
+    }, {
+        "name": "TX_CELL_DESC_SHORT            ",
+        "type": "string"
+    }, {
+        "name": "DA_RCD_CREATED                ",
+        "type": "date"
+    }, {
+        "name": "DA_RCD_UPDATED                ",
+        "type": "date"
+    }, {
+        "name": "FL_QRY_UPDATED                ",
+        "type": "int"
+    }, {
+        "name": "IN_CELL_TYPE                  ",
+        "type": "string"
+    }, {
+        "name": "IN_CONTROL_TYPE               ",
+        "type": "string"
+    }, {
+        "name": "TX_CELL_DESC_LONG             ",
+        "type": "string"
+    }, {
+        "name": "ID_MAILING                    ",
+        "type": "int"
+    }, {
+        "name": "NU_VERSIONS                   ",
+        "type": "int"
+    }, {
+        "name": "ID_QRY                        ",
+        "type": "int"
+    }, {
+        "name": "NU_PRIORITY                   ",
+        "type": "int"
+    }, {
+        "name": "NU_RAW_CUSTS                  ",
+        "type": "int"
+    }, {
+        "name": "NU_SELECTED_CUSTS             ",
+        "type": "int"
+    }, {
+        "name": "NU_DEDUPED_CUSTS              ",
+        "type": "int"
+    }, {
+        "name": "NU_CONTROL_CUSTS              ",
+        "type": "int"
+    }, {
+        "name": "PC_CONTROL_CUSTS              ",
+        "type": "int"
+    }, {
+        "name": "NU_NOT_MAILED                 ",
+        "type": "int"
+    }, {
+        "name": "NU_OUTPUT                     ",
+        "type": "int"
+    }, {
+        "name": "FL_RUN_QUERY                  ",
+        "type": "int"
+    }, {
+        "name": "DA_STATUS                     ",
+        "type": "date"
+    }, {
+        "name": "TI_STATUS                     ",
+        "type": "string"
+    }, {
+        "name": "TX_STATUS                     ",
+        "type": "string"
+    }, {
+        "name": "NA_JOB                        ",
+        "type": "string"
+    }, {
+        "name": "ID_CHAIN                      ",
+        "type": "int"
+    }, {
+        "name": "CD_GROUP                      ",
+        "type": "string"
+    }, {
+        "name": "ID_USER_CREATED               ",
+        "type": "string"
+    }, {
+        "name": "CD_CELL                       ",
+        "type": "string"
+    }, {
+        "name": "ID_CONTROL_CELL               ",
+        "type": "int"
+    }, {
+        "name": "ID_OFFER_LIST                 ",
+        "type": "int"
+    }, {
+        "name": "DA_PROMO_START                ",
+        "type": "date"
+    }, {
+        "name": "DA_PROMO_EXPIRE               ",
+        "type": "date"
+    }, {
+        "name": "TX_CREATIVE_TYPE              ",
+        "type": "string"
+    }, {
+        "name": "AM_AD_UNIT_COST               ",
+        "type": "decimal(18,2)"
+    }, {
+        "name": "ID_FLOWCHART                  ",
+        "type": "bigint"
+    }, {
+        "name": "EXTRACT_TS",
+        "type": "timestamp"
+    }
+]
+    }
+]

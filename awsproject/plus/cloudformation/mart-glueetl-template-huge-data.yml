@@ -1,0 +1,92 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  DevPrefix:
+    Type: String
+    Default: d
+  QAPrefix:
+    Type: String
+    Default: qa
+  ProdPrefix:
+    Type: String
+    Default: p
+  GlueIAMRoleName:
+    Type: String
+    Default: 'CAA-Service-Glue-iam-role'
+
+  S3ScriptLocation:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/script'
+  MartLibFile1:
+    Type: String
+    Default: martutil.py
+  LibPath:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/lib' 
+
+  ScriptName:
+    Type: String
+    MinLength: 1 
+
+
+Conditions:
+  IsEnvDEV: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '479484306740'
+  IsEnvQA: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '951523344214'
+  IsEnvPROD: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '512757696531'
+
+
+Resources:
+  CFNRGlueETL:
+    Type: AWS::Glue::Job   
+    Properties:
+      Role: !Sub 
+          - '${envPrefix}-${GlueIAMRoleName}'
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Mart Job 
+      Command:   
+        Name: glueetl  
+        ScriptLocation: !Sub
+          - 's3://s3-${envPrefix}-${S3ScriptLocation}/${ScriptName}/${ScriptName}'
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      ExecutionProperty:   
+        MaxConcurrentRuns: 1  
+      Name: !Ref ScriptName
+      DefaultArguments:
+        '--extra-py-files': !Sub
+          - 's3://s3-${envPrefix}-${LibPath}/${MartLibFile1}'
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+        '--enable-glue-datacatalog': ''
+        "--enable-continuous-cloudwatch-log" : "true"
+        "--enable-continuous-log-filter" : "true"
+        "--enable-metrics" : ""
+        "--enable-spark-ui" : "true"
+        "--spark-event-logs-path" :  !Sub
+          - 's3://s3-${envPrefix}-ascena-aadp-temp/glue/log'
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+        "--TempDir" :  !Sub
+          - 's3://s3-${envPrefix}-ascena-aadp-temp/glue/temp' 
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      GlueVersion: 2.0
+      WorkerType: "G.1X"
+      NumberOfWorkers: 20
+  CFNRMartTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: !Sub ${ScriptName}-Trigger
+      Type: CONDITIONAL
+      StartOnCreation: True
+      Description: !Sub Start ${ScriptName} glue job
+      Actions:
+        - JobName: !Ref ScriptName
+      Predicate:
+        Conditions:
+          - LogicalOperator: EQUALS
+            JobName: plus_dataquality
+            State: SUCCEEDED
+      WorkflowName: PlusMartWF

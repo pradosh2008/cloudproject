@@ -1,0 +1,89 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci396_curr_opt_in_out_full', 'plus_vmci198_opt_in_out_type']
+#fmw_fdn_tbl_list = ['plus_store']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+#fmw_fdn_prefix='/plus/fmwd'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_brand_customer_opt_in_out'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+#register_fdn_view(fmw_fdn_prefix,fmw_fdn_tbl_list,spark)
+
+
+
+build_mart_df = glueContext.sql("""SELECT
+  c.plus_vmci105_chain_cust_key                                   AS brand_customer_key
+-- , opt_in_out_key (This column is hash value of different column combinations based on c.cd_opt_in_out value)
+, c.plus_vmci396_curr_opt_in_out_full_key                         AS brand_customer_opt_in_out_full_key
+, c.plus_vmci172_chain_cust_email_key                             AS brand_customer_email_key
+, c.plus_vmci198_opt_in_out_type_key                              AS opt_in_out_type_key
+, c.plus_store_key                                                AS store_key
+, c.ID_CUST                                                       AS brand_customer_id
+, c.ID_CUST_ORIG                                                  AS customer_original_id
+, c.TE_CUST                                                       AS customer_phone_id
+, c.id_email                                                      AS email_id
+, c.id_cust_ext                                                   AS customer_external_id
+, c.CD_OPT_IN_OUT                                                 AS opt_in_out_cd
+, ct.tx_opt_in_out                                                 AS opt_in_out_des
+, c.IN_CUST_SOURCE                                                AS customer_source_cd
+, c.IN_CUST_SOURCE_2ND                                            AS customer_source_2nd_cd
+, c.CD_CUST_EXT_TYPE                                              AS customer_extension_type_cd
+, c.FL_OPT_IN                                                     AS opt_in_cd
+, c.TS_OPT_IN_OUT                                                 AS opt_in_out_tms
+, c.DA_OPT_IN_OUT                                                 AS opt_in_out_dt
+--, s.plus_store_key                                                AS store_key -- joined to plus_store table to get store_key
+, c.ID_STORE                                                      AS store_id
+, c.TS_TMCI396_CREATED                                            AS tmc1396_created_tms
+,  CASE 
+        WHEN c.id_chain = 4 THEN 'CA' 
+        WHEN c.id_chain = 7 THEN 'LB'
+   END                                                            AS brand_cd
+,c.extract_ts           as   source_extract_ts
+,'mart_plus_brand_customer_opt_in_out'           as mart_job_nam
+,current_timestamp     as mart_insert_tms
+FROM 
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci396_curr_opt_in_out_full_key
+    ORDER BY  TS_TMCI396_CREATED, extract_ts desc) AS row_num
+    FROM plus_vmci396_curr_opt_in_out_full
+    where id_chain in (4,7))sub_c
+	where sub_c.row_num=1)c
+inner join 
+
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci198_opt_in_out_type_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci198_opt_in_out_type)sub_ct
+	where sub_ct.row_num=1)ct
+on c.plus_vmci198_opt_in_out_type_key = ct.plus_vmci198_opt_in_out_type_key
+""") 
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

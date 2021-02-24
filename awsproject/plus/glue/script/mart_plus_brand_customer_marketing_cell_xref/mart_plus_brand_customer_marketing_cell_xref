@@ -1,0 +1,100 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci051_clcst_gp_h','plus_vmci105_chain_cust','plus_vmci024_dir_mkt_cl']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_brand_customer_marketing_cell_xref'
+target_prefix='/plus'
+#partitionKeys=[]
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT
+  m.plus_vmci051_clcst_gp_h_key     as brand_customer_marketing_cell_xref_key
+, ext_cc.plus_vmci105_chain_cust_key    as brand_customer_key
+, m.plus_vmci019_customer_key       as customer_key
+, m.id_cust                         as brand_customer_id
+, m.plus_vmci024_dir_mkt_cl_key     as direct_marketing_cell_key
+, m.id_dir_mkt_cell                 as direct_marketing_cell_id
+, ext_dmc.plus_vmci025_mailing_key      as direct_marketing_cell_mailing_key
+, ext_dmc.id_mailing                    as mailing_id
+, m.cd_cell_cust_type               as cell_customer_type_cd
+, m.id_cell_version                 as cell_version_id
+, m.fl_responded                    as responded_cd
+, m.cd_interaction                  as interaction_cd
+, m.id_package                      as package_id
+, m.extract_ts                      as source_extract_tms
+,'mart_plus_brand_customer_marketing_cell_xref' as mart_job_nam
+,current_timestamp as mart_insert_tms
+,  CASE
+  WHEN ext_cc.id_chain = 4 THEN 'CA'
+  WHEN ext_cc.id_chain = 7 THEN 'LB'
+  END                              as brand_cd
+FROM plus_vmci051_clcst_gp_h m
+join(
+     SELECT  plus_vmci051_clcst_gp_h_key
+     ,max(extract_ts) AS extract_ts
+     FROM plus_vmci051_clcst_gp_h
+     group by plus_vmci051_clcst_gp_h_key) sub_m
+     on sub_m.plus_vmci051_clcst_gp_h_key=m.plus_vmci051_clcst_gp_h_key
+     and sub_m.extract_ts=m.extract_ts
+              
+inner join
+    ( select  cc.plus_vmci105_chain_cust_key
+        ,cc.id_chain,cc.id_cust
+        
+        from plus_vmci105_chain_cust cc
+join ( select id_cust,plus_vmci105_chain_cust_key
+       ,max(extract_ts) AS extract_ts 
+       from plus_vmci105_chain_cust
+       group by plus_vmci105_chain_cust_key,id_cust)sub_cc
+     on
+      sub_cc.plus_vmci105_chain_cust_key=cc.plus_vmci105_chain_cust_key and
+       sub_cc.extract_ts=cc.extract_ts )  ext_cc
+      
+   on  m.id_cust=ext_cc.id_cust
+left outer join 
+     (select dmc.plus_vmci025_mailing_key
+            ,dmc.plus_vmci024_dir_mkt_cl_key
+             ,dmc.id_mailing
+      from plus_vmci024_dir_mkt_cl dmc
+join
+      (select plus_vmci025_mailing_key
+       ,max(extract_ts) AS extract_ts
+       from plus_vmci024_dir_mkt_cl
+       group by plus_vmci025_mailing_key)sub_dmc
+      on sub_dmc.plus_vmci025_mailing_key=dmc.plus_vmci025_mailing_key and
+     sub_dmc.extract_ts=dmc.extract_ts)ext_dmc 
+       
+ on ext_dmc.plus_vmci024_dir_mkt_cl_key = m.plus_vmci024_dir_mkt_cl_key
+""")
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

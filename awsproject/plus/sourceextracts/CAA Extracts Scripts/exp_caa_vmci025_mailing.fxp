@@ -1,0 +1,123 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci025_mailing.fxp
+*
+* Description: Export  mailing information*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.vmci396_vmci025_mailing_caa_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST( COLUMNNAME AS CHAR(784))
+FROM(
+SELECT'ID_MAILING|TX_MAIL_DESC_SHORT|TX_MAIL_DESC_LONG|DA_MAIL_EFF|DA_MAIL_EXP|DA_FILE_CREATED|DA_MAILED|NU_MAX_CUSTS|IN_DEDUP_TYPE|DA_RCD_CREATED|DA_RCD_UPDATED|FL_EXCL_EMP|CD_MAIL_TYPE|CD_PROCESS_TYPE|DA_STATUS|TI_STATUS|TX_STATUS|NA_JOB|ID_CHAIN|CD_GROUP|CD_OUTPUT_TYPE|ID_USER_CREATED|FL_INCLUDE_ALWAYS|FL_INCLUDE_SEED|FL_INCLUDE_DECOY|FL_INCLUDE_REQUEST|FL_SKIP_COUNTS|DA_PURGE|ID_LAST_CELL_DONE|TX_INCL_STATES|FL_OK_TO_MAIL_YES_CHKD	|FL_OK_TO_MAIL_NO_CHKD|FL_OK_TO_EMAIL_YES_CHKD	|FL_OK_TO_EMAIL_NO_CHKD|FL_EXCL_DO_NOT_PROMOTE|TX_INCL_DSFCODES|FL_INCL_MAIL_UNDETERMINED|FL_INCL_EMAIL_UNDETERMINED|CD_CAMPAIGN|TX_INTIATIVE|TX_CAMPAIGN_OBJECTIVE|DA_PRELIM_COUNT_DUE|DA_FINAL_COUNT_DUE|NA_MAIL_VENDOR|CD_ADTRAX|ID_WEEK_MAILING_EFF|NU_REQD_CIRCULATION|DA_DUE_LETTERSHOP|EXTRACT_TS'
+AS COLUMNNAME
+)A ;                       
+
+SELECT 
+CAST (ID_MAILING                     AS CHAR(11)),'|' (CHAR(1)),
+CAST (REGEXP_REPLACE(TX_MAIL_DESC_SHORT  ,'[^0-9a-zA-Z/#!-;,DATE<>=~^&*()+-}{[]]' ,' ')          AS CHAR(25)) ,'|'  (CHAR(1)),
+CAST (oTranslate(REGEXP_REPLACE(TX_MAIL_DESC_LONG  ,'[^0-9a-zA-Z/#!-;,DATE<>=~^&*()+-}{[]]' ,' ')   ,'0D0A'XC, ' ')        AS CHAR(255)) ,'|'  (CHAR(1)),
+CAST (DA_MAIL_EFF                    AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_MAIL_EXP                    AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_FILE_CREATED                AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_MAILED                      AS CHAR(10)),'|' (CHAR(1)),
+CAST (NU_MAX_CUSTS                   AS CHAR(11)),'|' (CHAR(1)),
+CAST (IN_DEDUP_TYPE                  AS CHAR(1)),'|' (CHAR(1)),
+CAST (DA_RCD_CREATED                 AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_RCD_UPDATED                 AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_EXCL_EMP                    AS CHAR(1)),'|' (CHAR(1)),
+CAST (CD_MAIL_TYPE                   AS CHAR(1)),'|' (CHAR(1)),
+CAST (CD_PROCESS_TYPE                AS CHAR(1)),'|' (CHAR(1)),
+CAST(CAST (DA_STATUS   AS DATE FORMAT 'YYYY-MM-DD')  AS CHAR(10)),'|' (CHAR(1)),
+CAST (TI_STATUS                      AS CHAR(11)),'|' (CHAR(1)),
+CAST (TX_STATUS                      AS CHAR(50)),'|' (CHAR(1)),
+CAST (NA_JOB                         AS CHAR(8)),'|' (CHAR(1)),
+CAST (ID_CHAIN                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (CD_GROUP                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (CD_OUTPUT_TYPE                 AS CHAR(4)),'|' (CHAR(1)),
+CAST (ID_USER_CREATED                AS CHAR(7)),'|' (CHAR(1)),
+CAST (FL_INCLUDE_ALWAYS              AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_INCLUDE_SEED                AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_INCLUDE_DECOY               AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_INCLUDE_REQUEST             AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_SKIP_COUNTS                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (DA_PURGE                       AS CHAR(10)),'|' (CHAR(1)),
+CAST (ID_LAST_CELL_DONE              AS CHAR(11)),'|' (CHAR(1)),
+CAST (oTranslate(REGEXP_REPLACE(TX_INCL_STATES  ,'[^0-9a-zA-Z/#!-;,DATE<>=~^&*()+-}{[]]' ,' ')   ,'0D0A'XC, ' ')        AS CHAR(413)) ,'|'  (CHAR(1)),
+CAST (FL_OK_TO_MAIL_YES_CHKD         AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OK_TO_MAIL_NO_CHKD          AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OK_TO_EMAIL_YES_CHKD        AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OK_TO_EMAIL_NO_CHKD         AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_EXCL_DO_NOT_PROMOTE         AS CHAR(1)),'|' (CHAR(1)),
+CAST (oTranslate(REGEXP_REPLACE(TX_INCL_DSFCODES  ,'[^0-9a-zA-Z/#!-;,DATE<>=~^&*()+-}{[]]' ,' ')   ,'0D0A'XC, ' ')        AS CHAR(205)) ,'|'  (CHAR(1)),
+CAST (FL_INCL_MAIL_UNDETERMINED      AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_INCL_EMAIL_UNDETERMINED     AS CHAR(1)),'|' (CHAR(1)),
+CAST (CD_CAMPAIGN                    AS CHAR(10)),'|' (CHAR(1)),
+CAST (TX_INTIATIVE                   AS CHAR(10)),'|' (CHAR(1)),
+CAST (TX_CAMPAIGN_OBJECTIVE          AS CHAR(100)),'|' (CHAR(1)),
+CAST (DA_PRELIM_COUNT_DUE            AS CHAR(10)),'|' (CHAR(1)),
+CAST (DA_FINAL_COUNT_DUE             AS CHAR(10)),'|' (CHAR(1)),
+CAST (NA_MAIL_VENDOR                 AS CHAR(25)),'|' (CHAR(1)),
+CAST (CD_ADTRAX                      AS CHAR(8)),'|' (CHAR(1)),
+CAST (ID_WEEK_MAILING_EFF            AS CHAR(6)),'|' (CHAR(1)),
+CAST (NU_REQD_CIRCULATION            AS CHAR(11)),'|' (CHAR(1)),
+CAST (DA_DUE_LETTERSHOP              AS CHAR(10)),'|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM 
+DVZEKE.VMCI025_MAILING WHERE ID_CHAIN IN (7)   ;
+
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci025_mailing$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table DVZEKE.VMCI025_MAILING" 
+      exit 1 
+   fi
+
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci025_mailing$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+

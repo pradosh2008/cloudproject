@@ -1,0 +1,7 @@
+[
+{
+"source_table_name": "vmci198_opt_in_out_type",
+"fields":
+[{"name": "cd_opt_in_out", "type": "string"}, {"name": "tx_opt_in_out", "type": "string"}, {"name": "da_tmci198_created", "type": "date"}, {"name": "in_opt_agg_type", "type": "string"}, {"name": "fl_send_ecomm", "type": "string"}, {"name": "in_addtl_key1", "type": "string"}, {"name": "in_addtl_key2", "type": "string"}, {"name": "in_addtl_key3", "type": "string"}, {"name": "in_addtl_key4", "type": "string"}, {"name": "fl_generic_feed", "type": "string"}, {"name": "fl_ism", "type": "string"}, {"name": "extract_ts", "type": "timestamp"}]
+}
+]

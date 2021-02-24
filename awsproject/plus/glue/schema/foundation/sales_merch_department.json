@@ -1,0 +1,7 @@
+[
+{
+"source_table_name": "sales_merch_department",
+"fields":
+[{"name": "department_nbr", "type": "int"}, {"name": "chain_nbr", "type": "integer"}, {"name": "division_nbr", "type": "int"}, {"name": "buyer_nbr", "type": "int"}, {"name": "merch_nbr", "type": "int"}, {"name": "group_nbr", "type": "int"}, {"name": "max_average_center_nbr", "type": "int"}, {"name": "department_nm", "type": "string"}, {"name": "purchase_amt", "type": "decimal(18,2)"}, {"name": "budget_markup_amt", "type": "decimal(18,2)"}, {"name": "total_market_amt", "type": "decimal(18,2)"}, {"name": "budget_intake_pct", "type": "decimal(18,2)"}, {"name": "average_tolerence_pct", "type": "decimal(18,2)"}, {"name": "profit_calc_type_ind", "type": "string"}, {"name": "markup_calc_type_ind", "type": "string"}, {"name": "otb_calc_type_ind", "type": "string"}, {"name": "department_vat_include_ind", "type": "string"}, {"name": "start_dt", "type": "date"}, {"name": "end_dt", "type": "date"}, {"name": "last_update_ts", "type": "timestamp"}, {"name": "active_department_ind", "type": "string"}, {"name": "extract_ts", "type": "timestamp"}]
+}
+]

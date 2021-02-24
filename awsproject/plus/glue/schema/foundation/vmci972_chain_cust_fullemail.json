@@ -1,0 +1,48 @@
+[ 
+ {
+  "source_table_name": "vmci972_chain_cust_fullemail",
+  "fields": 
+	[
+        {
+            "name": "id_chain",
+            "type": "int"
+        },
+        {
+            "name": "id_cust",
+            "type": "int"
+        },
+        {
+            "name": "id_email",
+            "type": "int"
+        },
+        {
+            "name": "ad_email_full",
+            "type": "string"
+        },
+        {
+            "name": "cd_email_style",
+            "type": "string"
+        },
+        {
+            "name": "da_email_created",
+            "type": "date"
+        },
+        {
+            "name": "fl_primary_email",
+            "type": "string"
+        },
+        {
+            "name": "da_em_cust_verified",
+            "type": "date"
+        },
+        {
+            "name": "fl_email_valid",
+            "type": "string"
+        },
+        {
+            "name": "extract_ts",
+            "type": "timestamp"
+        }
+	]
+ }
+]

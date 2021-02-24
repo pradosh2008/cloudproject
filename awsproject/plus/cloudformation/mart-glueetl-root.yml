@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  DevPrefix:
+    Type: String
+    Default: d
+  QAPrefix:
+    Type: String
+    Default: qa
+  ProdPrefix:
+    Type: String
+    Default: p
+  GlueIAMRoleName:
+    Type: String
+    Default: 'CAA-Service-Glue-iam-role'
+# Mart ETL Template URL    
+  TemplateURL:
+    Type: String
+    Default: 'ascena-code-repo.s3.amazonaws.com/plus/cloudformation/mart-glueetl-template.yml'
+# Mart ETL Template URL For Heavy Glue Jobs
+  TemplateURLHJ:
+    Type: String
+    Default: 'ascena-code-repo.s3.amazonaws.com/plus/cloudformation/mart-glueetl-template-huge-data.yml'
+# Glue Script path 
+  S3ScriptLocation:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/script'
+#Mart Utility file Name    
+  MartLibFile1:
+    Type: String
+    Default: martutil.py
+#Library Path
+  LibPath:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/lib' 
+    
+Conditions:
+  IsEnvDEV: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '479484306740'
+  IsEnvQA: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '951523344214'
+  IsEnvPROD: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '512757696531'
+    
+Resources:
+  MartWF:
+    Type: AWS::Glue::Workflow
+    Properties:
+        #DefaultRunProperties: Json
+        Description: Mart workflow starting with DQ job
+        Name: PlusMartWF
+        #Tags: Json
+  DQjob:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !Sub
+          - '${ePrefix}-${GlueIAMRoleName}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Foundation data qaulity job
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub
+          - 's3://s3-${ePrefix}-${S3ScriptLocation}/plus_dataquality/plus_dataquality'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      AllocatedCapacity: 10
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Name: plus_dataquality
+      DefaultArguments:
+        '--enable-glue-datacatalog': ''
+      GlueVersion: 2.0
+
+  StartTriggerDQ:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Type: SCHEDULED
+      Name: Start-plus_dataquality
+      Description: Start data quality job
+      Schedule: cron(15 17 * * ? *)
+      StartOnCreation: True
+      Actions:
+        - JobName: plus_dataquality
+      WorkflowName: !Ref MartWF
+
+  PlusCalendarWF:
+    Type: AWS::Glue::Workflow
+    Properties:
+        #DefaultRunProperties: Json
+        Description: Mart Calendar job
+        Name: PlusMartCalWF
+        #Tags: Json
+  PlusCalendarjob:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !Sub
+          - '${ePrefix}-${GlueIAMRoleName}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Mart Calendar job
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub
+          - 's3://s3-${ePrefix}-${S3ScriptLocation}/mart_plus_calendar/mart_plus_calendar'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      AllocatedCapacity: 10
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Name: mart_plus_calendar
+      DefaultArguments:
+        '--extra-py-files': !Sub
+          - 's3://s3-${envPrefix}-${LibPath}/${MartLibFile1}'
+          - { envPrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+        '--enable-glue-datacatalog': ''
+      GlueVersion: 2.0
+
+  StartTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Type: SCHEDULED
+      Name: Start-mart_plus_calendar
+      Description: Start Calendar job
+      Schedule: cron(00 8 15 02 ? 2021)
+      StartOnCreation: True
+      Actions:
+        - JobName: mart_plus_calendar
+      WorkflowName: !Ref PlusCalendarWF
+      
+  ETLStack1:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_dim_store
+  ETLStack2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_dim_item       
+  ETLStack4:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_fact_transaction
+  ETLStack5:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer 
+  ETLStack6:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_email  
+  ETLStack7:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_demographics
+  ETLStack8:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURLHJ}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_fact_transaction_detail  
+  ETLStack9:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_direct_marketing_cell    
+  ETLStack10:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_opt_in_out
+  ETLStack11:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_email_outbound        
+  ETLStack12:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_perks_membership        
+  ETLStack13:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_brand_customer_marketing_cell_xref        
+  ETLStack14:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:  !Sub 
+          - 'https://s3-${ePrefix}-${TemplateURL}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        ScriptName: mart_plus_direct_marketing_cell_mailing
+  #ETLStack15:
+    #Type: AWS::CloudFormation::Stack
+    #Properties:
+      #TemplateURL:  !Sub 
+          #- 'https://s3-${ePrefix}-${TemplateURL}'
+          #- { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      #Parameters:
+        #ScriptName: mart_plus_brand_customer_account        

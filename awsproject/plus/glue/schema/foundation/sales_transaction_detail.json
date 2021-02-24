@@ -1,0 +1,343 @@
+[
+	{
+		"source_table_name": "sales_transaction_detail",
+		"fields": [
+			{
+				"name": "DETAIL_SEQ_NBR",
+				"type": "int"
+			},
+			{
+				"name": "LINE_ACTION_CD",
+				"type": "string"
+			},
+			{
+				"name": "LINE_OBJECT_TYPE_CD",
+				"type": "string"
+			},
+			{
+				"name": "LINE_OBJECT_CD",
+				"type": "string"
+			},
+			{
+				"name": "LINE_VOID_IND",
+				"type": "string"
+			},
+			{
+				"name": "SKU_NBR",
+				"type": "string"
+			},
+			{
+				"name": "TRANSACTION_LINE_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "TRANSACTION_LINE_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "TRANSACTION_LINE_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PERMANENT_MARKDOWN_TYPE_CD",
+				"type": "string"
+			},
+			{
+				"name": "DISCOUNT_MARKDOWN_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "CUSTOMER_PAID_TAX_AMT",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "COMPANY_OWED_TAX_AMT",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_REASON_CD",
+				"type": "string"
+			},
+			{
+				"name": "COMMISSION_AMT",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "CURRENT_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "ORIGINAL_UNIT_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SCANNED_IND",
+				"type": "string"
+			},
+			{
+				"name": "GIFT_CARD_IND",
+				"type": "string"
+			},
+			{
+				"name": "TAXABLE_IND",
+				"type": "string"
+			},
+			{
+				"name": "STYLE_LOCATOR_IND",
+				"type": "string"
+			},
+			{
+				"name": "PRIMARY_SALESPERSON_NBR",
+				"type": "int"
+			},
+			{
+				"name": "SECONDARY_SALESPERSON_NBR",
+				"type": "int"
+			},
+			{
+				"name": "SALES_RETURN_IND",
+				"type": "string"
+			},
+			{
+				"name": "ORIGINAL_STORE_NBR",
+				"type": "int"
+			},
+			{
+				"name": "ORIGINAL_REGISTER_NBR",
+				"type": "int"
+			},
+			{
+				"name": "ORIGINAL_TRANSACTION_DT",
+				"type": "date"
+			},
+			{
+				"name": "ORIGINAL_TRANSACTION_NBR",
+				"type": "int"
+			},
+			{
+				"name": "RET_PRIMARY_SALES_PERSON_NBR",
+				"type": "string"
+			},
+			{
+				"name": "RET_SECONDARY_SALES_PERSON_NBR",
+				"type": "string"
+			},
+			{
+				"name": "RETURN_DISPOSITION_CD",
+				"type": "string"
+			},
+			{
+				"name": "SALES_LAYAWAY_IND",
+				"type": "string"
+			},
+			{
+				"name": "UPC_NBR",
+				"type": "string"
+			},
+			{
+				"name": "SELECTION_STORE_NBR",
+				"type": "int"
+			},
+			{
+				"name": "OVERSEAS_ITEM_IND",
+				"type": "string"
+			},
+			{
+				"name": "SELLING_CHAIN_NBR",
+				"type": "int"
+			},
+			{
+				"name": "SELLING_STORE_NBR",
+				"type": "int"
+			},
+			{
+				"name": "CHAIN_NBR",
+				"type": "int"
+			},
+			{
+				"name": "STORE_NBR",
+				"type": "int"
+			},
+			{
+				"name": "TRANSACTION_NBR",
+				"type": "int"
+			},
+			{
+				"name": "TRANSACTION_DT",
+				"type": "date"
+			},
+			{
+				"name": "REGISTER_NBR",
+				"type": "int"
+			},
+			{
+				"name": "RECORD_SEQ_NBR",
+				"type": "int"
+			},
+			{
+				"name": "MERCHANDISE_SALESPERSON_NBR",
+				"type": "int"
+			},
+			{
+				"name": "SELECTION_CHAIN_NBR",
+				"type": "int"
+			},
+			{
+				"name": "SHIP_FROM_STORE_NBR",
+				"type": "int"
+			},
+			{
+				"name": "RETURN_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SALES_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SALES_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SALES_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SALES_DISCOUNT_MARKDOWN_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "SALES_PROMO_MARKDOWN_RTL",
+				"type": "string"
+			},
+			{
+				"name": "RETURN_DISCOUNT_MARKDOWN_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_PROMO_MARKDOWN_RTL",
+				"type": "string"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_ORIGINAL_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_CURRENT_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PRODUCTIVE_SALES_REGISTER_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_SALES_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_SALES_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_SALES_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "NET_SALES_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "NET_SALES_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "NET_SALES_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "STYLE_LOCATOR_QTY",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "STYLE_LOCATOR_CST",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "STYLE_LOCATOR_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "NET_SALES_ORIGINAL_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "NET_SALES_CURRENT_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_ORIGINAL_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "RETURN_CURRENT_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_PROFIT_PRODTV_SLS_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_PROFIT_RETURN_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "GROSS_PROFIT_NET_SALES_RTL",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "TAX_AMT",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "PERM_MARKDOWN_TYPE_CD",
+				"type": "string"
+			},
+			{
+				"name": "CREATE_DT",
+				"type": "date"
+			},
+			{
+				"name": "LAST_UPDATE_TS",
+				"type": "timestamp"
+			},
+			{
+				"name": "ORIGINAL_CHAIN_NBR",
+				"type": "int"
+			},
+			{
+				"name": "EXTRACT_TS",
+				"type": "timestamp"
+			}
+		]
+	}
+]

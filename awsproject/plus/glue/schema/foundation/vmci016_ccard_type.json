@@ -1,0 +1,65 @@
+[
+	{
+		"source_table_name": "vmci016_ccard_type",
+		"fields":[
+		{
+        "name": "CD_BANK_CARD_TYPE",
+        "type": "string"
+    }, {
+        "name": "ID_CHAIN",
+        "type": "int"
+    }, {
+        "name": "TX_BANK_CARD_TYPE",
+        "type": "string"
+    }, {
+        "name": "FL_HOUSECARD",
+        "type": "string"
+    }, {
+        "name": "FL_COBRAND",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_HC_ACT",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_CO_ACT",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_HC_CLS",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_CO_CLS",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_HC_DNP",
+        "type": "string"
+    }, {
+        "name": "FL_UPDT_CO_DNP",
+        "type": "string"
+    }, {
+        "name": "FL_POPULATE_TMCI115",
+        "type": "string"
+    }, {
+        "name": "FL_APPLY_ACCOUNT_TERM",
+        "type": "string"
+    }, {
+        "name": "FL_OUTBOUND",
+        "type": "string"
+    }, {
+        "name": "CD_PARENT_TYPE",
+        "type": "string"
+    }, {
+        "name": "CD_CTYPE_PROCESS_STATUS",
+        "type": "string"
+    }, {
+        "name": "FL_FOREIGN_KEY",
+        "type": "string"
+    }, {
+        "name": "FL_HORIZON_SCORE",
+        "type": "string"
+    }, {
+        "name": "EXTRACT_TS",
+        "type": "timestamp"
+    }
+]
+    }
+]

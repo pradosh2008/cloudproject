@@ -1,0 +1,94 @@
+export DATE=`date +"%Y%m%d"`;
+#fexp -c ASCII<<!eof
+fexp -c UTF8<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci173_full_email_address.fxp
+*
+* Description: Export customer email attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.VMCI173_FULL_EMAIL_ADDRESS_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(327))
+FROM(
+SELECT 'ID_EMAIL|AD_EMAIL|ID_EMAIL_DOMAIN|AD_EMAIL_DOMAIN|AD_EMAIL_FULL|NU_BB_SOFT|NU_BB_HARD|CD_EMAIL_STYLE|DA_TMCI173_CREATED|DA_TMCI173_UPDATED|IN_CUST_SOURCE_FIRST|IN_CUST_SOURCE_2ND_FIRST|IN_CUST_SOURCE_LAST|IN_CUST_SOURCE_2ND_LAST|CD_EMAIL_INVALID|DA_FIRST_HARD_BB|DA_LAST_HARD_BB|DA_FIRST_SOFT_BB|DA_LAST_SOFT_BB|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT
+CAST(ID_EMAIL AS CHAR(11)), '|' (CHAR(1)),
+cast((case when AD_EMAIL like '%"%' then oreplace(AD_EMAIL,'"','') when AD_EMAIL like '%|%' then oreplace(AD_EMAIL,'|','') else AD_EMAIL end  ) as char(59)  ), '|' (CHAR(1)),
+CAST(ID_EMAIL_DOMAIN AS CHAR(11)), '|' (CHAR(1)),
+cast((case when AD_EMAIL_DOMAIN like '%"%' then oreplace(AD_EMAIL_DOMAIN,'"','') when AD_EMAIL_DOMAIN like '%|%' then oreplace(AD_EMAIL_DOMAIN,'|','') else AD_EMAIL_DOMAIN end  ) as char(57) ), '|' (CHAR(1)),
+cast((case when AD_EMAIL_FULL like '%"%' then oreplace(AD_EMAIL_FULL,'"','') when AD_EMAIL_FULL like '%|%' then oreplace(AD_EMAIL_FULL,'|','') else AD_EMAIL_FULL end  ) as char(65)  ), '|' (CHAR(1)),
+CAST(NU_BB_SOFT AS CHAR(11)), '|' (CHAR(1)),
+CAST(NU_BB_HARD AS CHAR(11)), '|' (CHAR(1)),
+CAST(CD_EMAIL_STYLE AS CHAR(1)), '|' (CHAR(1)),
+CAST(DA_TMCI173_CREATED AS CHAR(10)), '|' (CHAR(1)),
+CAST(DA_TMCI173_UPDATED AS CHAR(10)), '|' (CHAR(1)),
+CAST(IN_CUST_SOURCE_FIRST AS CHAR(2)), '|' (CHAR(1)),
+CAST(IN_CUST_SOURCE_2ND_FIRST AS CHAR(2)), '|' (CHAR(1)),
+CAST(IN_CUST_SOURCE_LAST AS CHAR(2)), '|' (CHAR(1)),
+CAST(IN_CUST_SOURCE_2ND_LAST AS CHAR(2)), '|' (CHAR(1)),
+CAST(CD_EMAIL_INVALID AS CHAR(2)), '|' (CHAR(1)),
+CAST(DA_FIRST_HARD_BB AS CHAR(10)), '|' (CHAR(1)),
+CAST(DA_LAST_HARD_BB AS CHAR(10)), '|' (CHAR(1)),
+CAST(DA_FIRST_SOFT_BB AS CHAR(10)), '|' (CHAR(1)),
+CAST(DA_LAST_SOFT_BB AS CHAR(10)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM DMMCIPI04.VMCI173_FULL_EMAIL_ADDRESS ;
+
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci173_full_email_address_$DATE.txt"
+ FORMAT TEXT MODE RECORD  ;
+
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table VMCI173_FULL_EMAIL_ADDRESS" 
+      exit 1 
+   fi
+
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci173_full_email_address_$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+

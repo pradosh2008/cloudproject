@@ -1,0 +1,102 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci051_clcst_gp_h.fxp
+*
+* Description: Export campaign information*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri     Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.vmci051_clcst_gp_h_caa_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST(COLUMNNAME AS CHAR(112))
+FROM(
+SELECT 'ID_CUST|ID_DIR_MKT_CELL|CD_CELL_CUST_TYPE|ID_CELL_VERSION|FL_RESPONDED|CD_INTERACTION|ID_PACKAGE|EXTRACT_TS'
+AS COLUMNNAME
+)A ;                       
+
+SELECT
+CAST(VMCI051.ID_CUST AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI051.ID_DIR_MKT_CELL AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI051.CD_CELL_CUST_TYPE AS CHAR(1)), '|' (CHAR(1)),
+CAST(VMCI051.ID_CELL_VERSION AS CHAR(6)), '|' (CHAR(1)),
+CAST(VMCI051.FL_RESPONDED AS CHAR(1)), '|' (CHAR(1)),
+CAST(VMCI051.CD_INTERACTION AS CHAR(2)), '|' (CHAR(1)),
+CAST(VMCI051.ID_PACKAGE AS CHAR(11)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM DVZEKE.VMCI051_CLCST_GP_H AS VMCI051
+INNER JOIN
+(
+SELECT  
+  VMCI024.ID_DIR_MKT_CELL
+ ,VMCI024.ID_MAILING 
+FROM DVZEKE.VMCI024_DIR_MKT_CL AS VMCI024 
+INNER JOIN (
+	SELECT DISTINCT CD_CAMPAIGN  
+	, ID_MAILING 
+	, DA_MAIL_EFF
+	, DA_MAIL_EXP  
+	FROM DVZEKE.VMCI025_MAILING
+	WHERE (DA_MAIL_EFF BETWEEN '$BEGIN_DT' AND '$END_DT')  AND ID_CHAIN IN (7)
+	
+			) AS VMCI025 
+	ON VMCI025.ID_MAILING = VMCI024.ID_MAILING 
+	AND ID_CHAIN IN (7)
+) AS L 
+ON VMCI051.ID_DIR_MKT_CELL = L.ID_DIR_MKT_CELL
+;
+
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci051_clcst_gp_h_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table VMCI051_CLCST_GP_H " 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci051_clcst_gp_h_$DATE.txt
+
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+ 
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+
+
+

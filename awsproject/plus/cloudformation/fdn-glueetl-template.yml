@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Conditions:
+  IsEnvDEV: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '479484306740'
+  IsEnvQA: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '951523344214'
+  IsEnvPROD: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '512757696531'
+
+Parameters:
+  DevPrefix:
+    Type: String
+    Default: d
+  QAPrefix:
+    Type: String
+    Default: qa
+  ProdPrefix:
+    Type: String
+    Default: p
+  GlueIAMRoleName:
+    Type: String
+    Default: 'CAA-Service-Glue-iam-role'
+
+ # FDN ETL parms
+  S3RepoPath:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/script'
+  S3LibPath:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue/lib'    
+  FDNUtil:
+    Type: String
+    Default: foundationutil.py
+
+
+  TableName:
+    Type: String
+    MinLength: 1 
+    Default: 'foobar3'
+
+
+
+
+Resources:
+  CFNRGlueETL:
+    Type: AWS::Glue::Job   
+    Properties:
+      Role: !Sub
+          - '${ePrefix}-${GlueIAMRoleName}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Mart Job 
+      Command:   
+        Name: glueetl  
+        ScriptLocation: !Sub 
+          - 's3://s3-${ePrefix}-${S3RepoPath}/${TableName}/${TableName}'
+          - { ePrefix: !If [IsEnvDEV,!Ref DevPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref ProdPrefix]] }
+      AllocatedCapacity: 10  
+      ExecutionProperty:   
+        MaxConcurrentRuns: 1  
+      #Name: !Ref TableName
+      Name: !Sub ${TableName}
+      DefaultArguments:
+        '--extra-py-files': !Sub
+          - 's3://s3-${ePrefix}-${S3LibPath}/${FDNUtil}'
+          - { ePrefix: !If [IsEnvDEV,!Ref DevPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref ProdPrefix]] }
+
+        '--enable-glue-datacatalog': ''
+      GlueVersion: 2.0
+

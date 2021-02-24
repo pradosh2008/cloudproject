@@ -1,0 +1,2 @@
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci396_curr_opt_in_out_full GROUP BY plus_vmci396_curr_opt_in_out_full_key,extract_ts HAVING count(*) >1)
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci396_curr_opt_in_out_full GROUP BY  row_hashed_val HAVING count(*)>1)

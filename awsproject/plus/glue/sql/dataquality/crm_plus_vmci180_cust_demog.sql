@@ -1,0 +1,2 @@
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci180_cust_demog GROUP BY plus_vmci180_cust_demog_key,extract_ts HAVING count(*) >1)
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci180_cust_demog GROUP BY  row_hashed_val HAVING count(*)>1)

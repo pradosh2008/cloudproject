@@ -1,0 +1,63 @@
+[
+	{
+		"source_table_name": "vmci079_club_memb",
+		"fields":[
+	{
+		"name": "id_cust",
+		"type": "int"
+	},
+	{
+		"name": "cd_club",
+		"type": "string"
+	},
+	{
+		"name": "id_chain",
+		"type": "int"
+	},
+	{
+		"name": "id_club_memb",
+		"type": "bigint"
+	},
+	{
+		"name": "fl_needs_card",
+		"type": "string"
+	},
+	{
+		"name": "fl_card_ret_mail",
+		"type": "string"
+	},
+	{
+		"name": "da_orig_signup",
+		"type": "date"
+	},
+	{
+		"name": "da_renewed",
+		"type": "date"
+	},
+	{
+		"name": "da_expiration",
+		"type": "date"
+	},
+	{
+		"name": "da_canceled",
+		"type": "date"
+	},
+	{
+		"name": "am_fee_paid",
+		"type": "decimal(18,2)"
+	},
+	{
+		"name": "fl_auto_enroll",
+		"type": "string"
+	},
+	{
+		"name": "fl_canceled",
+		"type": "string"
+	},
+	{
+		"name": "extract_ts",
+		"type": "timestamp"
+	}
+]
+}
+]

@@ -1,0 +1,94 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci024_dir_mkt_cl']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_direct_marketing_cell'
+target_prefix='/plus'
+#partitionKeys=[]
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT
+  dmc.plus_vmci024_dir_mkt_cl_key     as   direct_marketing_cell_key
+, dmc.id_dir_mkt_cell                 as   direct_marketing_cell_id
+, dmc.tx_cell_desc_short              as   cell_short_des
+, dmc.da_rcd_created                  as   record_created_dt
+, dmc.da_rcd_updated                  as   record_updated_dt
+, dmc.fl_qry_updated                  as   query_updated_cd
+, dmc.in_cell_type                    as   cell_type_ind
+, dmc.in_control_type                 as   control_type_ind
+, dmc.tx_cell_desc_long               as   cell_long_des
+, dmc.plus_vmci025_mailing_key        as   mailing_key
+, dmc.id_mailing                      as   mailing_id
+, dmc.nu_versions                     as   version_num
+, dmc.id_qry                          as   query_id
+, dmc.nu_priority                     as   priority_num
+, dmc.nu_raw_custs                    as   raw_customer_num
+, dmc.nu_selected_custs               as   selected_customer_num
+, dmc.nu_deduped_custs                as   deduped_customer_num
+, dmc.nu_control_custs                as   control_customer_num
+, dmc.pc_control_custs                as   control_custmer_pct
+, dmc.nu_not_mailed                   as   not_mailed_num
+, dmc.nu_output                       as   output_num
+, dmc.fl_run_query                    as   run_query_cd
+, dmc.da_status                       as   status_dt
+, dmc.ti_status                       as   status_ind
+, dmc.tx_status                       as   status_des
+, dmc.na_job                          as   job_nam
+, dmc.cd_group                        as   group_cd
+, dmc.id_user_created                 as   user_created_id
+, dmc.cd_cell                         as   cell_cd
+, dmc.id_control_cell                 as   control_cell_id
+, dmc.id_offer_list                   as   offer_list_id
+, dmc.da_promo_start                  as   promo_start_dt
+, dmc.da_promo_expire                 as   promo_expire_dt
+, dmc.tx_creative_type                as   creative_type_des
+, dmc.am_ad_unit_cost                 as   ad_unit_cost_amt
+, dmc.id_flowchart                    as   flowchart_id
+, CASE
+       WHEN dmc.id_chain = 4 THEN 'CA'
+       WHEN dmc.id_chain = 7 THEN 'LB'
+  END                                 as brand_cd
+,dmc.extract_ts                      as   source_extract_tms
+,"mart_plus_direct_marketing_cell"   as mart_job_nam
+,current_timestamp() as mart_insert_tms
+FROM 
+    (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci024_dir_mkt_cl_key
+    ORDER BY  extract_ts desc) AS row_num_dmc
+    FROM plus_vmci024_dir_mkt_cl 
+    where id_chain in (4,7) ) as dmc
+WHERE dmc.row_num_dmc=1
+""")
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

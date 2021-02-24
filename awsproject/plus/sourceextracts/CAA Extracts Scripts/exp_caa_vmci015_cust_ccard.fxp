@@ -1,0 +1,94 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci015_cust_ccard.fxp
+*
+* Description: Export customer credit card  attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.caa_vmci015_cust_ccard_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST( COLUMNNAME AS CHAR(310))
+FROM(
+SELECT'ID_CUST|ID_ACCOUNT|CD_CCARD_PROCESS_STATUS|CD_BANK_CARD_TYPE|IN_BANK_CARD_SRCE|DA_BANK_CARD_ADDED|IN_FB_ACCT_TYPE|FL_ACCOUNT_CLOSED|FL_ACCOUNT_ACTIVE|CD_ACCOUNT_TERM|DA_APPLY_HOUSCARD|IN_CUST_SOURCE_2ND|CD_BNK_CRD_SUBTYPE|DA_CARD_ISSUED|DA_TMCI015_ROW_UPDATED|ID_ACCOUNT_PREFIX|ID_ACCOUNT_SUFFIX|EXTRACT_TS'AS COLUMNNAME
+)A ;                       
+
+SELECT 
+CAST(CCD.ID_CUST                        AS CHAR(11)),'|' (CHAR(1)),
+CAST(CAST(CCD.ID_ACCOUNT AS BIGINT) AS CHAR(64)),'|' (CHAR(1)),
+CAST(CD_CCARD_PROCESS_STATUS        AS CHAR(1)),'|' (CHAR(1)),
+CAST(CCD.CD_BANK_CARD_TYPE              AS CHAR(2)),'|' (CHAR(1)),
+CAST(CCD.IN_BANK_CARD_SRCE              AS CHAR(2)),'|' (CHAR(1)),
+CAST(CCD.DA_BANK_CARD_ADDED             AS CHAR(10)),'|' (CHAR(1)),
+CAST(CCD.IN_FB_ACCT_TYPE                AS CHAR(10)),'|' (CHAR(1)),
+CAST(CCD.FL_ACCOUNT_CLOSED              AS CHAR(1)),'|' (CHAR(1)),
+CAST(CCD.FL_ACCOUNT_ACTIVE              AS CHAR(1)),'|' (CHAR(1)),
+CAST(CCD.CD_ACCOUNT_TERM                AS CHAR(1)),'|' (CHAR(1)),
+CAST(CCD.DA_APPLY_HOUSCARD              AS CHAR(10)),'|' (CHAR(1)),
+CAST(CCD.IN_CUST_SOURCE_2ND             AS CHAR(2)),'|' (CHAR(1)),
+CAST(CCD.CD_BNK_CRD_SUBTYPE             AS CHAR(2)),'|' (CHAR(1)),
+CAST(CCD.DA_CARD_ISSUED                 AS CHAR(10)),'|' (CHAR(1)),
+CAST(CCD.DA_TMCI015_ROW_UPDATED         AS CHAR(10)),'|' (CHAR(1)),
+CAST(CCD.ID_ACCOUNT_PREFIX AS CHAR(11)),'|' (CHAR(1)),
+CAST(CCD.ID_ACCOUNT_SUFFIX AS CHAR(6)),'|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM
+DVZEKE.VMCI015_CUST_CCARD  CCD 
+INNER JOIN 
+(SELECT ID_CUST  from DVZEKE.VMCI105_CHAIN_CUST WHERE ID_CHAIN IN (7)group by 1) CC
+ON CCD.ID_CUST=CC.ID_CUST
+AND DA_BANK_CARD_ADDED  BETWEEN '$BEGIN_DT' AND '$END_DT'
+ ;
+
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci015_cust_ccard$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  DVZEKE.VMCI105_CHAIN_CUST " 
+      exit 1 
+   fi
+
+######################################################################
+# Zip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci015_cust_ccard$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+

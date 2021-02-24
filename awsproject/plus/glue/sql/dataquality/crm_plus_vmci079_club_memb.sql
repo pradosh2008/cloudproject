@@ -1,0 +1,2 @@
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci079_club_memb GROUP BY plus_vmci079_club_memb_key,extract_ts HAVING count(*) >1)
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci079_club_memb GROUP BY  row_hashed_val HAVING count(*)>1)

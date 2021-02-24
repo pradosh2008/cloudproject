@@ -1,0 +1,230 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci019_customer', 'plus_vmci019_custonly','plus_vmci105_chain_cust']
+fmw_fdn_tbl_list = ['plus_store']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+fmw_fdn_prefix='/plus/fmw'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_brand_customer'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+register_fdn_view(fmw_fdn_prefix,fmw_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT
+  cc.plus_vmci105_chain_cust_key                                                   AS brand_customer_key
+, c.ID_CUST                                                                        AS brand_customer_id
+, cc.IN_CUST_SOURCE_FIRST                                                          AS brand_customer_source_first_num
+, cc.IN_CUST_SOURCE_2ND_FIRST                                                      AS brand_customer_source_second_first_num
+, cc.IN_CUST_SOURCE_LAST                                                           AS brand_customer_source_last_num
+, cc.IN_CUST_SOURCE_2ND_LAST                                                       AS brand_customer_source_second_last_num
+, cc.DA_LAST_TRNS                                                                  AS last_transaction_dt
+, cc.CD_MAIL                                                                       AS mail_cd
+, CASE cc.FL_DO_NOT_PROMOTE WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END          AS do_not_promote_ind
+, CASE cc.FL_OK_TO_MAIL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END              AS ok_to_mail_ind
+--Extra join added to plus_store table on id_chain and id_store to plus_vmci105_chain_cust table because store_key was not available in plus_vmci105_chain_cust table
+, s.plus_store_key                                                                AS store_key 
+, cc.id_store                                                                      AS store_id
+, cc.ID_EMP                                                                        AS emp_id
+, cc.DA_FIRST_TRNS                                                                 AS first_transaction_dt
+, cc.DA_MAIL_CODE                                                                  AS mail_code_dt
+, CASE cc.FL_ACTIVE_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END         AS active_houscard_ind
+, CASE cc.FL_HLDR_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END           AS hldr_houscard_ind
+, CASE cc.FL_DECLIN_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END         AS declin_houscard_ind
+, cc.DA_APPLY_HOUSCARD                                                             AS apply_houscard_dt
+, CASE cc.FL_ACTIVE_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END          AS active_cobrand_ind
+, CASE cc.FL_HLDR_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END            AS hldr_cobrand_ind
+, CASE cc.FL_CLOSED_HOUSCARD WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END         AS closed_houscard_ind
+, CASE cc.FL_CLOSED_COBRAND WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END          AS closed_cobrand_ind
+, cc.CD_ACCOUNT_TERM                                                               AS account_term_ind
+, CASE cc.FL_SHOPS_JUNIORS WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END           AS shops_juniors_ind
+, CASE cc.FL_SHOPS_MISSES WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END            AS shops_misses_ind
+, CASE cc.FL_SHOPS_PLUS WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END              AS shops_plus_ind
+, cc.FL_OK_TO_PHONE                                                                AS ok_to_phone_cd
+, cc.DA_CH_CUST_ADDED                                                              AS ch_customer_added_dt
+, cc.FL_OK_TO_STMT_INS                                                             AS ok_to_stmt_ins_cd
+, cc.CD_LBO_MIGRATION_STATUS                                                       AS lbo_migration_status_cd
+--missing columns from plus_vmci105_chain_cust
+, cc.extract_ts                                                                    AS chain_cust_extract_tms
+, cc.id_chain                                                                      AS chain_id
+, c.IN_CUST_SOURCE_FIRST                                                           AS customer_source_first_num
+, c.IN_CUST_SOURCE_2ND_FIRST                                                       AS customer_source_second_num
+, c.IN_CUST_SOURCE_LAST                                                            AS customer_source_last_num
+, c.IN_CUST_SOURCE_2ND_LAST                                                        AS customer_source_second_last_num
+, c.ID_HOUSEHOLD                                                                   AS customer_household_id
+, c.ID_ADDRESS                                                                     AS customer_address_id
+, c.AD_TYPE                                                                        AS customer_address_type_cd
+, c.AD_RURAL_TYP                                                                   AS customer_address_rural_type_cd
+, c.NA_COUNTRY                                                                     AS customer_country_nam
+, c.IN_RC_SOURCE                                                                   AS customer_rc_source_cd
+, c.IN_AQ_HIGH_RISE_RC                                                             AS customer_aq_high_rise_rc_cd
+, c.IN_AQ_FIRM_RC                                                                  AS customer_aq_firm_rc_num
+, c.CD_AQ_GENERAL_RC                                                               AS customer_aq_general_rc_cd
+, c.CD_AQ_FIRM_RC                                                                  AS customer_aq_firm_rc_cd
+, c.CD_AQ_STRT_DIR_RC                                                              AS customer_aq_strt_dir_rc_cd
+, c.CD_AQ_STRT_SUFF_RC                                                             AS customer_aq_strt_suff_rc_cd
+, c.CD_AQ_APT_RC                                                                   AS customer_aq_apt_rc_cd
+, c.CD_AQ_STREET_NM_RC                                                             AS customer_aq_street_nm_rc_cd
+, c.CD_AQ_TRAILING_DIR_RC                                                          AS customer_aq_trailing_dir_rc_cd
+, c.CD_AQ_POB_RC                                                                   AS customer_aq_pob_rc_cd
+, c.CD_AQ_RRHC_RC                                                                  AS customer_aq_rrhc_rc_cd
+, c.CD_AQ_CITY_ST_RC                                                               AS customer_aq_city_st_rc_cd
+, c.CD_AQ_STATE_PROV_RC                                                            AS customer_aq_state_prov_rc_cd
+, c.CD_AQ_ZIP5_RC                                                                  AS customer_aq_zip5_rc_cd
+, c.CD_AQ_ZIP4_RC                                                                  AS customer_aq_zip4_rc_cd
+, c.CD_AQ_ZIPOUT_RC                                                                AS customer_aq_zipout_rc_cd
+, c.CD_AQ_DSF_LIST_RC                                                              AS customer_aq_dsf_list_rc_cd
+, c.CD_AQ_ADDR_CORRECT_RC                                                          AS customer_aq_addr_correct_rc_cd
+, c.CD_AQ_OVERALL_CORRECT_RC                                                       AS customer_aq_overall_correct_cd_cd
+, c.CD_AQ_CDQP_CONFIDENCE_RC                                                       AS customer_aq_cdqp_confidence_rc_cd
+, c.CD_AQ_DPV_RC                                                                   AS customer_aq_dpv_rc_cd
+, CASE c.FL_AQ_DPV_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END                AS customer_aq_dpv_rc_ind
+, c.CD_AQ_DPV_FOOTNOTE_LIST_RC                                                     AS customer_aq_dpv_footnote_list_rc_cd
+, CASE c.FL_AQ_DPV_CMRA_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END           AS customer_aq_dvp_cmra_rc_ind
+, c.CD_AQ_LACS_RC                                                                  AS customer_aq_lacs_rc_cd
+, c.IN_AQ_LACS_RC                                                                  AS customer_aq_lacs_rc_num
+, c.IN_VM_NCOA_MATCH_RC                                                            AS customer_vm_ncoa_match_rc_cd
+, c.CD_VM_NCOA_FOOTNOTE_RC                                                         AS customer_vm_ncoa_footnote_rc_cd
+, c.CD_VM_NCOA_FWD_TYPE_RC                                                         AS customer_vm_ncoa_fwd_type_rc_cd
+, CASE c.FL_VM_NCOA_FWD_RC WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END           AS customer_vm_ncoa_fwd_rc_ind
+, c.CD_NCOA_NIX_ACTION                                                             AS customer_ncoa_nix_action_cd
+, c.CD_NCOA_ZIP_CORRCT                                                             AS customer_ncoa_zip_corrct_cd
+, c.CD_NCOA_COA_INDEX                                                              AS customer_ncoa_coa_index_cd
+, c.CD_NCOA_ADDR_TYPE                                                              AS customer_ncoa_addr_type_cd
+, c.CD_NCOA_MATCH                                                                  AS customer_ncoa_match_cd
+, c.ID_NCOA_VENDOR                                                                 AS customer_ncoa_vendor_id
+, c.DA_CUST_ADDED                                                                  AS customer_customer_added_dt
+, CASE c.FL_DECEASED WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END                 AS customer_deceased_ind
+, CASE c.FL_TP_CARDHOLDER WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END            AS customer_tp_cardholder_ind
+, c.DA_CUST_MODIFIED                                                               AS customer_customer_modified_dt
+, c.IN_ADDR_RELIABLE                                                               AS customer_addr_reliable_cd
+, c.ID_CARRIER_RTE                                                                 AS customer_carrier_rte_id
+, c.ID_DPBC                                                                        AS customer_dpbc_id
+, c.ID_ELOT                                                                        AS customer_elot_id
+, c.DA_MOVED                                                                       AS customer_moved_dt
+, c.CD_CHAIN_REF                                                                   AS customer_chain_ref_cd
+, c.NU_PRIORITY                                                                    AS customer_priority_num
+, CASE c.FL_DMA_DONT_MAIL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END            AS customer_dma_dont_mail_ind
+, CASE c.FL_DMA_DONT_CALL WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END            AS customer_dma_dont_call_ind
+, c.DA_CUST_VERIFIED                                                               AS customer_verified_dt
+--missing columns from plus_vmci019_customer (same columns are also in plus_vmci019_custonly) 
+, c.na_prefix                                                                      AS nam_prefix
+, c.na_first                                                                       AS first_nam
+, c.na_middle                                                                      AS middle_nam
+, c.na_last                                                                        AS last_nam
+, c.na_suffix                                                                      AS nam_professional_suffix
+, c.na_generation                                                                  AS nam_generational_suffix
+, c.ad_house_number                                                                AS addr_house_num
+, c.ad_strt_pre_dir                                                                AS addr_street_pre_dir
+, c.ad_strt_name                                                                   AS addr_street_nam
+, c.ad_strt_suff_typ                                                               AS addr_street_typ_suffix
+, c.ad_strt_suff_dir                                                               AS addr_street_dir_suffix
+, c.ad_unit_value                                                                  AS addr_unit_num
+, c.ad_rural_num                                                                   AS addr_rural_num
+, c.ad_box_num                                                                     AS addr_box_num
+, c.ad_pmb_num                                                                     AS addr_pmb_num
+, c.ad_addtlinfo                                                                   AS addr_addtlinfo_des
+, c.ad_strt_primary                                                                AS primary_street_addr
+, c.ad_strt_secondary                                                              AS secondary_street_addr
+, c.ad_urbanization                                                                AS addr_urbanization_des
+, c.na_city                                                                        AS city_nam
+, c.cd_state                                                                       AS state_cd
+, c.zc_zip_5                                                                       AS zip5_cd
+, c.zc_zip_4                                                                       AS zip4_cd
+, c.cd_postal                                                                      AS postal_cd
+, c.da_birth                                                                       AS birth_dt
+, c.na_alt_first                                                                   AS alt_first_nam
+, c.in_gender                                                                      AS gender_cd
+, c.in_alt_gender                                                                  AS alt_gender_cd
+, c.id_hyg_household                                                               AS household_hyg_id
+, c.extract_ts                                                                     AS customer_extract_tms
+, co.ZC_ZIP_5                                                                      AS cust_only_zc_zip_5_des
+, co.ZC_ZIP_4                                                                      AS cust_only_zc_zip_4_des
+, co.CD_COUNTRY                                                                    AS cust_only_country_cd
+, co.MO_CUST_ADDED                                                                 AS cust_only_customer_added_month
+, co.YR_CUST_ADDED                                                                 AS cust_only_customer_added_year
+, CASE co.FL_BRYLANE WHEN 'Y' THEN 1 WHEN 'N' THEN 0 ELSE NULL END                 AS cust_only_brylane_ind
+, co.ID_HYG_HOUSEHOLD                                                              AS cust_only_household_hyg_id
+--missing columns from plus_vmci019_custonly
+, co.ad_street1                                                                    AS line_1_addr
+, co.ad_street2                                                                    AS line_2_addr
+, co.ad_street3                                                                    AS line_3_addr
+, co.ad_whole                                                                      AS full_addr                                                 
+, case when cc.ID_CHAIN = 7 then 'LB' 
+       WHEN cc.ID_CHAIN = 4 THEN 'CA' 
+       ELSE NULL 
+       END AS brand_cd
+,co.extract_ts           as   source_extract_ts 
+,"mart_plus_brand_customer"            as mart_job_nam
+,current_timestamp     as mart_insert_tms 
+from
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by PLUS_VMCI019_CUSTOMER_KEY
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci019_customer)sub_c
+	where sub_c.row_num =1)c
+	
+inner join
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by PLUS_VMCI019_CUSTONLY_KEY
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci019_custonly)sub_co
+	where sub_co.row_num=1)co
+on c.id_cust = co.id_cust
+
+inner join
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by PLUS_VMCI105_CHAIN_CUST_KEY
+    ORDER BY  extract_ts desc) AS row_num
+    FROM PLUS_VMCI105_CHAIN_CUST
+    where id_chain in (4,7))sub_cc
+	where sub_cc.row_num=1)cc
+on c.id_cust = cc.id_cust
+
+left join
+
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_store_key
+    ORDER BY  batch_id desc) AS row_num
+    FROM plus_store
+    where chain_id in (4,7))st
+	where st.row_num=1)s
+on cc.id_store = s.store_id 
+and cc.id_chain = s.chain_id
+""") 
+
+
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

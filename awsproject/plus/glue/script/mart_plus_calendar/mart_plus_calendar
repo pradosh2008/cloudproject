@@ -1,0 +1,229 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+edw_fdn_tbl_list=['plus_calendar']
+#crm_fdn_tbl_list=['plus_vmci025_mailing']
+edw_fdn_prefix='/plus/edw'
+#crm_fdn_prefix='/plus/crmd'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_calendar'
+target_prefix='/plus'
+partitionKeys=[]
+#partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+#register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT 
+plus_calendar_key   as   plus_calendar_key
+,calendar_dt   as   calendar_dt
+,calendar_day_desc   as   calendar_day_desc
+,julian_nbr   as   julian_nbr
+,holiday_ind   as   holiday_ind
+,canadian_holiday_ind   as   canadian_holiday_ind
+,weekend_ind   as   weekend_ind
+,fiscal_year_53weeks_ind   as   fiscal_year_53weeks_ind
+,calendar_day_of_week_nbr   as   calendar_day_of_week_nbr
+,calendar_day_of_month_nbr   as   calendar_day_of_month_nbr
+,calendar_day_of_quarter_nbr   as   calendar_day_of_quarter_nbr
+,calendar_day_of_season_nbr   as   calendar_day_of_season_nbr
+,calendar_day_of_year_nbr   as   calendar_day_of_year_nbr
+,calendar_week_nbr   as   calendar_week_nbr
+,calendar_week_desc   as   calendar_week_desc
+,calendar_days_in_week_nbr   as   calendar_days_in_week_nbr
+,calendar_week_start_dt   as   calendar_week_start_dt
+,calendar_week_end_dt   as   calendar_week_end_dt
+,calendar_month_nbr   as   calendar_month_nbr
+,calendar_month_desc   as   calendar_month_desc
+,calendar_days_in_month_nbr   as   calendar_days_in_month_nbr
+,calendar_month_start_dt   as   calendar_month_start_dt
+,calendar_month_end_dt   as   calendar_month_end_dt
+,calendar_quarter_nbr   as   calendar_quarter_nbr
+,calendar_quarter_desc   as   calendar_quarter_desc
+,calendar_days_in_quarter_nbr   as   calendar_days_in_quarter_nbr
+,calendar_quarter_start_dt   as   calendar_quarter_start_dt
+,calendar_quarter_end_dt   as   calendar_quarter_end_dt
+,calendar_season_nbr   as   calendar_season_nbr
+,calendar_season_desc   as   calendar_season_desc
+,calendar_days_in_season_nbr   as   calendar_days_in_season_nbr
+,calendar_season_start_dt   as   calendar_season_start_dt
+,calendar_season_end_dt   as   calendar_season_end_dt
+,calendar_year_nbr   as   calendar_year_nbr
+,calendar_year_desc   as   calendar_year_desc
+,calendar_days_in_year_nbr   as   calendar_days_in_year_nbr
+,calendar_year_start_dt   as   calendar_year_start_dt
+,calendar_year_end_dt   as   calendar_year_end_dt
+,fiscal_day_of_week_nbr   as   fiscal_day_of_week_nbr
+,fiscal_day_of_month_nbr   as   fiscal_day_of_month_nbr
+,fiscal_day_of_quarter_nbr   as   fiscal_day_of_quarter_nbr
+,fiscal_day_of_season_nbr   as   fiscal_day_of_season_nbr
+,fiscal_day_of_year_nbr   as   fiscal_day_of_year_nbr
+,fiscal_day_lw_dt   as   fiscal_day_lw_dt
+,fiscal_day_ly_dt   as   fiscal_day_ly_dt
+,fiscal_day_2ly_dt   as   fiscal_day_2ly_dt
+,fiscal_day_wtd_start_dt   as   fiscal_day_wtd_start_dt
+,fiscal_day_wtd_end_dt   as   fiscal_day_wtd_end_dt
+,fiscal_day_wtd_ly_start_dt   as   fiscal_day_wtd_ly_start_dt
+,fiscal_day_wtd_ly_end_dt   as   fiscal_day_wtd_ly_end_dt
+,fiscal_day_wtd_2ly_start_dt   as   fiscal_day_wtd_2ly_start_dt
+,fiscal_day_wtd_2ly_end_dt   as   fiscal_day_wtd_2ly_end_dt
+,fiscal_day_mtd_start_dt   as   fiscal_day_mtd_start_dt
+,fiscal_day_mtd_end_dt   as   fiscal_day_mtd_end_dt
+,fiscal_day_mtd_ly_start_dt   as   fiscal_day_mtd_ly_start_dt
+,fiscal_day_mtd_ly_end_dt   as   fiscal_day_mtd_ly_end_dt
+,fiscal_day_mtd_2ly_start_dt   as   fiscal_day_mtd_2ly_start_dt
+,fiscal_day_mtd_2ly_end_dt   as   fiscal_day_mtd_2ly_end_dt
+,fiscal_day_qtd_start_dt   as   fiscal_day_qtd_start_dt
+,fiscal_day_qtd_end_dt   as   fiscal_day_qtd_end_dt
+,fiscal_day_qtd_ly_start_dt   as   fiscal_day_qtd_ly_start_dt
+,fiscal_day_qtd_ly_end_dt   as   fiscal_day_qtd_ly_end_dt
+,fiscal_day_qtd_2ly_start_dt   as   fiscal_day_qtd_2ly_start_dt
+,fiscal_day_qtd_2ly_end_dt   as   fiscal_day_qtd_2ly_end_dt
+,fiscal_day_std_start_dt   as   fiscal_day_std_start_dt
+,fiscal_day_std_end_dt   as   fiscal_day_std_end_dt
+,fiscal_day_std_ly_start_dt   as   fiscal_day_std_ly_start_dt
+,fiscal_day_std_ly_end_dt   as   fiscal_day_std_ly_end_dt
+,fiscal_day_std_2ly_start_dt   as   fiscal_day_std_2ly_start_dt
+,fiscal_day_std_2ly_end_dt   as   fiscal_day_std_2ly_end_dt
+,fiscal_day_ytd_start_dt   as   fiscal_day_ytd_start_dt
+,fiscal_day_ytd_end_dt   as   fiscal_day_ytd_end_dt
+,fiscal_day_ytd_ly_start_dt   as   fiscal_day_ytd_ly_start_dt
+,fiscal_day_ytd_ly_end_dt   as   fiscal_day_ytd_ly_end_dt
+,fiscal_day_ytd_2ly_start_dt   as   fiscal_day_ytd_2ly_start_dt
+,fiscal_day_ytd_2ly_end_dt   as   fiscal_day_ytd_2ly_end_dt
+,fiscal_week_nbr   as   fiscal_week_nbr
+,fiscal_week_desc   as   fiscal_week_desc
+,fiscal_days_in_week_nbr   as   fiscal_days_in_week_nbr
+,fiscal_week_start_dt   as   fiscal_week_start_dt
+,fiscal_week_end_dt   as   fiscal_week_end_dt
+,fiscal_week_of_month_nbr   as   fiscal_week_of_month_nbr
+,fiscal_week_of_quarter_nbr   as   fiscal_week_of_quarter_nbr
+,fiscal_week_of_season_nbr   as   fiscal_week_of_season_nbr
+,fiscal_week_of_year_nbr   as   fiscal_week_of_year_nbr
+,fiscal_week_mtd_start_nbr   as   fiscal_week_mtd_start_nbr
+,fiscal_week_mtd_end_nbr   as   fiscal_week_mtd_end_nbr
+,fiscal_week_mtd_ly_start_nbr   as   fiscal_week_mtd_ly_start_nbr
+,fiscal_week_mtd_ly_end_nbr   as   fiscal_week_mtd_ly_end_nbr
+,fiscal_week_mtd_2ly_start_nbr   as   fiscal_week_mtd_2ly_start_nbr
+,fiscal_week_mtd_2ly_end_nbr   as   fiscal_week_mtd_2ly_end_nbr
+,fiscal_week_qtd_start_nbr   as   fiscal_week_qtd_start_nbr
+,fiscal_week_qtd_end_nbr   as   fiscal_week_qtd_end_nbr
+,fiscal_week_qtd_ly_start_nbr   as   fiscal_week_qtd_ly_start_nbr
+,fiscal_week_qtd_ly_end_nbr   as   fiscal_week_qtd_ly_end_nbr
+,fiscal_week_qtd_2ly_start_nbr   as   fiscal_week_qtd_2ly_start_nbr
+,fiscal_week_qtd_2ly_end_nbr   as   fiscal_week_qtd_2ly_end_nbr
+,fiscal_week_std_start_nbr   as   fiscal_week_std_start_nbr
+,fiscal_week_std_end_nbr   as   fiscal_week_std_end_nbr
+,fiscal_week_std_ly_start_nbr   as   fiscal_week_std_ly_start_nbr
+,fiscal_week_std_ly_end_nbr   as   fiscal_week_std_ly_end_nbr
+,fiscal_week_std_2ly_start_nbr   as   fiscal_week_std_2ly_start_nbr
+,fiscal_week_std_2ly_end_nbr   as   fiscal_week_std_2ly_end_nbr
+,fiscal_week_ytd_start_nbr   as   fiscal_week_ytd_start_nbr
+,fiscal_week_ytd_end_nbr   as   fiscal_week_ytd_end_nbr
+,fiscal_week_ytd_ly_start_nbr   as   fiscal_week_ytd_ly_start_nbr
+,fiscal_week_ytd_ly_end_nbr   as   fiscal_week_ytd_ly_end_nbr
+,fiscal_week_ytd_2ly_start_nbr   as   fiscal_week_ytd_2ly_start_nbr
+,fiscal_week_ytd_2ly_end_nbr   as   fiscal_week_ytd_2ly_end_nbr
+,fiscal_week_lw_nbr   as   fiscal_week_lw_nbr
+,fiscal_week_ly_nbr   as   fiscal_week_ly_nbr
+,fiscal_week_ly_lw_nbr   as   fiscal_week_ly_lw_nbr
+,fiscal_week_nw_nbr   as   fiscal_week_nw_nbr
+,fiscal_week_ny_nbr   as   fiscal_week_ny_nbr
+,fiscal_week_2ly_nbr   as   fiscal_week_2ly_nbr
+,fiscal_week_2ly_lw_nbr   as   fiscal_week_2ly_lw_nbr
+,fiscal_week_2weeks_ago_nbr   as   fiscal_week_2weeks_ago_nbr
+,fiscal_week_2weeks_start_nbr   as   fiscal_week_2weeks_start_nbr
+,fiscal_week_2weeks_end_nbr   as   fiscal_week_2weeks_end_nbr
+,fiscal_week_3ly_nbr   as   fiscal_week_3ly_nbr
+,fiscal_week_3ly_lw_nbr   as   fiscal_week_3ly_lw_nbr
+,fiscal_week_3weeks_ago_nbr   as   fiscal_week_3weeks_ago_nbr
+,fiscal_week_3weeks_start_nbr   as   fiscal_week_3weeks_start_nbr
+,fiscal_week_3weeks_end_nbr   as   fiscal_week_3weeks_end_nbr
+,fiscal_week_4weeks_ago_nbr   as   fiscal_week_4weeks_ago_nbr
+,fiscal_week_4weeks_start_nbr   as   fiscal_week_4weeks_start_nbr
+,fiscal_week_4weeks_end_nbr   as   fiscal_week_4weeks_end_nbr
+,fiscal_week_5weeks_ago_nbr   as   fiscal_week_5weeks_ago_nbr
+,fiscal_week_5weeks_start_nbr   as   fiscal_week_5weeks_start_nbr
+,fiscal_week_5weeks_end_nbr   as   fiscal_week_5weeks_end_nbr
+,fiscal_week_6weeks_ago_nbr   as   fiscal_week_6weeks_ago_nbr
+,fiscal_week_6weeks_start_nbr   as   fiscal_week_6weeks_start_nbr
+,fiscal_week_6weeks_end_nbr   as   fiscal_week_6weeks_end_nbr
+,fiscal_week_7weeks_ago_nbr   as   fiscal_week_7weeks_ago_nbr
+,fiscal_week_7weeks_start_nbr   as   fiscal_week_7weeks_start_nbr
+,fiscal_week_7weeks_end_nbr   as   fiscal_week_7weeks_end_nbr
+,fiscal_week_8weeks_ago_nbr   as   fiscal_week_8weeks_ago_nbr
+,fiscal_week_8weeks_start_nbr   as   fiscal_week_8weeks_start_nbr
+,fiscal_week_8weeks_end_nbr   as   fiscal_week_8weeks_end_nbr
+,fiscal_week_52weeks_ago_nbr   as   fiscal_week_52weeks_ago_nbr
+,fiscal_week_52weeks_start_nbr   as   fiscal_week_52weeks_start_nbr
+,fiscal_week_52weeks_end_nbr   as   fiscal_week_52weeks_end_nbr
+,fiscal_month_nbr   as   fiscal_month_nbr
+,fiscal_month_desc   as   fiscal_month_desc
+,fiscal_days_in_month_nbr   as   fiscal_days_in_month_nbr
+,fiscal_month_start_dt   as   fiscal_month_start_dt
+,fiscal_month_end_dt   as   fiscal_month_end_dt
+,fiscal_month_of_quarter_nbr   as   fiscal_month_of_quarter_nbr
+,fiscal_month_of_season_nbr   as   fiscal_month_of_season_nbr
+,fiscal_month_of_year_nbr   as   fiscal_month_of_year_nbr
+,fiscal_last_month_nbr   as   fiscal_last_month_nbr
+,fiscal_month_ly_nbr   as   fiscal_month_ly_nbr
+,fiscal_month_2ly_nbr   as   fiscal_month_2ly_nbr
+,fiscal_month_ytd_start_nbr   as   fiscal_month_ytd_start_nbr
+,fiscal_month_ytd_end_nbr   as   fiscal_month_ytd_end_nbr
+,fiscal_quarter_nbr   as   fiscal_quarter_nbr
+,fiscal_quarter_desc   as   fiscal_quarter_desc
+,fiscal_days_in_quarter_nbr   as   fiscal_days_in_quarter_nbr
+,fiscal_quarter_start_dt   as   fiscal_quarter_start_dt
+,fiscal_quarter_end_dt   as   fiscal_quarter_end_dt
+,fiscal_quarter_of_season_nbr   as   fiscal_quarter_of_season_nbr
+,fiscal_quarter_of_year_nbr   as   fiscal_quarter_of_year_nbr
+,fiscal_quarter_ly_nbr   as   fiscal_quarter_ly_nbr
+,fiscal_quarter_2ly_nbr   as   fiscal_quarter_2ly_nbr
+,fiscal_season_nbr   as   fiscal_season_nbr
+,fiscal_season_desc   as   fiscal_season_desc
+,fiscal_days_in_season_nbr   as   fiscal_days_in_season_nbr
+,fiscal_season_start_dt   as   fiscal_season_start_dt
+,fiscal_season_end_dt   as   fiscal_season_end_dt
+,fiscal_season_of_year_nbr   as   fiscal_season_of_year_nbr
+,fiscal_season_ly_nbr   as   fiscal_season_ly_nbr
+,fiscal_season_2ly_nbr   as   fiscal_season_2ly_nbr
+,fiscal_year_nbr   as   fiscal_year_nbr
+,fiscal_year_desc   as   fiscal_year_desc
+,fiscal_days_in_year_nbr   as   fiscal_days_in_year_nbr
+,fiscal_year_start_dt   as   fiscal_year_start_dt
+,fiscal_year_end_dt   as   fiscal_year_end_dt
+,fiscal_year_ly_nbr   as   fiscal_year_ly_nbr
+,fiscal_year_2ly_nbr   as   fiscal_year_2ly_nbr
+,fiscal_lw_prior_month_nbr   as   fiscal_lw_prior_month_nbr
+,fiscal_lw_prior_quarter_nbr   as   fiscal_lw_prior_quarter_nbr
+,fiscal_lw_prior_season_nbr   as   fiscal_lw_prior_season_nbr
+,fiscal_lw_prior_year_nbr   as   fiscal_lw_prior_year_nbr
+,last_update_ts   as   last_update_ts 
+,'mart_plus_calendar'    as mart_job_nam
+,current_timestamp     as mart_insert_tms
+ from plus_calendar""")
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

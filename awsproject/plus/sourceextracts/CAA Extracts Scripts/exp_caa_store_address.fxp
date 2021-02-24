@@ -1,0 +1,104 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_store_address.fxp
+*
+* Description: Export store address information
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.STORE_ADDRESS_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST( COLUMNNAME AS CHAR(471))
+     FROM(
+     SELECT
+'STORE_NBR|CHAIN_NBR|ADDRESS_TYPE_CD|CITY_NM|STATE_NM|STATE_CD|ADDRESS_LINE_1_DESC|ADDRESS_LINE_2_DESC|ADDRESS_LINE_3_DESC|ZIP_CD|ZIP_5_CD|ZIP_4_CD|ADDRESS_COUNTY_NM|ADDRESS_COUNTRY_NM|ADDRESS_GEOGRAPHY_CD|ADDRESS_CENSUS_TRACT_NBR|ADDRESS_LATITUDE_NBR|ADDRESS_LONGITUDE_NBR|ADDRESS_START_DT|ADDRESS_END_DT|EMAIL_ADDRESS_DESC|JURISDICTION_CD|ADDRESS_COUNTRY_CD|PRIMARY_ADDRESS_IND|CONTACT_NM|PHONE_NBR|SECONDARY_PHONE_NBR|FAX_NBR|START_DT|END_DT|LAST_UPDATE_TS|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT 
+CAST (CAST(STORE_NBR  AS INT)        AS CHAR(	12	)),'|' (CHAR(1)),
+CAST (CHAIN_NBR                      AS CHAR(	6	)),'|' (CHAR(1)),
+CAST (ADDRESS_TYPE_CD                AS CHAR(	2	)),'|' (CHAR(1)),
+CAST (CITY_NM                        AS CHAR(	18	)),'|' (CHAR(1)),
+CAST (STATE_NM                       AS CHAR(	20	)),'|' (CHAR(1)),
+CAST (STATE_CD                       AS CHAR(	2	)),'|' (CHAR(1)),
+CAST (ADDRESS_LINE_1_DESC            AS CHAR(	35	)),'|' (CHAR(1)),
+CAST (ADDRESS_LINE_2_DESC            AS CHAR(	35	)),'|' (CHAR(1)),
+CAST (ADDRESS_LINE_3_DESC            AS CHAR(	30	)),'|' (CHAR(1)),
+CAST (ZIP_CD                         AS CHAR(	9	)),'|' (CHAR(1)),
+CAST (ZIP_5_CD                       AS CHAR(	5	)),'|' (CHAR(1)),
+CAST (ZIP_4_CD                       AS CHAR(	4	)),'|' (CHAR(1)),
+CAST (ADDRESS_COUNTY_NM              AS CHAR(	20	)),'|' (CHAR(1)),
+CAST (ADDRESS_COUNTRY_NM             AS CHAR(	13	)),'|' (CHAR(1)),
+CAST (ADDRESS_GEOGRAPHY_CD           AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_CENSUS_TRACT_NBR       AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_LATITUDE_NBR           AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_LONGITUDE_NBR          AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_START_DT               AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_END_DT                 AS CHAR(5)),'|' (CHAR(1)),
+CAST (EMAIL_ADDRESS_DESC             AS CHAR(	33	)),'|' (CHAR(1)),
+CAST (JURISDICTION_CD                AS CHAR(5)),'|' (CHAR(1)),
+CAST (ADDRESS_COUNTRY_CD             AS CHAR(	3	)),'|' (CHAR(1)),
+CAST (PRIMARY_ADDRESS_IND            AS CHAR(	1	)),'|' (CHAR(1)),
+CAST (CONTACT_NM                     AS CHAR(	26	)),'|' (CHAR(1)),
+CAST (PHONE_NBR                      AS CHAR(	12	)),'|' (CHAR(1)),
+CAST (SECONDARY_PHONE_NBR            AS CHAR(	12	)),'|' (CHAR(1)),
+CAST (FAX_NBR                        AS CHAR(	10	)),'|' (CHAR(1)),
+CAST (START_DT                       AS CHAR(	10	)),'|' (CHAR(1)),
+CAST (END_DT                         AS CHAR(	10)),'|' (CHAR(1)),
+CAST (LAST_UPDATE_TS                 AS CHAR(19)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP AS CHAR(19))
+FROM $DB_RPT.STORE_ADDRESS 
+WHERE CAST(LAST_UPDATE_TS AS DATE  FORMAT 'YYYY-MM-DD')  BETWEEN '$BEGIN_DT' AND '$END_DT' 
+;
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/edw/${BRAND}_store_address$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table STORE_ADDRESS  " 
+      exit 1 
+   fi
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/edw/${BRAND}_store_address$DATE.txt
+
+
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+

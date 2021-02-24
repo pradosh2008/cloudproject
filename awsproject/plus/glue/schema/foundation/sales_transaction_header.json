@@ -1,0 +1,236 @@
+[
+	{
+		"source_table_name": "sales_transaction_header",
+		"fields": [
+		
+			{
+				"name": "selling_chain_nbr",
+				"type": "int"
+			},
+			{
+				"name": "selling_store_nbr",
+				"type": "int"
+			},
+			{
+				"name": "sales_order_chain_nbr",
+				"type": "int"
+			},
+			{
+				"name": "sales_order_store_nbr",
+				"type": "int"
+			},
+			{
+				"name": "transaction_nbr",
+				"type": "int"
+			},
+			{
+				"name": "transaction_dt",
+				"type": "date"
+			},
+			{
+				"name": "transaction_tm",
+				"type": "string"
+			},
+			{
+				"name": "register_nbr",
+				"type": "int"
+			},
+			{
+				"name": "record_seq_nbr",
+				"type": "int"
+			},
+			{
+				"name": "cashier_nbr",
+				"type": "int"
+			},
+			{
+				"name": "manager_nbr",
+				"type": "int"
+			},
+			{
+				"name": "employee_nbr",
+				"type": "string"
+			},
+			{
+				"name": "layaway_nbr",
+				"type": "string"
+			},
+			{
+				"name": "tax_exempt_nbr",
+				"type": "string"
+			},
+			{
+				"name": "ship_to_store_nbr",
+				"type": "int"
+			},
+			{
+				"name": "demand_order_nbr",
+				"type": "string"
+			},
+			{
+				"name": "deferred_payment_amt",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "payment_amt",
+				"type": "decimal(18,2)"
+			},
+			{
+				"name": "order_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "order_received_dt",
+				"type": "date"
+			},
+			{
+				"name": "order_received_tm",
+				"type": "string"
+			},
+			{
+				"name": "chain_reference_cd",
+				"type": "int"
+			},
+			{
+				"name": "transaction_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "tender_reference_cd",
+				"type": "int"
+			},
+			{
+				"name": "return_receipt_ind",
+				"type": "string"
+			},
+			{
+				"name": "sales_channel_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "email_capture_ind",
+				"type": "string"
+			},
+			{
+				"name": "address_capture_ind",
+				"type": "string"
+			},
+			{
+				"name": "multi_brand_transaction_ind",
+				"type": "string"
+			},
+			{
+				"name": "domestic_order_ind",
+				"type": "string"
+			},
+			{
+				"name": "register_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "entry_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "payment_reference_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "payment_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "transaction_void_ind",
+				"type": "string"
+			},
+			{
+				"name": "ship_to_store_conversion_ind",
+				"type": "string"
+			},
+			{
+				"name": "create_dt",
+				"type": "date"
+			},
+			{
+				"name": "last_update_ts",
+				"type": "timestamp"
+			},
+			{
+				"name": "apply_matching_logic_cd",
+				"type": "string"
+			},
+			{
+				"name": "customer_nbr",
+				"type": "int"
+			},
+			{
+				"name": "tender_primary_group_nm",
+				"type": "string"
+			},
+			{
+				"name": "layaway_nbr_crm",
+				"type": "bigint"
+			},
+			{
+				"name": "transaction_id",
+				"type": "string"
+			},
+			{
+				"name": "order_rec_tran_dt",
+				"type": "date"
+			},
+			{
+				"name": "customer_seq_nbr",
+				"type": "int"
+			},
+			{
+				"name": "customer_first_nm",
+				"type": "string"
+			},
+			{
+				"name": "customer_last_nm",
+				"type": "string"
+			},
+			{
+				"name": "customer_primary_phone_nbr",
+				"type": "string"
+			},
+			{
+				"name": "customer_secondary_phone_nbr",
+				"type": "string"
+			},
+			{
+				"name": "customer_email_address",
+				"type": "string"
+			},
+			{
+				"name": "customer_zip_cd",
+				"type": "string"
+			},
+			{
+				"name": "club_member_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "customer_external_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "customer_external_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "ecommerce_customer_nbr",
+				"type": "string"
+			},
+			{
+				"name": "loyalty_transaction_ind",
+				"type": "int"
+			},
+			{
+				"name": "extract_ts",
+				"type": "timestamp"
+			}
+		]
+	}
+]

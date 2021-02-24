@@ -1,0 +1,89 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_sales_merch_class.fxp
+*
+* Description: Export Merchandise class details for CAA.
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri	    Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.SALES_MERCH_CLASS_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(144))
+     FROM(
+     SELECT
+'CHAIN_NBR|CLASS_NBR|DEPARTMENT_NBR|GROUP_NBR|DIVISION_NBR|CLASS_NM|CLASS_VAT_IND|START_DT|END_DT|LAST_UPDATE_TS|ACTIVE_CLASS_IND|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT
+CAST(CHAIN_NBR AS CHAR(6)), '|' (CHAR(1)),
+CAST (CAST (CLASS_NBR  AS DECIMAL(6,0) FORMAT '-(22)9')AS CHAR(6)),'|'(CHAR(1)),
+CAST (CAST (DEPARTMENT_NBR  AS DECIMAL(6,0) FORMAT '-(22)9')AS CHAR(6)),'|'(CHAR(1)),
+CAST (CAST (GROUP_NBR  AS DECIMAL(6,0) FORMAT '-(22)9')AS CHAR(6)),'|'(CHAR(1)),
+CAST (CAST (DIVISION_NBR  AS DECIMAL(6,0) FORMAT '-(22)9')AS CHAR(6)),'|'(CHAR(1)),
+CAST(CLASS_NM AS CHAR(30)), '|' (CHAR(1)),
+CAST(CLASS_VAT_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(START_DT AS CHAR(10)), '|' (CHAR(1)),
+CAST(END_DT AS CHAR(10)), '|' (CHAR(1)),
+CAST(LAST_UPDATE_TS AS CHAR(19)),'|' (CHAR(1)),
+CAST(ACTIVE_CLASS_IND AS CHAR(1)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM
+$DB_RPT.MERCH_CLASS;
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_merch_class_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table MERCH_CLASS" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+
+bzip2 /var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_merch_class_$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+
+
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+

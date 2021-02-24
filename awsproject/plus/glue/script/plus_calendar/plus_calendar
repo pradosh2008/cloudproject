@@ -1,0 +1,75 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from foundationutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+# job name
+job_name=args['JOB_NAME']
+
+
+# specify source table name  and target table name
+source_tbl='calendar'
+target_tbl='plus_calendar'
+partitionKeys=[]
+
+#Specify the data will get load loaded in which folder in target bucket
+target_prefix='//plus//edw'
+source_prefix='//plus//edw'
+# specify primary key and foreign key columns name
+map_keyval = {'plus_calendar_key':['calendar_dt']}
+
+
+def clean_sourcedf_cal(source_prefix,source_tbl,spark):
+    source_path="s3://"+source_bucket_name+source_prefix+"//"+source_tbl
+    source_df=spark.read.option("delimiter",",").option("header", "true").csv(source_path+'//*')
+    tempList = [] #Edit01
+    for col in source_df.columns:
+        new_name = col.strip().lower()
+        new_name = "".join(new_name.split())
+        new_name = new_name.replace('.','') # EDIT
+        tempList.append(new_name) #Edit02
+    #print(tempList)
+    source_clean_df = source_df.toDF(*tempList)
+    #return source_clean_df
+    for col_c in source_clean_df.columns:
+        #source_df = source_df.withColumn(col_c, func.ltrim(func.rtrim(source_df[col_c])))
+        source_clean_df = source_clean_df.withColumn(col_c, trim(source_clean_df[col_c]))
+        #source_clean_df = source_clean_df.withColumn(col_c, trim(col(col_c)))
+    source_clean_df=source_clean_df.withColumn("source_file_nam", element_at(split(input_file_name(),"/"), -1))
+    return source_clean_df
+	
+# Clean soruce DF removing spaces 
+hst_clean_df=clean_sourcedf_cal(source_prefix,source_tbl,spark)
+#hst_clean_df=clean_sourcedf(source_prefix,source_tbl,spark)
+#Calulate row hash val of each column &  add to frame
+hst_hash_df=calc_rowhash(hst_clean_df)
+
+hst_hash_df.show(2)
+
+
+base_sdf=create_base_frame(hst_hash_df
+                            ,map_keyval
+                            ,glueContext
+                           ,spark
+                            ,job_name
+                            ,source_tbl
+                            ,audit_cols=['foundation_program_nam','foundation_insert_tms'])
+
+status = write_to_sink(base_sdf,target_tbl,partitionKeys,glueContext,target_prefix)
+
+#moving to archive
+move_to_archive(status,source_prefix,source_tbl)
+
+
+job.commit()

@@ -1,0 +1,133 @@
+[ 
+ {
+  "source_table_name": "vmci105_chain_cust",
+  "fields": 
+ [
+  {
+    "name": "id_chain",
+    "type": "int"
+  },
+  {
+    "name": "id_cust",
+    "type": "int"
+  },
+  {
+    "name": "da_last_trns",
+    "type": "date"
+  },
+  {
+    "name": "cd_mail",
+    "type": "string"
+  },
+  {
+    "name": "fl_do_not_promote",
+    "type": "string"
+  },
+  {
+    "name": "fl_ok_to_mail",
+    "type": "string"
+  },
+  {
+    "name": "id_store",
+    "type": "int"
+  },
+  {
+    "name": "id_emp",
+    "type": "int"
+  },
+  {
+    "name": "da_first_trns",
+    "type": "date"
+  },
+  {
+    "name": "da_mail_code",
+    "type": "date"
+  },
+  {
+    "name": "fl_active_houscard",
+    "type": "string"
+  },
+  {
+    "name": "fl_hldr_houscard",
+    "type": "string"
+  },
+  {
+    "name": "fl_declin_houscard",
+    "type": "string"
+  },
+  {
+    "name": "da_apply_houscard",
+    "type": "date"
+  },
+  {
+    "name": "fl_active_cobrand",
+    "type": "string"
+  },
+   {
+    "name": "fl_hldr_cobrand",
+    "type": "string"
+  },
+  {
+    "name": "fl_closed_houscard",
+    "type": "string"
+  },
+  {
+    "name": "fl_closed_cobrand",
+    "type": "string"
+  },
+  {
+    "name": "cd_account_term",
+    "type": "string"
+  },
+  {
+    "name": "fl_shops_juniors",
+    "type": "string"
+  },
+  {
+    "name": "fl_shops_misses",
+    "type": "string"
+  },
+  {
+    "name": "fl_shops_plus",
+    "type": "string"
+  },
+  {
+    "name": "fl_ok_to_phone",
+    "type": "string"
+  },
+  {
+    "name": "da_ch_cust_added",
+    "type": "date"
+  },
+  {
+    "name": "fl_ok_to_stmt_ins",
+    "type": "string"
+  },
+  {
+    "name": "in_cust_source_first",
+    "type": "string"
+  },
+  {
+    "name": "in_cust_source_2nd_first",
+    "type": "string"
+  },
+  {
+    "name": "in_cust_source_last",
+    "type": "string"
+  },
+  {
+    "name": "in_cust_source_2nd_last",
+    "type": "string"
+  },
+  {
+    "name": "cd_lbo_migration_status",
+    "type": "string"
+  },
+  {
+    "name": "extract_ts",
+    "type": "timestamp"
+  }
+ ]
+ }
+]
+

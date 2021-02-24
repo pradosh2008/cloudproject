@@ -1,0 +1,34 @@
+[
+	{
+		"source_table_name": "vmci051_clcst_gp_h",
+		"fields":
+	[
+		{
+        "name": "id_cust",
+        "type": "int"
+    }, {
+        "name": "id_dir_mkt_cell",
+        "type": "int"
+    }, {
+        "name": "cd_cell_cust_type",
+        "type": "string"
+    }, {
+        "name": "id_cell_version",
+        "type": "int"
+    }, {
+        "name": "fl_responded",
+        "type": "string"
+    }, {
+        "name": "cd_interaction",
+        "type": "string"
+    }, {
+        "name": "id_package",
+        "type": "int"
+    }, {
+        "name": "extract_ts",
+        "type": "timestamp"
+    }
+	]
+	}
+]
+	

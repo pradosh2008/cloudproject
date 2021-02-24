@@ -1,0 +1,94 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci396_curr_opt_in_out_full.fxp
+*
+* Description: Export customer opt in out attributes.
+*
+*
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.vmci396_curr_opt_in_out_full_caa_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(205))
+FROM(
+SELECT'ID_CUST|ID_CHAIN|IN_CUST_SOURCE|IN_CUST_SOURCE_2ND|TS_TMCI396_CREATED|ID_CUST_ORIG|ID_EMAIL|TE_CUST|ID_STORE|CD_OPT_IN_OUT|FL_OPT_IN|TS_OPT_IN_OUT|ID_CUST_EXT|CD_CUST_EXT_TYPE|DA_OPT_IN_OUT|EXTRACT_TS'AS COLUMNNAME
+)A ;  
+                     
+SELECT 
+CAST (ID_CUST                        AS CHAR(11)),'|' (CHAR(1)),
+CAST (ID_CHAIN                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE                 AS CHAR(2)),'|' (CHAR(1)),
+CAST (IN_CUST_SOURCE_2ND             AS CHAR(2)),'|' (CHAR(1)),
+CAST (TS_TMCI396_CREATED             AS CHAR(19)),'|' (CHAR(1)),
+CAST (ID_CUST_ORIG                   AS CHAR(11)),'|' (CHAR(1)),
+CAST (ID_EMAIL                       AS CHAR(11)),'|' (CHAR(1)),
+CAST (TE_CUST                        AS CHAR(12)),'|' (CHAR(1)),
+CAST (ID_STORE                       AS CHAR(6)),'|' (CHAR(1)),
+CAST (CD_OPT_IN_OUT                  AS CHAR(2)),'|' (CHAR(1)),
+CAST (FL_OPT_IN                      AS CHAR(1)),'|' (CHAR(1)),
+CAST (TS_OPT_IN_OUT                  AS CHAR(19)),'|' (CHAR(1)),
+CAST (ID_CUST_EXT                    AS CHAR(15)),'|' (CHAR(1)),
+CAST (CD_CUST_EXT_TYPE               AS CHAR(1)),'|' (CHAR(1)),
+CAST (CAST(DA_OPT_IN_OUT AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP AS CHAR(19))
+FROM DMMCIPI04.VMCI396_CURR_OPT_IN_OUT_FULL
+WHERE ID_CHAIN IN (7)
+AND (CAST(TS_OPT_IN_OUT AS DATE FORMAT 'YYYY-MM-DD') BETWEEN '$BEGIN_DT' AND '$END_DT') OR (CAST(TS_TMCI396_CREATED AS DATE FORMAT 'YYYY-MM-DD') BETWEEN '$BEGIN_DT' AND '$END_DT')
+;
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci396_curr_opt_in_out_full_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table VMCI396_CURR_OPT_IN_OUT_FULL" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci396_curr_opt_in_out_full_$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+
+
+

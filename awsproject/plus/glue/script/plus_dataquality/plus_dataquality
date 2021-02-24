@@ -1,0 +1,112 @@
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql.functions import current_timestamp,DataFrame
+from awsglue.dynamicframe import DynamicFrame
+from awsglue.context import GlueContext
+from pyspark.context import SparkContext
+from pyspark.sql.types import StructType,StructField,StringType,LongType,IntegerType
+import boto3
+import re
+
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+s3 = boto3.client('s3')
+ss3 = boto3.resource('s3')
+# Define bucket name where  SQL queries  for tables to be executed are placed 
+sql_bucket_name = 's3-p-ascena-code-repo'
+#Target Foundation Bucket Name
+foundation_bucket_name="s3-p-ascena-aadp-foundation"
+target_db="plus_foundation"
+target_tbl='plus_dataquality_log'
+partitionKeys=[]
+#Defining target schema
+schema = StructType([
+        StructField('Check_type_cd', StringType(), True),
+        StructField('Record_cnt', LongType(), True),
+        StructField('Status_cd', StringType(), True),
+        StructField('Table_nam', StringType(), True)
+         ])
+#  Map the SQL's in .SQL file to the corresponding Check Type
+Query_lst=["Primary_key_Check","Row_Hash_Unique_check"]
+
+bucket = ss3.Bucket(sql_bucket_name)
+
+
+## Defining the  query  directory  through which the code should iterate  reading SQL files
+objs = bucket.objects.filter(Prefix='plus/glue/sql/dataquality/')
+
+## Iterate through all the SQL files under the folder & execute  all SQL's inside each file & writting results to a Dataframe
+for obj in objs:    
+    file=obj.key
+    split_str=(re.split(' |\/|\.',file))
+    query_name= split_str[4]
+    if len(split_str[4])>0:
+        #Deriving attributes needed for job to run
+        query_string_split = query_name.split('_')
+        prefix=query_string_split[0] 
+        table_nam = "_".join(query_string_split[1:])
+        print(" Queries run are against "+table_nam)
+        foundation_file_path="s3://"+foundation_bucket_name+"/plus/"+ prefix+"/"+table_nam
+        # Building the foundation frame for the table for which SQL's are to be run against
+        fdn_df=spark.read.parquet(foundation_file_path)
+        print("Build Foundation frame completed for "+table_nam)
+        ## Registering the dataframe as a view
+        fdn_df.createOrReplaceTempView(table_nam)
+        ## Reading the SQL file path  for the table 
+        query_path ="s3://"+sql_bucket_name+"/" + "plus/glue/sql/dataquality/"+ query_name + ".sql"
+        #Converting the   query file to a list
+        query = sc.textFile(query_path).collect()
+
+         ## Execute the SQL's for table in loop & create a data dictioniory assinging the key check name & the result
+        sql_lst=[]
+        for sql_script in query:
+            sql_lst.append(spark.sql(sql_script).collect())
+        
+        sql_result=[]
+        for sqlElement in sql_lst:
+            if sqlElement:
+                sql_result.append(sqlElement[0]['cnt'])
+            else:
+                sql_result.append(0)
+        thisdict = dict(zip(Query_lst, sql_result))
+        #Converting the data dictioniory to a data frame & adding the  column & values for the final target table
+        df_write = spark.createDataFrame(spark.sparkContext.emptyRDD(), schema)
+        d2={}
+        for key in thisdict:
+            if thisdict[key] ==0:
+                d2['Check_type_cd']=key
+                d2['Record_cnt']=thisdict[key]
+                d2['Table_nam']=table_nam
+                d2['Status_cd']='Pass'
+                rdd = sc.parallelize([d2])
+                df_pass = spark.read.json(rdd)
+                df_write = df_write.union(df_pass)
+            else:
+                d2['Check_type_cd']=key
+                d2['Record_cnt']=thisdict[key]
+                d2['Table_nam']=table_nam
+                d2['Status_cd']='Fail'
+                rdd = sc.parallelize([d2])
+                df_fail = spark.read.json(rdd)
+                df_write = df_write.union(df_fail)
+                print("Data Quality SQL execution completed for "+table_nam)
+        # Add Run Date to dataframe
+        df_final=df_write.withColumn("Run_tms",current_timestamp())
+        col_order=('Run_tms','Table_Nam','Check_Type_cd','Record_Cnt','Status_cd')
+        # Re order the dataframe to be written to sink
+        df_write_sink=df_final.select(*col_order)
+        # Convert Spark DF to  dynamic frame
+        target_gdf = DynamicFrame.fromDF(df_write_sink, glueContext, "df_write_sink")
+        # Write to Sink
+        sink = glueContext.getSink(connection_type="s3", path="s3://"+foundation_bucket_name+"/plus/logging/"+ target_tbl,\
+        enableUpdateCatalog=True,\
+        updateBehavior="UPDATE_IN_DATABASE",\
+        partitionKeys=partitionKeys\
+        )
+        sink.setFormat("glueparquet")
+        sink.setCatalogInfo(catalogDatabase=target_db, catalogTableName=target_tbl)
+        sink.writeFrame(target_gdf)
+
+

@@ -1,0 +1,204 @@
+[
+	{
+		"source_table_name": "vmci025_mailing",
+		"fields": 
+		[
+			{
+				"name": "id_mailing",
+				"type": "int"
+			},
+			{
+				"name": "tx_mail_desc_short",
+				"type": "string"
+			},
+			{
+				"name": "tx_mail_desc_long",
+				"type": "string"
+			},
+			{
+				"name": "da_mail_eff",
+				"type": "date"
+			},
+			{
+				"name": "da_mail_exp",
+				"type": "date"
+			},
+			{
+				"name": "da_file_created",
+				"type": "date"
+			},
+			{
+				"name": "da_mailed",
+				"type": "date"
+			},
+			{
+				"name": "nu_max_custs",
+				"type": "int"
+			},
+			{
+				"name": "in_dedup_type",
+				"type": "string"
+			},
+			{
+				"name": "da_rcd_created",
+				"type": "date"
+			},
+			{
+				"name": "da_rcd_updated",
+				"type": "date"
+			},
+			{
+				"name": "fl_excl_emp",
+				"type": "string"
+			},
+			{
+				"name": "cd_mail_type",
+				"type": "string"
+			},
+			{
+				"name": "cd_process_type",
+				"type": "string"
+			},
+			{
+				"name": "da_status",
+				"type": "date"
+			},
+			{
+				"name": "ti_status",
+				"type": "string"
+			},
+			{
+				"name": "tx_status",
+				"type": "string"
+			},
+			{
+				"name": "na_job",
+				"type": "string"
+			},
+			{
+				"name": "id_chain",
+				"type": "int"
+			},
+			{
+				"name": "cd_group",
+				"type": "string"
+			},
+			{
+				"name": "cd_output_type",
+				"type": "string"
+			},
+			{
+				"name": "id_user_created",
+				"type": "string"
+			},
+			{
+				"name": "fl_include_always",
+				"type": "string"
+			},
+			{
+				"name": "fl_include_seed",
+				"type": "string"
+			},
+			{
+				"name": "fl_include_decoy",
+				"type": "string"
+			},
+			{
+				"name": "fl_include_request",
+				"type": "string"
+			},
+			{
+				"name": "fl_skip_counts",
+				"type": "string"
+			},
+			{
+				"name": "da_purge",
+				"type": "date"
+			},
+			{
+				"name": "id_last_cell_done",
+				"type": "int"
+			},
+			{
+				"name": "tx_incl_states",
+				"type": "string"
+			},
+			{
+				"name": "fl_ok_to_mail_yes_chkd",
+				"type": "string"
+			},
+			{
+				"name": "fl_ok_to_mail_no_chkd",
+				"type": "string"
+			},
+			{
+				"name": "fl_ok_to_email_yes_chkd",
+				"type": "string"
+			},
+			{
+				"name": "fl_ok_to_email_no_chkd",
+				"type": "string"
+			},
+			{
+				"name": "fl_excl_do_not_promote",
+				"type": "string"
+			},
+			{
+				"name": "tx_incl_dsfcodes",
+				"type": "string"
+			},
+			{
+				"name": "fl_incl_mail_undetermined",
+				"type": "string"
+			},
+			{
+				"name": "fl_incl_email_undetermined",
+				"type": "string"
+			},
+			{
+				"name": "cd_campaign",
+				"type": "string"
+			},
+			{
+				"name": "tx_intiative",
+				"type": "string"
+			},
+			{
+				"name": "tx_campaign_objective",
+				"type": "string"
+			},
+			{
+				"name": "da_prelim_count_due",
+				"type": "date"
+			},
+			{
+				"name": "da_final_count_due",
+				"type": "date"
+			},
+			{
+				"name": "na_mail_vendor",
+				"type": "string"
+			},
+			{
+				"name": "cd_adtrax",
+				"type": "string"
+			},
+			{
+				"name": "id_week_mailing_eff",
+				"type": "int"
+			},
+			{
+				"name": "nu_reqd_circulation",
+				"type": "int"
+			},
+			{
+				"name": "da_due_lettershop",
+				"type": "date"
+			},
+			{
+				"name": "extract_ts",
+				"type": "timestamp"
+			}
+		]
+	}
+]

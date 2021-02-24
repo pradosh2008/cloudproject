@@ -1,0 +1,57 @@
+[
+ {
+  "source_table_name": "sales_merch_class",
+  "fields": 
+  [	
+	{
+        "name": "chain_nbr",
+        "type": "int"
+    },	
+	{
+        "name": "class_nbr",
+        "type": "int"
+    },
+	{
+        "name": "department_nbr",
+        "type": "int"
+    },
+    {
+        "name": "group_nbr",
+        "type": "int"
+    },
+    {
+        "name": "division_nbr",
+        "type": "int"
+    },
+
+    {
+        "name": "class_nm",
+        "type": "string"
+    },
+    {
+        "name": "class_vat_ind",
+        "type": "string"
+    },
+    {
+        "name": "start_dt",
+        "type": "DATE"
+    },
+    {
+        "name": "end_dt",
+        "type": "DATE"
+    },
+    {
+        "name": "last_update_ts",
+        "type": "TIMESTAMP"
+    },
+    {
+        "name": "active_class_ind",
+        "type": "string"
+    },
+    {
+        "name": "extract_ts",
+        "type": "TIMESTAMP"
+    }
+  ]
+ }
+]

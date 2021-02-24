@@ -1,0 +1,139 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_sales_transaction_header.fxp
+*
+* Description: Export sales transaction header 
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.SALES_TRANSACTION_HEADER_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST( COLUMNNAME AS CHAR(1043))
+     FROM(
+     SELECT
+'SELLING_CHAIN_NBR|SELLING_STORE_NBR|SALES_ORDER_CHAIN_NBR|SALES_ORDER_STORE_NBR|TRANSACTION_NBR|TRANSACTION_DT|TRANSACTION_TM|REGISTER_NBR|RECORD_SEQ_NBR|CASHIER_NBR|MANAGER_NBR|EMPLOYEE_NBR|LAYAWAY_NBR|TAX_EXEMPT_NBR|SHIP_TO_STORE_NBR|DEMAND_ORDER_NBR|DEFERRED_PAYMENT_AMT|PAYMENT_AMT|ORDER_NBR|ORDER_RECEIVED_DT|ORDER_RECEIVED_TM|CHAIN_REFERENCE_CD|TRANSACTION_TYPE_CD|TENDER_REFERENCE_CD|RETURN_RECEIPT_IND|SALES_CHANNEL_TYPE_CD|EMAIL_CAPTURE_IND|ADDRESS_CAPTURE_IND|MULTI_BRAND_TRANSACTION_IND|DOMESTIC_ORDER_IND|REGISTER_TYPE_CD|ENTRY_TYPE_CD|PAYMENT_REFERENCE_NBR|PAYMENT_TYPE_CD|TRANSACTION_VOID_IND|SHIP_TO_STORE_CONVERSION_IND|CREATE_DT|LAST_UPDATE_TS|APPLY_MATCHING_LOGIC_CD|CUSTOMER_NBR|TENDER_PRIMARY_GROUP_NM|LAYAWAY_NBR_CRM|TRANSACTION_ID|ORDER_REC_TRAN_DT|CUSTOMER_SEQ_NBR|CUSTOMER_FIRST_NM|CUSTOMER_LAST_NM|CUSTOMER_PRIMARY_PHONE_NBR|CUSTOMER_SECONDARY_PHONE_NBR|CUSTOMER_EMAIL_ADDRESS|CUSTOMER_ZIP_CD|CLUB_MEMBER_NBR|CUSTOMER_EXTERNAL_TYPE_CD|CUSTOMER_EXTERNAL_NBR|ECOMMERCE_CUSTOMER_NBR|LOYALTY_TRANSACTION_IND|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT 
+CAST (SELLING_CHAIN_NBR             AS CHAR(6)),'|' (CHAR(1)),
+CAST (CAST(SELLING_STORE_NBR  AS INT)AS CHAR(12)),'|' (CHAR(1)),
+CAST (SALES_ORDER_CHAIN_NBR AS CHAR(6)),'|' (CHAR(1)),
+CAST (CAST(SALES_ORDER_STORE_NBR  AS INT)            AS CHAR(12)),'|' (CHAR(1)),
+CAST (TRANSACTION_NBR               AS CHAR(11)),'|' (CHAR(1)),
+CAST (TRANSACTION_DT                AS CHAR(10)),'|' (CHAR(1)),
+CAST (TRANSACTION_TM                AS CHAR(8)),'|' (CHAR(1)),
+CAST (REGISTER_NBR                  AS CHAR(11)),'|' (CHAR(1)),
+CAST (RECORD_SEQ_NBR                AS CHAR(11)),'|' (CHAR(1)),
+CAST (CASHIER_NBR                   AS CHAR(11)),'|' (CHAR(1)),
+CAST (MANAGER_NBR                   AS CHAR(18)),'|' (CHAR(1)),
+CAST (EMPLOYEE_NBR AS CHAR(10)),'|' (CHAR(1)),
+CAST ( LAYAWAY_NBR                    AS CHAR(18)),'|' (CHAR(1)),
+CAST (TAX_EXEMPT_NBR                AS CHAR(9)),'|' (CHAR(1)),
+CAST (CAST(SHIP_TO_STORE_NBR AS INT)  AS CHAR(12)),'|' (CHAR(1)),
+CAST (DEMAND_ORDER_NBR AS CHAR(19)),'|' (CHAR(1)),
+CAST (CAST(DEFERRED_PAYMENT_AMT AS DECIMAL(13,4) FORMAT '-(22)9.9(2)')           AS CHAR(9)),'|' (CHAR(1)),
+CAST (CAST(PAYMENT_AMT  AS DECIMAL(13,4) FORMAT '-(22)9.9(2)')                   AS CHAR(9)),'|' (CHAR(1)),
+CAST ( CAST(ORDER_NBR AS INT)                     AS CHAR(18)),'|' (CHAR(1)),
+CAST (ORDER_RECEIVED_DT             AS CHAR(10)),'|' (CHAR(1)),
+CAST (ORDER_RECEIVED_TM              AS CHAR(6)),'|' (CHAR(1)),
+CAST (CHAIN_REFERENCE_CD            AS CHAR(11)),'|' (CHAR(1)),
+CAST (TRANSACTION_TYPE_CD           AS CHAR(2)),'|' (CHAR(1)),
+CAST (TENDER_REFERENCE_CD                 AS CHAR(11)),'|' (CHAR(1)),
+CAST (RETURN_RECEIPT_IND            AS CHAR(1)),'|' (CHAR(1)),
+CAST (SALES_CHANNEL_TYPE_CD         AS CHAR(2)),'|' (CHAR(1)),
+CAST (EMAIL_CAPTURE_IND AS CHAR(1)),'|' (CHAR(1)),
+CAST (ADDRESS_CAPTURE_IND AS CHAR(1)),'|' (CHAR(1)),
+CAST (MULTI_BRAND_TRANSACTION_IND   AS CHAR(1)),'|' (CHAR(1)),
+CAST (DOMESTIC_ORDER_IND            AS CHAR(1)),'|' (CHAR(1)),
+CAST (REGISTER_TYPE_CD              AS CHAR(1)),'|' (CHAR(1)),
+CAST (ENTRY_TYPE_CD                 AS CHAR(3)),'|' (CHAR(1)),
+CAST (CAST(PAYMENT_REFERENCE_NBR   AS INT)       AS CHAR(20)),'|' (CHAR(1)),
+CAST (PAYMENT_TYPE_CD               AS CHAR(1)),'|' (CHAR(1)),
+CAST (TRANSACTION_VOID_IND  AS CHAR(1)),'|' (CHAR(1)),
+CAST (SHIP_TO_STORE_CONVERSION_IND         AS CHAR(1)),'|' (CHAR(1)),
+CAST (CAST(CREATE_DT         AS DATE FORMAT 'YYYY-MM-DD')            AS CHAR(10)),'|' (CHAR(1)),
+CAST (LAST_UPDATE_TS AS CHAR(19)),'|' (CHAR(1)),
+CAST (APPLY_MATCHING_LOGIC_CD       AS CHAR(1)),'|' (CHAR(1)),
+CAST (CUSTOMER_NBR AS CHAR(11)),'|' (CHAR(1)),
+CAST (TENDER_PRIMARY_GROUP_NM AS CHAR(13)),'|' (CHAR(1)),
+CAST (CAST(LAYAWAY_NBR_CRM  AS INT )AS CHAR(20)),'|' (CHAR(1)),
+CAST (TRANSACTION_ID  AS CHAR(24)),'|' (CHAR(1)),
+CAST (CAST(ORDER_REC_TRAN_DT AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CUSTOMER_SEQ_NBR AS CHAR(11)),'|' (CHAR(1)),
+CAST (CUSTOMER_FIRST_NM AS CHAR(20)),'|' (CHAR(1)),
+CAST (CUSTOMER_LAST_NM AS CHAR(20)),'|' (CHAR(1)),
+CAST (CUSTOMER_PRIMARY_PHONE_NBR AS CHAR(10)),'|' (CHAR(1)),
+CAST (CUSTOMER_SECONDARY_PHONE_NBR AS CHAR(10)),'|' (CHAR(1)),
+CAST (CUSTOMER_EMAIL_ADDRESS AS CHAR(50)),'|' (CHAR(1)),
+CAST (CUSTOMER_ZIP_CD AS CHAR(9)),'|' (CHAR(1)),
+CAST (CAST(CLUB_MEMBER_NBR AS BIGINT) AS CHAR(12)),'|' (CHAR(1)),
+CAST (CUSTOMER_EXTERNAL_TYPE_CD AS CHAR(1)),'|' (CHAR(1)),
+CAST (CAST(CUSTOMER_EXTERNAL_NBR AS BIGINT) AS CHAR(18)),'|' (CHAR(1)),
+CAST (ECOMMERCE_CUSTOMER_NBR AS CHAR(11)),'|' (CHAR(1)),
+CAST (LOYALTY_TRANSACTION_IND AS CHAR(11)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP  AS CHAR(19))
+
+FROM $DB_RPT.SALES_TRANSACTION_HEADER WHERE CAST(LAST_UPDATE_TS AS DATE FORMAT 'YYYY-MM-DD') BETWEEN '$BEGIN_DT' AND '$END_DT'  ;
+
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_transaction_header_${BEGIN_DT}_${END_DT}.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+
+.LOGOFF ;
+
+!eof
+
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  SALES_TRANSACTION_HEADER" 
+      exit 1 
+   fi
+
+
+######################################################################
+# Zip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_transaction_header_${BEGIN_DT}_${END_DT}.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   echo "Compression step completed!"
+ 
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+
+
+
+
+
+

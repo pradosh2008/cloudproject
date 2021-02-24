@@ -1,0 +1,413 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+
+Parameters:
+  DevPrefix:
+    Type: String
+    Default: d
+  QAPrefix:
+    Type: String
+    Default: qa
+  ProdPrefix:
+    Type: String
+    Default: p
+  LambdaRoleName:
+    Type: String
+    Default: '-ASNLambdaExecutionRole-iam-role'
+  
+  LambdaFunctionName:
+    Type: String
+    Default: '-plus-caa-s3-foundation-etl-lambda'
+
+  GlueIAMRoleName:
+    Type: String
+    Default: 'CAA-Service-Glue-iam-role'
+ # FDN ETL parms
+  CFTPath:
+    Type: String
+    Default: 'ascena-code-repo.s3.amazonaws.com/plus/cloudformation'
+  TemplateName:
+    Type: String
+    Default: 'fdn-glueetl-template.yml'
+  S3RepoPath:
+    Type: String
+    Default: 'ascena-code-repo/plus/glue'
+  FDNUtil:
+    Type: String
+    Default: foundationutil.py
+
+
+Conditions:
+  IsEnvDEV: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '479484306740'
+  IsEnvQA: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '951523344214'
+  IsEnvPROD: !Equals 
+    - !Ref 'AWS::AccountId'
+    - '512757696531'
+   
+
+Description: Lambda function to run foundation glue job
+Resources:
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.7
+      Role: !Join
+          - ''
+          - - 'arn:aws:iam::'
+            - !If 
+              - IsEnvPROD
+              - '512757696531:role/p'
+              - !If 
+                - IsEnvQA
+                - '951523344214:role/qa'
+                - '479484306740:role/d'
+            - !Ref LambdaRoleName  
+      FunctionName: !Join
+          - ''
+          - - !If 
+              - IsEnvPROD
+              - !Ref ProdPrefix
+              - !If 
+                - IsEnvQA
+                - !Ref QAPrefix
+                - !Ref DevPrefix
+            - !Ref LambdaFunctionName             
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import uuid
+          
+          
+          print("STARTING NEW INVOCATION!!!")
+          s3_resource = boto3.resource('s3')
+          s3_client = boto3.client('s3')
+          glue = boto3.client('glue')
+          
+          def lambda_handler(event, context):
+              # Setting variables to equal values from the event object passed in.
+              source_bucket_name = event['Records'][0]['s3']['bucket']['name']
+              region = event['Records'][0]['awsRegion']
+              object = event['Records'][0]['s3']['object']['key']
+              user = event['Records'][0]['userIdentity']['principalId']
+              
+              print("Bucket name: " + source_bucket_name)
+              print("Region name: " + region)
+              print("User is :" + user)
+              print("Object name :" + object)
+              
+          
+              table_nam = object.split('/')[-2]
+              print("table name :" + table_nam)
+              
+          
+              src = s3_resource.Bucket(source_bucket_name)
+              gluejobname = "plus_"+table_nam
+              print("glue job name :" + gluejobname)    
+              
+          
+              currentjobrun = glue.start_job_run(JobName=gluejobname)
+              print ("GLUE_JOB run ID: " + currentjobrun['JobRunId'])
+              
+          
+              status = glue.get_job_run(JobName=gluejobname, RunId=currentjobrun['JobRunId'])
+              print("Glue job name:  {0} | job id: {1} | Job Status: {2}".format(status['JobRun']['JobName'], status['JobRun']['Id'],status['JobRun']['JobRunState']))
+          
+              
+              return
+      Description: Invoke a function during stack creation.
+      Timeout: 120
+
+
+  BluecoreWF:
+    Type: AWS::Glue::Workflow
+    Properties:
+        #DefaultRunProperties: Json
+        Description: Workflow to kick off bluecore extract
+        Name: PlusBluecoreWF
+
+  BlueCoreExtract:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !Sub
+          - '${ePrefix}-${GlueIAMRoleName}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Process model scores and produce Bluecore extract file
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub
+          - 's3://s3-${ePrefix}-${S3RepoPath}/script/plus_outbound_bluecore/plus_outbound_bluecore.py'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      AllocatedCapacity: 50
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Name: plus_outbound_bluecore
+      DefaultArguments:
+        '--extra-py-files': !Sub
+          - 's3://s3-${ePrefix}-${S3RepoPath}/lib/${FDNUtil}'
+          - { ePrefix: !If [IsEnvDEV,!Ref DevPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref ProdPrefix]] }
+        '--enable-glue-datacatalog': ''
+      GlueVersion: 2.0
+
+  StartTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Type: SCHEDULED
+      Name: Start-plus_outbound_bluecore
+      Description: Start data quality job
+      Schedule: cron(10 19 30 1 ? 2022)
+      StartOnCreation: True
+      Actions:
+        - JobName: plus_outbound_bluecore
+      WorkflowName: !Ref BluecoreWF
+
+
+  CalendarWF:
+    Type: AWS::Glue::Workflow
+    Properties:
+        #DefaultRunProperties: Json
+        Description: Workflow to kick off plus Calendar
+        Name: PlusCalendarWF
+
+  Calendar:
+    Type: AWS::Glue::Job
+    Properties:
+      Role: !Sub
+          - '${ePrefix}-${GlueIAMRoleName}'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Description: Plus Calendar data
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub
+          - 's3://s3-${ePrefix}-${S3RepoPath}/script/plus_calendar/plus_calendar'
+          - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      AllocatedCapacity: 10
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Name: plus_calendar
+      DefaultArguments:
+        '--extra-py-files': !Sub
+          - 's3://s3-${ePrefix}-${S3RepoPath}/lib/${FDNUtil}'
+          - { ePrefix: !If [IsEnvDEV,!Ref DevPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref ProdPrefix]] }
+        '--enable-glue-datacatalog': ''
+      GlueVersion: 2.0
+      
+  StartTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Type: SCHEDULED
+      Name: Start-plus_calendar
+      Description: Start plus calendar job
+      Schedule: cron(15 11 4 12 ? 2020)
+      StartOnCreation: True
+      Actions:
+        - JobName: plus_calendar
+      WorkflowName: !Ref CalendarWF
+      
+      
+  ETLFDN1:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub 
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_item
+  ETLFDN2:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_sales_merch_department
+  ETLFDN3:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_sales_customer
+  ETLFDN4:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_sales_merch_class
+  ETLFDN5:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_sales_transaction_detail
+  ETLFDN6:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_sales_transaction_header
+  ETLFDN7:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_store
+  ETLFDN8:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_store_address
+  ETLFDN9:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_tmci997_esp_outbound
+  ETLFDN10:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci015_cust_ccard
+  ETLFDN11:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci016_ccard_type
+  ETLFDN12:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci019_customer
+  ETLFDN13:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci019_custonly
+  ETLFDN14:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci024_dir_mkt_cl
+  ETLFDN15:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci025_mailing
+  ETLFDN16:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci051_clcst_gp_h
+  ETLFDN17:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci079_club_memb
+  ETLFDN18:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci105_chain_cust
+  ETLFDN19:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci172_chain_cust_email
+  ETLFDN20:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci173_full_email_addr_status
+  ETLFDN21:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci173_full_email_address
+  ETLFDN22:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci180_cust_demog
+  ETLFDN23:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci198_opt_in_out_type
+  ETLFDN24:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci396_curr_opt_in_out_full
+  ETLFDN25:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://s3-${ePrefix}-${CFTPath}/${TemplateName}'
+        - { ePrefix: !If [IsEnvPROD,!Ref ProdPrefix,!If [IsEnvQA,!Ref QAPrefix,!Ref DevPrefix]] }
+      Parameters:
+        TableName: plus_vmci972_chain_cust_fullemail
+

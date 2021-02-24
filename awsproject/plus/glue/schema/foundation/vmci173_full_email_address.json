@@ -1,0 +1,68 @@
+[
+	{
+		"source_table_name": "vmci173_full_email_address",
+		"fields":[
+		{
+        "name": "ID_EMAIL",
+        "type": "int"
+    }, {
+        "name": "AD_EMAIL",
+        "type": "string"
+    }, {
+        "name": "ID_EMAIL_DOMAIN",
+        "type": "int"
+    }, {
+        "name": "AD_EMAIL_DOMAIN",
+        "type": "string"
+    }, {
+        "name": "AD_EMAIL_FULL",
+        "type": "string"
+    }, {
+        "name": "NU_BB_SOFT",
+        "type": "int"
+    }, {
+        "name": "NU_BB_HARD",
+        "type": "int"
+    }, {
+        "name": "CD_EMAIL_STYLE",
+        "type": "string"
+    }, {
+        "name": "DA_TMCI173_CREATED",
+        "type": "date"
+    }, {
+        "name": "DA_TMCI173_UPDATED",
+        "type": "date"
+    }, {
+        "name": "IN_CUST_SOURCE_FIRST",
+        "type": "string"
+    }, {
+        "name": "IN_CUST_SOURCE_2ND_FIRST",
+        "type": "string"
+    }, {
+        "name": "IN_CUST_SOURCE_LAST",
+        "type": "string"
+    }, {
+        "name": "IN_CUST_SOURCE_2ND_LAST",
+        "type": "string"
+    }, {
+        "name": "CD_EMAIL_INVALID",
+        "type": "string"
+    }, {
+        "name": "DA_FIRST_HARD_BB",
+        "type": "date"
+    }, {
+        "name": "DA_LAST_HARD_BB",
+        "type": "date"
+    }, {
+        "name": "DA_FIRST_SOFT_BB",
+        "type": "date"
+    }, {
+        "name": "DA_LAST_SOFT_BB",
+        "type": "date"
+    }, {
+        "name": "EXTRACT_TS",
+        "type": "timestamp"
+    }
+]
+	}
+]

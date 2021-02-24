@@ -1,0 +1,2 @@
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci173_full_email_addr_status GROUP BY plus_vmci173_full_email_addr_status_key,element_at(split(source_file_nam,'_'),1),extract_ts HAVING count(*) >1)
+select count(*) as cnt from (SELECT count(*) FROM plus_vmci173_full_email_addr_status GROUP BY  row_hashed_val HAVING count(*)>1)

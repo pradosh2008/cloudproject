@@ -1,0 +1,99 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_sales_customer.fxp
+*
+* Description: Export Sales Cusotmer details for CAA.
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri	    Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.SALES_CUSTOMER_CAA_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(381))
+     FROM(
+     SELECT
+'SELLING_CHAIN_NBR|SELLING_STORE_NBR|REGISTER_NBR|TRANSACTION_NBR|TRANSACTION_DT|CUSTOMER_NBR|CUSTOMER_SEQ_NBR|CUSTOMER_FIRST_NM|CUSTOMER_LAST_NM|CUSTOMER_PRIMARY_PHONE_NBR|CUSTOMER_SECONDARY_PHONE_NBR|CUSTOMER_EMAIL_ADDRESS|CUSTOMER_ZIP_CD|APPLY_MATCHING_LOGIC_CD|CLUB_MEMBER_NBR|CUSTOMER_EXTERNAL_TYPE_CD|CUSTOMER_EXTERNAL_NBR|LAST_UPDATE_TS|ECOMMERCE_CUSTOMER_NBR|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT
+CAST(SELLING_CHAIN_NBR AS CHAR(6)), '|' (CHAR(1)),
+CAST (CAST (SELLING_STORE_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')AS CHAR(12)),'|'(CHAR(1)),
+CAST(REGISTER_NBR AS CHAR(11)), '|' (CHAR(1)),
+CAST(TRANSACTION_NBR AS CHAR(11)), '|' (CHAR(1)),
+CAST(TRANSACTION_DT AS CHAR(10)), '|' (CHAR(1)),
+CAST(CUSTOMER_NBR AS CHAR(11)), '|' (CHAR(1)),
+CAST(CUSTOMER_SEQ_NBR AS CHAR(11)), '|' (CHAR(1)),
+CAST(CUSTOMER_FIRST_NM AS CHAR(20)), '|' (CHAR(1)),
+CAST(CUSTOMER_LAST_NM AS CHAR(20)), '|' (CHAR(1)),
+CAST(CUSTOMER_PRIMARY_PHONE_NBR AS CHAR(10)), '|' (CHAR(1)),
+CAST(CUSTOMER_SECONDARY_PHONE_NBR AS CHAR(10)), '|' (CHAR(1)),
+CAST(CUSTOMER_EMAIL_ADDRESS AS CHAR(50)), '|' (CHAR(1)),
+CAST(CUSTOMER_ZIP_CD AS CHAR(9)), '|' (CHAR(1)),
+CAST(APPLY_MATCHING_LOGIC_CD AS CHAR(1)), '|' (CHAR(1)),
+CAST (CAST (CLUB_MEMBER_NBR  AS DECIMAL(12,0) FORMAT '-(22)9')AS CHAR(12)),'|'(CHAR(1)),
+CAST(CUSTOMER_EXTERNAL_TYPE_CD AS CHAR(1)), '|' (CHAR(1)),
+CAST (CAST (CUSTOMER_EXTERNAL_NBR  AS DECIMAL(16,0) FORMAT '-(22)9')AS CHAR(16)),'|'(CHAR(1)),
+CAST(LAST_UPDATE_TS AS CHAR(19)),'|' (CHAR(1)),
+CAST(ECOMMERCE_CUSTOMER_NBR AS CHAR(11)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM
+$DB_RPT.SALES_CUSTOMER  
+WHERE CUSTOMER_SEQ_NBR=1 
+AND EXTRACT(YEAR FROM TRANSACTION_DT )>=(EXTRACT(YEAR FROM DATE) -3) 
+; 
+
+
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_customer_${BEGIN_DT}_${END_DT}.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table SALES_CUSTOMER" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/edw/${BRAND}_sales_customer_${BEGIN_DT}_${END_DT}.txt
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+   
+   echo "Compression step completed!"
+ 
+
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+

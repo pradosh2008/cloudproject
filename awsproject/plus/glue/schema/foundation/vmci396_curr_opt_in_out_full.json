@@ -1,0 +1,71 @@
+[
+	{
+		"source_table_name": "vmci396_curr_opt_in_out_full",
+		"fields":[
+	{
+		"name": "id_chain",
+		"type": "int"
+	},
+	{
+		"name": "id_cust",
+		"type": "int"
+	},
+	{
+		"name": "in_cust_source",
+		"type": "string"
+	},
+	{
+		"name": "in_cust_source_2nd",
+		"type": "string"
+	},
+	{
+		"name": "ts_tmci396_created",
+		"type": "timestamp"
+	},
+	{
+		"name": "id_cust_orig",
+		"type": "int"
+	},
+	{
+		"name": "id_email",
+		"type": "int"
+	},
+	{
+		"name": "te_cust",
+		"type": "bigint"
+	},
+	{
+		"name": "id_store",
+		"type": "int"
+	},
+	{
+		"name": "cd_opt_in_out",
+		"type": "string"
+	},
+	{
+		"name": "fl_opt_in",
+		"type": "string"
+	},
+	{
+		"name": "ts_opt_in_out",
+		"type": "timestamp"
+	},
+	{
+		"name": "id_cust_ext",
+		"type": "bigint"
+	},
+	{
+		"name": "cd_cust_ext_type",
+		"type": "string"
+	},
+	{
+		"name": "da_opt_in_out",
+		"type": "date"
+	},
+	{
+		"name": "extract_ts",
+		"type": "timestamp"
+	}
+]
+}
+]

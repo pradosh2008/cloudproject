@@ -1,0 +1,203 @@
+[
+	{
+		"source_table_name": "store",
+		"fields":[
+	{
+		"name": "CHAIN_ID",
+		"type": "int"
+	},
+	{
+		"name": "STORE_ID",
+		"type": "int"
+	},
+	{
+		"name": "REGION_ID",
+		"type": "int"
+	},
+	{
+		"name": "DISTRICT_ID",
+		"type": "int"
+	},
+	{
+		"name": "DC_ID",
+		"type": "int"
+	},
+	{
+		"name": "COMPANY_ID",
+		"type": "int"
+	},
+	{
+		"name": "AREA_ID",
+		"type": "int"
+	},
+	{
+		"name": "STORE_REMODEL_DATE",
+		"type": "date"
+	},
+	{
+		"name": "STORE_OPEN_DATE",
+		"type": "date"
+	},
+	{
+		"name": "STORE_CLOSE_DATE",
+		"type": "date"
+	},
+	{
+		"name": "STORE_TYPE",
+		"type": "string"
+	},
+	{
+		"name": "STORE_NAME",
+		"type": "string"
+	},
+	{
+		"name": "MALL_NAME",
+		"type": "string"
+	},
+	{
+		"name": "STORE_MANAGER_NAME",
+		"type": "string"
+	},
+	{
+		"name": "DISTRICT_MGR_NAME",
+		"type": "string"
+	},
+	{
+		"name": "REGION_MGR_NAME",
+		"type": "string"
+	},
+	{
+		"name": "STORE_OPR_STATUS",
+		"type": "string"
+	},
+	{
+		"name": "STORE_OTS_STATUS",
+		"type": "string"
+	},
+	{
+		"name": "TOTAL_SQUARE_FT",
+		"type": "decimal(18,2)"
+	},
+	{
+		"name": "SELLING_SQUARE_FT",
+		"type": "decimal(18,2)"
+	},
+	{
+		"name": "STORE_CBSA",
+		"type": "string"
+	},
+	{
+		"name": "STORE_CITY",
+		"type": "string"
+	},
+	{
+		"name": "STORE_STATE",
+		"type": "string"
+	},
+	{
+		"name": "STORE_STATE_CD",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_LINE1",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_LINE2",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_LINE3",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ZIP_CD",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_COUNTRY_CD",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_COUNTY",
+		"type": "string"
+	},
+	{
+		"name": "STORE_ADDR_COUNTRY_NAME",
+		"type": "string"
+	},
+	{
+		"name": "STORE_PRIMARY_PHONE_NBR",
+		"type": "string"
+	},
+	{
+		"name": "LEASE_EXPIRE_DATE",
+		"type": "date"
+	},
+	{
+		"name": "REGION_NAME",
+		"type": "string"
+	},
+	{
+		"name": "AREA_NAME",
+		"type": "string"
+	},
+	{
+		"name": "CHAIN_NAME",
+		"type": "string"
+	},
+	{
+		"name": "DISTRICT_NAME",
+		"type": "string"
+	},
+	{
+		"name": "STORE_HOURS",
+		"type": "string"
+	},
+	{
+		"name": "SITE_TYPE_GROUP",
+		"type": "string"
+	},
+	{
+		"name": "DEPTH",
+		"type": "string"
+	},
+	{
+		"name": "FRONTAGE",
+		"type": "string"
+	},
+	{
+		"name": "OPEN_INV_DATE",
+		"type": "DATE"
+	},
+	{
+		"name": "CLOSE_INV_DATE",
+		"type": "DATE"
+	},
+	{
+		"name": "GOB_START_DATE",
+		"type": "DATE"
+	},
+	{
+		"name": "LATITUDE",
+		"type": "string"
+	},
+	{
+		"name": "LONGITUDE",
+		"type": "string"
+	},
+	{
+		"name": "DA_COMP_OPEN",
+		"type": "DATE"
+	},
+	{
+		"name": "COMP_IND",
+		"type": "string"
+	}, {
+        "name": "BATCH_ID",
+        "type": "int"
+    }
+]
+   }
+	
+]

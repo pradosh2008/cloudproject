@@ -1,0 +1,73 @@
+#incremental load
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from foundationutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+# job name
+job_name=args['JOB_NAME']
+
+
+# specify source table name  and target table name
+source_tbl='sales_transaction_detail'
+target_tbl='plus_sales_transaction_detail'
+
+#Specify the data will get load loaded in which folder in target bucket
+target_prefix='//plus//edw'
+source_prefix='//plus//edw'
+
+# specify primary key and foreign key columns name
+map_keyval = {'plus_sales_transaction_detail_key':['selling_chain_nbr','selling_store_nbr','register_nbr','transaction_dt','transaction_nbr','detail_seq_nbr'],
+           'plus_sales_transaction_header_key':['selling_chain_nbr','selling_store_nbr','register_nbr','transaction_dt','transaction_nbr'],
+           'plus_item_key':['sku_nbr'],
+           'plus_selling_store_key':['selling_store_nbr']}
+           
+           
+#If the table needs to be partitioned , specify the partition key columns
+partition_col='transaction_dt'
+partitionKeys=['selling_chain_nbr','transaction_month']
+
+#Build foundation frame  to get existing data into  foundation frame
+fdn_hash_df=read_fdn(target_prefix,target_tbl,spark)
+
+#  Clean source  df 
+inc_clean_df=clean_sourcedf(source_prefix,source_tbl,spark)
+
+#Add Hash value to incremental df
+inc_hash_df=calc_rowhash(inc_clean_df)
+
+# Compare incremental df to foundation to df for  capturing incremental records 
+inc_leftjoined_fdn_df=inc_leftjoin_fdn(fdn_hash_df,inc_hash_df)
+
+# Call base frame with incremental frame
+base_sdf=create_base_frame(inc_leftjoined_fdn_df
+                            ,map_keyval
+                            ,glueContext
+                            ,spark
+                            ,job_name
+                            ,source_tbl
+                            ,audit_cols=['foundation_program_nam','foundation_insert_tms'])
+        
+#If a partition to be done on a derived column eg. transaction_month  , additional step needed
+target_sdf=create_ym_partitoned_frame(base_sdf,partition_col,glueContext)
+       
+#pass base_sdf ot target_sdf based on the previous to this write function
+status=write_to_sink(target_sdf,target_tbl,partitionKeys,glueContext,target_prefix)
+
+
+#moving to archive
+move_to_archive(status,source_prefix,source_tbl)
+
+job.commit()
+

@@ -1,0 +1,112 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci024_dir_mkt_cl.fxp
+*
+* Description: Export Marketing information
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  A.Khatri     Initial Script
+*****************************************************************/
+
+
+.LOGTABLE $DB_WORK.vmci024_dir_mkt_cl_caa_log ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+SELECT CAST(COLUMNNAME AS CHAR(489))
+FROM(
+SELECT 'ID_DIR_MKT_CELL|TX_CELL_DESC_SHORT|DA_RCD_CREATED|DA_RCD_UPDATED|FL_QRY_UPDATED|IN_CELL_TYPE|IN_CONTROL_TYPE|TX_CELL_DESC_LONG|ID_MAILING|NU_VERSIONS|ID_QRY|NU_PRIORITY|NU_RAW_CUSTS|NU_SELECTED_CUSTS|NU_DEDUPED_CUSTS|NU_CONTROL_CUSTS|PC_CONTROL_CUSTS|NU_NOT_MAILED|NU_OUTPUT|FL_RUN_QUERY|DA_STATUS|TI_STATUS|TX_STATUS|NA_JOB|ID_CHAIN|CD_GROUP|ID_USER_CREATED|CD_CELL|ID_CONTROL_CELL|ID_OFFER_LIST|DA_PROMO_START|DA_PROMO_EXPIRE|TX_CREATIVE_TYPE|AM_AD_UNIT_COST|ID_FLOWCHART|EXTRACT_TS'
+AS COLUMNNAME
+)A ;                       
+
+SELECT
+CAST(VMCI024.ID_DIR_MKT_CELL AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.TX_CELL_DESC_SHORT AS CHAR(20)), '|' (CHAR(1)),
+CAST(VMCI024.DA_RCD_CREATED AS CHAR(10)), '|' (CHAR(1)),
+CAST(VMCI024.DA_RCD_UPDATED AS CHAR(10)), '|' (CHAR(1)),
+CAST(VMCI024.FL_QRY_UPDATED AS CHAR(4)), '|' (CHAR(1)),
+CAST(VMCI024.IN_CELL_TYPE AS CHAR(1)), '|' (CHAR(1)),
+CAST(VMCI024.IN_CONTROL_TYPE AS CHAR(1)), '|' (CHAR(1)),
+CAST(VMCI024.TX_CELL_DESC_LONG AS CHAR(252)), '|' (CHAR(1)),
+CAST(VMCI024.ID_MAILING AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_VERSIONS AS CHAR(6)), '|' (CHAR(1)),
+CAST(VMCI024.ID_QRY AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_PRIORITY AS CHAR(6)), '|' (CHAR(1)),
+CAST(VMCI024.NU_RAW_CUSTS AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_SELECTED_CUSTS AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_DEDUPED_CUSTS AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_CONTROL_CUSTS AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.PC_CONTROL_CUSTS AS CHAR(4)), '|' (CHAR(1)),
+CAST(VMCI024.NU_NOT_MAILED AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.NU_OUTPUT AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.FL_RUN_QUERY AS CHAR(4)), '|' (CHAR(1)),
+CAST(CAST (VMCI024.DA_STATUS   AS DATE FORMAT 'YYYY-MM-DD')  AS CHAR(10)),'|' (CHAR(1)),
+CAST(CAST (VMCI024.TI_STATUS  AS DECIMAL(20,2) FORMAT '-(22)9.9(2)')     AS CHAR(22) ) , '|' (CHAR(1)),
+CAST(VMCI024.TX_STATUS AS CHAR(50)), '|' (CHAR(1)),
+CAST(VMCI024.NA_JOB AS CHAR(8)), '|' (CHAR(1)),
+CAST(VMCI024.ID_CHAIN AS CHAR(4)), '|' (CHAR(1)),
+CAST(VMCI024.CD_GROUP AS CHAR(4)), '|' (CHAR(1)),
+CAST(VMCI024.ID_USER_CREATED AS CHAR(7)), '|' (CHAR(1)),
+CAST(VMCI024.CD_CELL AS CHAR(10)), '|' (CHAR(1)),
+CAST(VMCI024.ID_CONTROL_CELL AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.ID_OFFER_LIST AS CHAR(11)), '|' (CHAR(1)),
+CAST(VMCI024.DA_PROMO_START AS CHAR(10)), '|' (CHAR(1)),
+CAST(VMCI024.DA_PROMO_EXPIRE AS CHAR(10)), '|' (CHAR(1)),
+CAST(VMCI024.TX_CREATIVE_TYPE AS CHAR(50)), '|' (CHAR(1)),
+CAST(VMCI024.AM_AD_UNIT_COST AS CHAR(20)), '|' (CHAR(1)),
+CAST(VMCI024.ID_FLOWCHART AS CHAR(20)), '|' (CHAR(1)),
+CAST(CURRENT_TIMESTAMP AS CHAR(19))
+FROM DVZEKE.VMCI024_DIR_MKT_CL AS VMCI024
+INNER JOIN  DVZEKE.VMCI025_MAILING L ON VMCI024.ID_MAILING = L.ID_MAILING 
+WHERE L.ID_CHAIN IN (7) AND (DA_MAIL_EFF BETWEEN '$BEGIN_DT' AND '$END_DT')
+;
+
+ .EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci024_dir_mkt_cl_$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table VMCI024_DIR_MKT_CL AS VMCI024" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci024_dir_mkt_cl_$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+   
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------
+
+
+
+

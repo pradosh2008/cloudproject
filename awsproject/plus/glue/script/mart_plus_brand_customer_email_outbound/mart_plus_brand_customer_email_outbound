@@ -1,0 +1,194 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_tmci997_esp_outbound', 'plus_vmci019_customer', 'plus_vmci105_chain_cust']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+
+target_tbl='plus_brand_customer_email_outbound'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""select
+  eo.plus_tmci997_esp_outbound_key                   as brand_customer_email_outbound_key
+, cc.plus_vmci105_chain_cust_key                     as brand_customer_key -- Extra join (GCP mart doesn't have this join) to chain cust to get this column
+, eo.plus_vmci172_chain_cust_email_key               as brand_customer_email_key
+, eo.id_cust                                         as brand_customer_id
+, eo.id_email                                        as email_id
+, eo.ad_email_full                                   as full_email_addr
+, eo.cd_email_srce_initial                           as email_source_intitial_cd
+, eo.cd_email_srce_recent                            as email_source_recent_cd
+, eo.na_first                                        as first_nam
+, eo.na_last                                         as last_nam
+, eo.cd_state                                        as state_cd
+, eo.cd_postal                                       as postal_cd 
+, eo.nu_birth_month                                  as birth_month_num
+, eo.cd_plcc_status_lb                               as plcc_status_lb_cd
+, eo.cd_plcc_status_ca                               as plcc_status_ca_cd
+, eo.cd_plcc_status_fb                               as plcc_status_fb_cd
+, eo.da_premier_exp_fb                               as premier_expiration_fb_dt
+, case when trim(eo.fl_perk_status)='Y' then 1
+       when trim(eo.fl_perk_status)='N' then 0
+       else NULL 
+  end                                                as perk_status_ind
+, eo.da_perk_exp_ca                                  as perk_expiration_ca_dt
+, case when trim(eo.fl_opt_in_em_lb)='Y' then 1
+       when trim(eo.fl_opt_in_em_lb)='N' then 0
+       else NULL 
+  end                                                 as opt_in_email_lb_ind
+, case when trim(eo.fl_opt_in_em_lbo)='Y' then 1
+       when trim(eo.fl_opt_in_em_lbo)='N' then 0
+       else NULL 
+  end                                                 as opt_in_email_lbo_ind
+, case when trim(eo.fl_opt_in_em_ca)='Y' then 1
+       when trim(eo.fl_opt_in_em_ca)='N' then 0
+       else NULL 
+  end                                                 as opt_in_email_ca_ind
+, case when trim(eo.fl_opt_in_em_sonsi)='Y' then 1
+       when trim(eo.fl_opt_in_em_sonsi)='N' then 0
+       else NULL 
+  end                                                 as opt_in_email_sonsi_ind
+, case when trim(eo.fl_opt_in_em_fb)='Y' then 1
+       when trim(eo.fl_opt_in_em_fb)='N' then 0
+       else NULL 
+  end                                                 as opt_in_email_fb_ind
+, case when trim(eo.fl_opt_in_dm)='Y' then 1
+       when trim(eo.fl_opt_in_dm)='N' then 0
+       else NULL 
+  end                                                 as opt_in_dm_ind
+, case when trim(eo.fl_opt_in_pa)='Y' then 1
+       when trim(eo.fl_opt_in_pa)='N' then 0
+       else NULL 
+  end                                                 as opt_in_pa_ind
+, case when trim(eo.fl_opt_in_td)='Y' then 1
+       when trim(eo.fl_opt_in_td)='N' then 0
+       else NULL 
+  end                                                 as opt_in_td_ind
+, eo.id_store_near_any_ch                             as store_near_any_ch_ind
+, eo.nu_dist_near_any_ch                              as distance_near_any_ch_num
+, eo.id_store_near_this_ch                            as store_near_this_ch_ind
+, eo.nu_dist_near_this_ch                             as distance_near_this_ch_num
+, eo.fl_employee                                      as employee_ind
+, eo.fl_cust_international                            as customer_international_ind
+, eo.id_store_loyalty                                 as store_loyalty_ind
+, eo.da_em_opt_in_1st                                 as email_opt_in_1st_dt
+, eo.cd_life_cycle                                    as life_cycle_cd
+, eo.cd_cust_segment                                  as customer_segment_cd
+, eo.da_ecomm_1st_purch                               as ecomm_1st_purchase_dt
+, eo.da_store_1st_purch                               as store_1st_purchase_dt
+, eo.da_1st_purch                                     as customer_1st_purchase_dt
+, eo.da_ecomm_last_purch                              as customer_ecomm_last_purchase_dt
+, eo.da_store_last_purch                              as store_last_purch_dt
+, eo.da_credit_last_purch                             as  credit_last_purch_dt
+, eo.pc_store_rev_12m                                 as store_rev_12m_pct
+, eo.am_sales_net_12m                                 as sales_net_12m_amt
+, eo.am_margin_net_12m                                as margin_net_12m_amt
+, eo.qu_txns_net_12m                                  as txns_net_12m_qty
+, eo.pc_margin_12m                                    as margin_12m_pct
+, case when trim(eo.fl_petite_buyer )='Y' then 1
+      when trim(eo.fl_petite_buyer)='N' then 0
+      else NULL 
+  end                                                 as petite_buyer_ind
+, case when trim(eo.fl_talls_buyer)='Y' then 1
+      when trim(eo.fl_talls_buyer)='N' then 0
+      else NULL 
+  end                                                 as talls_buyer_ind
+, eo.id_size_tops                                     as size_tops_id
+, eo.id_size_bottoms                                  as size_bottoms_id
+, eo.id_size_shoes                                    as size_shoes_id
+, eo.id_size_dress                                    as size_dress_id
+, eo.id_size_bra                                      as size_bra_id
+, eo.pc_clearance_3m                                  as clearance_3m_pct
+, case when trim(eo.fl_clearance_buyer_13m)='Y' then 1
+      when trim(eo.fl_clearance_buyer_13m)='N' then 0
+      else NULL
+  end                                                 as clearance_buyer_13m_ind
+, eo.da_last_purch_acrs_24m                           as last_purch_acrs_24m_dt
+, eo.da_last_purch_active_24m                         as last_purch_active_24m_dt
+, eo.da_last_purch_bra_24m                            as last_purch_bra_24m_dt
+, eo.da_last_purch_casual_24m                         as last_purch_casual_24m_dt
+, eo.da_last_purch_denim_24m                          as last_purch_denim_24m_dt
+, eo.da_last_purch_dress_24m                          as last_purch_dress_24m_dt
+, eo.da_last_purch_knits_24m                          as last_purch_knits_24m_dt
+, eo.da_last_purch_hosry_24m                          as last_purch_hosry_24m_dt
+, eo.da_last_purch_jewlry_24m                         as last_purch_jewlry_24m_dt
+, eo.da_last_purch_outerwr_24m                        as last_purch_outerwr_24m_dt
+, eo.da_last_purch_panties_24m                        as last_purch_panties_24m_dt
+, eo.da_last_purch_shapewr_24m                        as last_purch_shapewr_24m_dt
+, eo.da_last_purch_shoes_24m                          as last_purch_shoes_24m_dt
+, eo.da_last_purch_sleepwr_24m                        as last_purch_sleepwr_24m_dt
+, eo.da_last_purch_spanx_24m                          as last_purch_spanx_24m_dt
+, eo.da_last_purch_sweater_24m                        as last_purch_sweater_24m_dt
+, eo.da_last_purch_swimwear_24m                       as last_purch_swimwear_24m_dt
+, eo.da_last_purch_wtw_24m                            as last_purch_wtw_24m_dt
+, eo.da_last_purch_wmn_tops_24m                       as last_purch_wmn_tops_24m_dt
+, eo.da_last_purch_bttms_24m                          as last_purch_bttms_24m_dt
+, eo.da_last_purch_innerwr_24m                        as last_purch_innerwr_24m_dt
+, eo.da_last_purch_coats_24m                          as last_purch_coats_24m_dt
+, eo.da_last_purch_social_24m                         as last_purch_social_24m_dt
+, eo.da_last_purch_misc_24m                           as last_purch_misc_24m_dt
+, eo.da_last_open                                     as last_open_dt
+, eo.da_last_clicked                                  as last_clicked_dt
+, eo.da_tmci997_created                               as tmci997_created_dt
+, eo.da_tmci997_updated                               as tmci997_updated_dt
+, eo.da_em_opt_in_last                                as em_opt_in_last_dt
+, eo.extract_ts                                       as source_extract_ts
+,'mart_plus_brand_customer_email_outbound'            as mart_job_nam
+,current_timestamp                                    as mart_insert_tms 
+, case when eo.id_chain= 7 then 'LB'
+       when eo.id_chain = 4 THEN 'CA'
+       else null 
+  end                                                 as brand_cd
+from (SELECT   * 
+             , max(extract_ts) over (partition by plus_tmci997_esp_outbound_key) as max_extract_ts
+      FROM plus_tmci997_esp_outbound
+     ) eo
+inner join (SELECT   id_cust
+                   , extract_ts
+                   , max(extract_ts) over (partition by plus_vmci019_customer_key) as max_extract_ts
+            FROM plus_vmci019_customer
+           ) c on  eo.id_cust = c.id_cust
+               and c.extract_ts = c.max_extract_ts
+left join ( SELECT   plus_vmci105_chain_cust_key
+                   , id_cust
+                   , id_chain
+                   , extract_ts
+                   , max(extract_ts) over (partition by plus_vmci105_chain_cust_key) as max_extract_ts
+            FROM plus_vmci105_chain_cust
+            where id_chain in (4,7)
+          ) cc on  cc.id_cust = c.id_cust 
+               and eo.id_chain = cc.id_chain
+               and cc.extract_ts = cc.max_extract_ts
+where eo.id_chain in (4,7)
+and   eo.extract_ts = eo.max_extract_ts
+""") 
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

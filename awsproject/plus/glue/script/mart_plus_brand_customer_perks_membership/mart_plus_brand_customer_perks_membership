@@ -1,0 +1,118 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=[]
+crm_fdn_tbl_list=['plus_vmci079_club_memb', 'plus_vmci105_chain_cust','plus_vmci019_customer']
+#fmw_fdn_tbl_list = []
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+#fmw_fdn_prefix='/plus/fmwd'
+
+
+target_tbl='plus_brand_customer_perks_membership'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""
+SELECT
+c.plus_vmci079_club_memb_key as brand_customer_perks_membership_key
+, c.plus_vmci105_chain_cust_key as brand_customer_key
+, c.id_cust as brand_customer_id
+, c.id_club_memb as club_memb_id
+, c.cd_club as club_cd
+, case
+      when trim(c.fl_needs_card)='Y' then 1
+      when trim(c.fl_needs_card)='N' then 0
+      else NULL
+      end as need_card_ind
+, case
+      when trim(c.fl_card_ret_mail)='Y' then 1
+      when trim(c.fl_card_ret_mail)='N' then 0
+      else NULL
+      end as card_ret_ind
+, c.da_orig_signup as orig_signup_dt
+, c.da_renewed as renewed_dt
+, c.da_expiration as expiration_dt
+, c.da_canceled as canceled_dt
+, c.am_fee_paid as fee_paid_amt
+, case
+     when trim(c.fl_auto_enroll)='Y' then 1
+     when trim(c.fl_auto_enroll)='N' then 0
+     else NULL
+     end as auto_enroll_ind
+, case
+     when trim(c.fl_canceled)='Y' then 1
+     when trim(c.fl_canceled)='N' then 0
+     else NULL
+     end as canceled_ind
+, c.extract_ts as source_extract_tms 
+, CASE
+    WHEN c.id_chain = 4 THEN 'CA'
+    WHEN c.id_chain = 7 THEN 'LB'
+    END as brand_cd
+,'mart_plus_brand_customer_perks_membership' as mart_job_nam
+, current_timestamp as mart_insert_tms
+from plus_vmci079_club_memb c
+join
+     (
+      SELECT plus_vmci079_club_memb_key
+     ,max(extract_ts) AS extract_ts
+      FROM plus_vmci079_club_memb
+      group by plus_vmci079_club_memb_key) sub_c
+     on sub_c.plus_vmci079_club_memb_key=c.plus_vmci079_club_memb_key
+     and sub_c.extract_ts=c.extract_ts
+
+inner join (
+            select cc.plus_vmci105_chain_cust_key
+           ,cc.id_cust,cc.id_chain
+            from plus_vmci105_chain_cust cc
+
+      join (SELECT plus_vmci105_chain_cust_key
+            ,max(extract_ts) AS extract_ts
+            FROM plus_vmci105_chain_cust
+            group by plus_vmci105_chain_cust_key) sub_cc
+
+     on sub_cc.plus_vmci105_chain_cust_key=cc.plus_vmci105_chain_cust_key
+     and sub_cc.extract_ts=cc.extract_ts  ) chain_cust
+     on c.id_cust = chain_cust.id_cust
+     and c.id_chain=chain_cust.id_chain
+
+inner join ( select cust.plus_vmci019_customer_key
+            , cust.id_cust
+            from plus_vmci019_customer cust
+      join ( select plus_vmci019_customer_key
+            ,max(extract_ts) AS extract_ts
+            FROM plus_vmci019_customer
+            group by plus_vmci019_customer_key) sub_cust
+
+      on sub_cust.plus_vmci019_customer_key=cust.plus_vmci019_customer_key
+      and sub_cust.extract_ts=cust.extract_ts ) ext_cust
+      on c.id_cust = ext_cust.id_cust
+""") 
+
+
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+job.commit()

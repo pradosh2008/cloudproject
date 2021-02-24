@@ -1,0 +1,110 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+fmw_fdn_tbl_list=['plus_store']
+#edw_fdn_prefix='/plus/edwd'
+#crm_fdn_prefix='/plus/crmd'
+fmw_fdn_prefix='/plus/fmw'
+
+target_tbl='dim_store'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+#register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+register_fdn_view(fmw_fdn_prefix,fmw_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT s.plus_store_key                          as store_key
+        , s.store_id                             AS store_id
+        , s.store_name                           AS store_nam
+        , s.region_id                            AS region_cd
+        , s.region_name                          AS region_nam
+        , s.region_mgr_name                      AS region_manager_nam
+        , s.district_id                          AS district_cd
+        , s.district_name                        AS district_nam
+        , s.district_mgr_name                    AS district_manager_nam
+        , s.area_id                              AS area_cd
+        , s.area_name                            AS area_nam
+        , s.dc_id                                AS dc_id
+        , s.company_id                           AS company_cd
+        , s.chain_name                           as chain_nam 
+        , s.store_remodel_date                   AS remodel_dt
+        , s.store_open_date                      AS open_dt
+        , s.store_close_date                     AS close_dt
+        , s.store_type                           AS store_type_cd
+        , s.store_manager_name                   AS store_manager_nam
+        , s.store_opr_status                     AS store_operating_status_cd
+        , s.store_ots_status                     AS store_open_to_ship_status_cd
+        , s.total_square_ft                      AS total_square_feet_num
+        , s.selling_square_ft                    AS selling_square_feet_num
+        , s.store_addr_line1                     AS line_1_addr
+        , s.store_addr_line2                     AS line_2_addr
+        , s.store_addr_line3                     AS line_3_addr
+        , s.store_city                           AS city_nam
+        , s.store_state                          AS state_nam
+        , s.store_state_cd                       AS state_cd
+        , s.store_zip_cd                         AS postal_cd
+        , s.store_zip_cd                         AS zip4_cd
+        , s.store_addr_country_cd                AS country_cd
+        , s.store_addr_country_name              AS country_nam
+        , s.store_addr_county                    AS county_nam
+        , s.store_primary_phone_nbr              AS store_phone_num
+        , s.lease_expire_date                    AS lease_end_dt
+        , s.store_hours                          AS store_hours_des
+        , s.site_type_group                      AS site_type_cd
+        , s.mall_name                            AS store_mall_nam
+        , s.latitude                             AS latitude
+        , s.longitude                            AS longitude
+        , s.store_cbsa                           AS store_cbsa_id
+        , s.frontage                             as frontage_feet_cnt
+        , s.depth                                as depth_feet_cnt 
+        , s.gob_start_date                       as gob_start_dt
+        , s.open_inv_date                        as open_inv_dt 
+        , s.close_inv_date                       as close_inv_dt 
+        , s.da_comp_open                         as comp_open_dt
+        , s.comp_ind                             as comp_ind
+        , s.batch_id                             as source_batch_id
+        , case  when s.Chain_id = 4
+                then 'CA'
+                when s.Chain_id =7
+                then 'LB'
+          end                                    AS brand_cd
+        ,'mart_dim_store' as mart_job_nam
+        ,current_timestamp as mart_insert_tms
+		
+FROM (
+  SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_store_key
+    ORDER BY  batch_id desc) AS row_num
+    FROM plus_store
+    where chain_id in (4,7) ) as s
+WHERE s.row_num=1""")
+
+
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

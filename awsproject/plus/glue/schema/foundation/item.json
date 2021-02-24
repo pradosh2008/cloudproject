@@ -1,0 +1,49 @@
+[
+   { "source_table_name": "item",
+    "fields":
+	[
+      { "name": "sku_id", "type": "lpad14" }
+    , { "name": "chain_id", "type": "int" }
+    , { "name": "division_id", "type": "int" }
+    , { "name": "style_id", "type": "int" }
+    , { "name": "dept_id", "type": "int" }
+    , { "name": "class_id", "type": "int" }
+    , { "name": "subclass_id", "type": "int" }
+    , { "name": "group_no", "type": "int" }
+    , { "name": "item_status", "type": "string" }
+    , { "name": "standard_uom", "type": "string" }
+    , { "name": "regular_unit_retail", "type": "decimal(18,2)" }
+    , { "name": "selling_unit_retail", "type": "decimal(18,2)" }
+    , { "name": "item_diff_color", "type": "string" }
+    , { "name": "item_diff_size", "type": "string" }
+    , { "name": "inventory_ind", "type": "string" }
+    , { "name": "merchandise_ind", "type": "string" }
+    , { "name": "orderable_ind", "type": "string" }
+    , { "name": "sellable_ind", "type": "string" }
+    , { "name": "ship_alone_ind", "type": "string" }
+    , { "name": "item_desc", "type": "string" }
+    , { "name": "short_desc", "type": "string" }
+    , { "name": "create_datetime", "type": "timestamp" }
+    , { "name": "last_updt_ts", "type": "timestamp" }
+    , { "name": "season_id", "type": "string" }
+    , { "name": "season_desc", "type": "string" }
+    , { "name": "vendor_id", "type": "string" }
+    , { "name": "vendor_name", "type": "string" }
+    , { "name": "vendor_product_id", "type": "string" }
+    , { "name": "unit_cost", "type": "decimal(18,2)" }
+    , { "name": "origin_country_id", "type": "string" }
+    , { "name": "style_desc", "type": "string" }
+    , { "name": "diff_color_desc", "type": "string" }
+    , { "name": "diff_size_desc", "type": "string" }
+    , { "name": "subclass_name", "type": "string" }
+    , { "name": "class_name", "type": "string" }
+    , { "name": "dept_name", "type": "string" }
+    , { "name": "group_name", "type": "string" }
+    , { "name": "division_name", "type": "string" }
+    , { "name": "record_status", "type": "string" }
+    , { "name": "ecom_exclusives", "type": "string" }
+    , { "name": "planned_md_date", "type": "string" }
+    , { "name": "batch_id", "type": "int" }
+    ]
+   }
+]

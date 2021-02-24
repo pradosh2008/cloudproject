@@ -1,0 +1,132 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+#crm_fdn_tbl_list=['plus_item']
+fmw_fdn_tbl_list=['plus_item']
+#edw_fdn_prefix='/plus/edwd'
+#crm_fdn_prefix='/plus/crmd'
+fmw_fdn_prefix='/plus/fmw'
+
+#target_tbl='dim_customer_test'
+target_tbl='dim_item'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+#register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+register_fdn_view(fmw_fdn_prefix,fmw_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT itm.plus_item_key              as item_key
+      , itm.SKU_ID                             AS sku_id
+      , itm.ITEM_DESC                          AS item_des
+      , itm.SHORT_DESC                         AS item_short_des
+      , case when itm.CHAIN_ID = 4 
+             then 'CA'
+             when itm.CHAIN_ID = 7 
+             then 'LB'
+        end                              AS brand_cd
+      , itm.DIVISION_ID              AS division_id
+      , UPPER(itm.DIVISION_NAME)     AS division_nam
+      , itm.GROUP_NO                 AS group_num
+      , UPPER(itm.GROUP_NAME)        AS group_nam
+      , itm.DEPT_ID                  AS department_id
+      , UPPER(itm.DEPT_NAME)         AS department_nam
+      , itm.CLASS_ID                 AS class_id
+      , UPPER(itm.CLASS_NAME)        AS class_nam
+      , itm.SUBCLASS_ID              AS subclass_id
+      , UPPER(itm.SUBCLASS_NAME)     AS subclass_nam
+      , itm.STYLE_ID                 AS style_id
+      , UPPER(itm.STYLE_DESC)        AS style_des
+      , itm.ITEM_DIFF_COLOR          AS different_color_cd
+      , UPPER(itm.DIFF_COLOR_DESC)   AS different_color_des
+      , itm.ITEM_DIFF_SIZE           AS different_size_cd
+      , UPPER(itm.DIFF_SIZE_DESC)    AS different_size_des
+      , itm.ITEM_STATUS              AS item_status_cd
+      , itm.season_id                AS season_id
+      , itm.season_desc              AS season_des
+      , itm.STANDARD_UOM             AS standard_uom_des
+      , itm.REGULAR_UNIT_RETAIL      AS regular_unit_retail_amt
+      , itm.SELLING_UNIT_RETAIL      AS selling_unit_retail_amt
+      , itm.VENDOR_ID                as vendor_id 
+      , itm.vendor_name              as vendor_nam 
+      , itm.vendor_product_id                 as vendor_product_id
+      , case    when itm.INVENTORY_IND='Y' 
+                then 1
+                when itm.INVENTORY_IND = 'N' 
+                then 0
+                else NULL 
+        end                                     as inventory_ind
+      , case     when itm.MERCHANDISE_IND='Y' 
+                then 1
+                when itm.MERCHANDISE_IND = 'N' 
+                then 0
+                else NULL 
+        end                                     as merchandise_ind
+      , case     when itm.ORDERABLE_IND='Y' 
+                then 1
+                when itm.ORDERABLE_IND = 'N' 
+                then 0
+                else NULL 
+        end                                     as orderable_ind
+      , case     when itm.SELLABLE_IND='Y' 
+                then 1
+                when itm.SELLABLE_IND = 'N' 
+                then 0
+                else NULL 
+        end                                             as sellable_ind
+      , case    when itm.SHIP_ALONE_IND='Y' 
+                then 1
+                when itm.SHIP_ALONE_IND = 'N' 
+                then 0
+                else NULL 
+        end                                             as ship_alone_ind
+      , case when itm.ecom_exclusives='Yes'
+             then 1 else 0
+        end                                       as ecom_exclusives_ind
+      , itm.CREATE_DATETIME                       AS item_create_tms
+      , itm.LAST_UPDT_TS                          AS last_update_tms
+      , itm.UNIT_COST                             AS unit_cost_amt
+      , itm.ORIGIN_COUNTRY_ID                     AS origin_country_cd
+      , itm.record_status                         AS item_record_status_cd
+      , planned_md_date     as planned_md_dt
+,itm.CHAIN_ID          as chain_id
+,itm.batch_id           as source_batch_id
+,"mart_dim_item"             as mart_job_nam
+,current_timestamp    as mart_insert_tms 
+from 
+(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_item_key
+    ORDER BY  batch_id desc) AS row_num
+    FROM plus_item
+    where chain_id in (4,7) ) as itm
+WHERE itm.row_num=1
+""")
+
+
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

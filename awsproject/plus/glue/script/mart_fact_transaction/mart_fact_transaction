@@ -1,0 +1,167 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+
+#write your code here
+
+edw_fdn_tbl_list=['plus_sales_transaction_header','plus_sales_customer']
+#crm_fdn_tbl_list=[]
+edw_fdn_prefix='/plus/edw'
+#crm_fdn_prefix='/plus/crmd'
+
+
+target_tbl='fact_transaction'
+target_prefix='/plus'
+partitionKeys=['brand_cd','transaction_month']
+
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+
+
+build_mart_df = glueContext.sql(""" 
+SELECT
+  th.plus_sales_transaction_header_key                          as transaction_key
+, case when scc.plus_vmci105_chain_cust_key is null 
+       then th.plus_vmci105_chain_cust_key 
+       else scc.plus_vmci105_chain_cust_key end              as brand_customer_key
+, plus_selling_store_key                                     as store_key
+, transaction_dt                                             as transaction_dt
+, case 
+       when order_received_dt is null 
+       then transaction_dt 
+       else order_received_dt 
+  end                                                        as order_dt
+, transaction_nbr                                            as transaction_num
+, register_nbr                                               as register_num
+, sales_channel_type_cd                                      as channel_cd
+, transaction_type_cd                                        as transaction_type_cd
+, entry_type_cd                                              as transaction_entry_type_cd
+, cashier_nbr                                                as cashier_id       
+, manager_nbr                                                as store_manager_id 
+, layaway_nbr                                                as layaway_num
+, case 
+       when trim(multi_brand_transaction_ind) = 'Y' then 1
+       when trim(multi_brand_transaction_ind) = 'N' then 0
+       else NULL
+  end                                                        as multi_brand_transaction_ind
+, case
+        when trim(domestic_order_ind)='Y' then 1
+        when trim(domestic_order_ind)='N' then 0
+        else NULL 
+  end                                                        as domestic_order_ind
+, case
+        when trim(address_capture_ind)='Y' then 1
+        when trim(address_capture_ind)='N' then 0
+        else NULL 
+  end                                                        as address_capture_ind
+, case  
+        when trim(email_capture_ind)='Y' then 1
+        when trim(email_capture_ind)='N' then 0
+        else NULL 
+  end                                                        as email_capture_ind
+, case
+        when trim(return_receipt_ind)='Y' then 1
+        when trim(return_receipt_ind)='N' then 0
+        else NULL 
+  end                                                        as return_receipt_ind
+, order_nbr                                                  as order_num            -- GCP has this column as STRING, but Athena doesn't support casting from int to string.
+, cast(transaction_void_ind as bigint)                       as transaction_void_ind
+, plus_ship_to_store_key                                     as ship_to_store_key
+, case
+       when tender_reference_cd is not null 
+            and tender_reference_cd != 0 
+       then 1
+       else 0 
+  end                                                        as membership_ind
+, payment_reference_nbr                                      as plcc_payment_reference_num 
+, transaction_tm                                             as plcc_payment_tm
+, payment_amt                                                as plcc_payment_amt
+, plus_sales_order_store_key                                 as plus_sales_order_store_key
+, selling_store_nbr                                          as selling_store_num
+, sales_order_chain_nbr                                      as sales_order_chain_num
+, sales_order_store_nbr                                      as sales_order_store_num
+, record_seq_nbr                                             as record_seq_num
+, employee_nbr                                               as employee_num
+, tax_exempt_nbr                                             as tax_exempt_num
+, ship_to_store_nbr                                          as ship_to_store_num
+, demand_order_nbr                                           as demand_order_num
+, deferred_payment_amt                                       as deferred_payment_amt
+, order_received_tm                                          as order_received_tm
+, chain_reference_cd                                         as chain_reference_cd
+, register_type_cd                                           as register_type_cd
+, payment_type_cd                                            as payment_type_cd
+, ship_to_store_conversion_ind                               as ship_to_store_conversion_ind
+, create_dt                                                  as create_dt
+, last_update_ts                                             as last_update_tms
+, apply_matching_logic_cd                                    as apply_matching_logic_cd
+, coalesce(scc.customer_nbr,th.customer_nbr)                 as customer_num
+, tender_primary_group_nm                                    as tender_primary_group_nam
+, layaway_nbr_crm                                            as crm_layaway_num
+, transaction_id                                             as transaction_id
+, order_rec_tran_dt                                          as order_rec_tran_dt
+, customer_seq_nbr                                           as customer_seq_num
+, customer_first_nm                                          as customer_first_nam
+, customer_last_nm                                           as customer_last_nam
+, customer_primary_phone_nbr                                 as customer_primary_phone_num
+, customer_secondary_phone_nbr                               as customer_secondary_phone_num
+, customer_email_address                                     as customer_email_addr
+, customer_zip_cd                                            as customer_zip_cd
+, club_member_nbr                                            as club_member_num
+, customer_external_type_cd                                  as customer_external_type_cd
+, customer_external_nbr                                      as customer_external_num
+, ecommerce_customer_nbr                                     as ecommerce_customer_num
+, loyalty_transaction_ind                                    as loyalty_transaction_ind
+--Partition Columns
+, selling_chain_nbr                                          as selling_chain_num
+, transaction_month                                          as transaction_month
+,CASE
+       WHEN th.selling_chain_nbr = 4 THEN 'CA'
+       WHEN th.selling_chain_nbr = 7 THEN 'LB'
+  END                                                                                                                                                                                                      as brand_cd
+,th.extract_ts as   source_extract_tms
+,"mart_fact_transaction"   as mart_job_nam
+,current_timestamp() as mart_insert_tms
+--,row_number() over(partition by fdn_sth.plus_sales_transaction_header_key  order by fdn_sth.extract_ts desc
+--                  ) as row_num
+FROM plus_sales_transaction_header th 
+join (select plus_sales_transaction_header_key
+            ,max(extract_ts) as max_extract_ts
+    FROM plus_sales_transaction_header
+    group by plus_sales_transaction_header_key
+) thc
+    on  thc.plus_sales_transaction_header_key = th.plus_sales_transaction_header_key
+    and thc.max_extract_ts = th.extract_ts
+ 
+left join (SELECT plus_sales_transaction_header_key
+          ,extract_ts
+          ,plus_vmci105_chain_cust_key
+          ,customer_nbr
+          ,max(extract_ts) over (partition by plus_sales_transaction_header_key                                    
+                          ) as max_extract_ts
+      FROM plus_sales_customer sc 
+)scc
+    on scc.plus_sales_transaction_header_key = th.plus_sales_transaction_header_key
+    and scc.extract_ts = scc.max_extract_ts 
+
+--where sth.row_num = 1
+""")
+
+
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

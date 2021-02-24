@@ -1,0 +1,316 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci180_cust_demog', 'plus_vmci105_chain_cust']
+#fmw_fdn_tbl_list = ['plus_store']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+#fmw_fdn_prefix='/plus/fmwd'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_brand_customer_demographics'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+#register_fdn_view(fmw_fdn_prefix,fmw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""select 
+   cc.plus_vmci105_chain_cust_key                               as brand_customer_key
+   , cd.id_cust                                                 as brand_customer_id
+   , cd.da_tmci180_added                                        as tmci180_added_dt
+   , cd.da_tmci180_update                                       as tmci180_update_dt
+   , case when trim(cd.fl_merged)='Y' then 1
+          when trim(cd.fl_merged)='N' then 0
+          else NULL
+     end                                                        as merged_ind
+   , cd.da_merged                                               as merged_dt
+   , cd.cd_ethnic                                               as ethnic_cd
+   , cd.cd_religion                                             as religion_cd
+   , cd.cd_rollup                                               as rollup_cd
+   , cd.cd_language_pref                                        as language_pref_cd
+   , cd.cd_country_of_origin                                    as country_of_origin_cd
+   , cd.cd_income_est_hh                                        as income_est_hh_cd
+   , cd.cd_inc_est_hh_mtch_lvl                                  as inc_est_hh_mtch_lvl_cd
+   , cast(cd.fl_male18_24_in_hh as integer)                     as male18_24_in_hh_ind
+   , cast(cd.fl_female18_24_in_hh as integer)                   as female18_24_in_hh_ind
+   , cast(cd.fl_unknown18_24_in_hh as integer)                  as unknown18_24_in_hh_ind
+   , cast(cd.fl_male25_34_in_hh as integer)                     as male25_34_in_hh_ind
+   , cast(cd.fl_female25_34_in_hh as integer)                   as female25_34_in_hh_ind
+   , cast(cd.fl_unknown25_34_in_hh as integer)                  as unknown25_34_in_hh_ind
+   , cast(cd.fl_male35_44_in_hh as integer)                     as male35_44_in_hh_ind
+   , cast(cd.fl_female35_44_in_hh as integer)                   as female35_44_in_hh_ind
+   , cast(cd.fl_unknown35_44_in_hh as integer)                  as unknown35_44_in_hh_ind
+   , cast(cd.fl_male45_54_in_hh as integer)                     as male45_54_in_hh_ind
+   , cast(cd.fl_female45_54_in_hh as integer)                   as female45_54_in_hh_ind
+   , cast(cd.fl_unknown45_54_in_hh as integer)                  as unknown45_54_in_hh_ind
+   , cast(cd.fl_male55_64_in_hh as integer)                     as male55_64_in_hh_ind
+   , cast(cd.fl_female55_64_in_hh as integer)                   as female55_64_in_hh_ind
+   , cast(cd.fl_unknown55_64_in_hh as integer)                  as unknown55_64_in_hh_ind
+   , cast(cd.fl_male65_74_in_hh as integer)                     as male65_74_in_hh_ind
+   , cast(cd.fl_female65_74_in_hh as integer)                   as female65_74_in_hh_ind
+   , cast(cd.fl_unknown65_74_in_hh as integer)                  as unknown65_74_in_hh_ind
+   , cast(cd.fl_male_75plus_in_hh as integer)                   as male_75plus_in_hh_ind
+   , cast(cd.fl_female_75plus_in_hh as integer)                 as female_75plus_in_hh_ind
+   , cast(cd.fl_unknown_75plus_in_hh as integer)                as unknown_75plus_in_hh_ind
+   , cd.cd_adult_age_mtch_lvl                                   as adult_age_mtch_lvl_cd
+   , cd.cd_1st_ind_mtch_lvl                                     as first_ind_mtch_lvl_cd
+   , cd.cd_ip_individual_age                                    as ip_individual_age_cd
+   , cd.cd_1st_individual_age                                   as individual_1st_age_cd
+   , cd.cd_2nd_individual_age                                   as individual_2nd_age_cd
+   , cd.cd_3rd_individual_age                                   as individual_3rd_age_cd
+   , cd.cd_4th_individual_age                                   as individual_4th_age_cd
+   , cd.cd_5th_individual_age                                   as individual_5th_age_cd
+   , cast(cd.fl_cc_gold_premium as integer)                     as cc_gold_premium_ind
+   , cast(cd.fl_cc_regular as integer)                          as cc_regular_ind
+   , cd.cd_1st_individual_race                                  as first_individual_race_cd
+   , cd.cd_2nd_individual_race                                  as second_individual_race_cd
+   , cd.cd_3rd_individual_race                                  as third_individual_race_cd
+   , cd.cd_4th_individual_race                                  as fourth_individual_race_cd
+   , cd.cd_5th_individual_race                                  as fifth_individual_race_cd
+   , cd.cd_ip_individual_occupation                             as ip_individual_occupation_cd
+   , cd.cd_ip_individual_education                              as ip_individual_education_cd
+   , cd.cd_ip_individual_race                                   as ip_individual_race_cd
+   , cd.cd_ip_individual_gender                                 as ip_individual_gender_cd
+   , cd.cd_marital_status_in_hh                                 as marital_status_in_hh_cd
+   , cd.cd_marital_status_mtch_lvl                              as marital_status_mtch_lvl_cd
+   , cast(cd.fl_male00_02_in_hh as integer)                     as male00_02_in_hh_ind
+   , cast(cd.fl_female00_02_in_hh as integer)                   as female00_02_in_hh_ind
+   , cast(cd.fl_unknown00_02_in_hh as integer)                  as unknown00_02_in_hh_ind
+   , cast(cd.fl_male03_05_in_hh as integer)                     as male03_05_in_hh_ind
+   , cast(cd.fl_female03_05_in_hh as integer)                   as female03_05_in_hh_ind
+   , cast(cd.fl_unknown03_05_in_hh as integer)                  as unknown03_05_in_hh_ind
+   , cast(cd.fl_male06_10_in_hh as integer)                     as male06_10_in_hh_ind
+   , cast(cd.fl_female06_10_in_hh as integer)                   as female06_10_in_hh_ind
+   , cast(cd.fl_unknown06_10_in_hh as integer)                  as unknown06_10_in_hh_ind
+   , cast(cd.fl_male11_15_in_hh as integer)                     as male11_15_in_hh_ind
+   , cast(cd.fl_female11_15_in_hh as integer)                   as female11_15_in_hh_ind
+   , cast(cd.fl_unknown11_15_in_hh as integer)                  as unknown11_15_in_hh_ind
+   , cast(cd.fl_male16_17_in_hh as integer)                     as male16_17_in_hh_ind
+   , cast(cd.fl_female16_17_in_hh as integer)                   as female16_17_in_hh_ind
+   , cast(cd.fl_unknown16_17_in_hh as integer)                  as unknown16_17_in_hh_ind
+   , cd.cd_num_of_children                                      as num_of_children_cd
+   , cd.cd_1st_individual_occu                                  as first_individual_occu_cd
+   , cd.na_first_1st_ind                                        as first_1st_ind_nam
+   , cd.na_middle_1st_ind                                       as middle_1st_ind_nam
+   , cd.cd_gender_1st_ind                                       as gender_1st_ind_cd
+   , cd.na_first_2nd_ind                                        as first_2nd_ind_nam
+   , cd.na_middle_2nd_ind                                       as middle_2nd_ind_nam
+   , cd.cd_gender_2nd_ind                                       as gender_2nd_ind_cd
+   , case when trim(cd.fl_working_woman)='' 
+            then cast(null as integer)
+            else cast(cd.fl_working_woman as integer)
+     end                                                        as working_woman_ind
+   , cd.na_first_3rd_ind                                        as first_3rd_ind_nam
+   , cd.na_middle_3rd_ind                                       as middle_3rd_ind_nam
+   , cd.cd_gender_3rd_ind                                       as gender_3rd_ind_cd
+   , cd.na_first_4th_ind                                        as first_4th_ind_nam
+   , cd.na_middle_4th_ind                                       as middle_4th_ind_nam
+   , cd.cd_gender_4th_ind                                       as gender_4th_ind_cd
+   , cd.na_first_5th_ind                                        as first_5th_ind_nam
+   , cd.na_middle_5th_ind                                       as middle_5th_ind_nam
+   , cd.cd_gender_5th_ind                                       as gender_5th_ind_cd
+   , cd.cd_home_owner_renter                                    as home_owner_renter_cd
+   , cd.cd_home_own_rent_mtch_lvl                               as home_own_rent_mtch_lvl_cd
+   , cd.nu_length_of_residence                                  as length_of_residence_num
+   , cd.cd_len_of_residence_mtch_lvl                            as len_of_residence_mtch_lvl_cd
+   , cd.cd_home_market_val_range                                as home_market_val_range_cd
+   , cd.cd_home_assessed_val_range                              as home_assessed_val_range_cd
+   , cd.cd_home_market_val_range_prem                           as home_market_val_range_prem_cd
+   , cd.cd_dwelling_type                                        as dwelling_type_cd
+   , cd.cd_property_type                                            as property_type_cd
+   , cd.tx_apt_num                                                  as tx_apt_num
+   , case when trim(cd.fl_woman_plus_sizes)='' then cast(null as integer)
+     else cast(cd.fl_woman_plus_sizes as integer)
+     end                                                            as woman_plus_sizes_ind
+   , case when trim(cd.fl_wps_accessories)='' then cast(null as integer)
+     else cast(cd.fl_wps_accessories as integer)
+     end                                                            as wps_accessories_ind
+   , case when trim(cd.fl_wps_activewear)='' then cast(null as integer)
+     else cast(cd.fl_wps_activewear as integer)
+     end                                                            as wps_activewear_ind
+   , case when trim(cd.fl_wps_business)='' then cast(null as integer)
+     else cast(cd.fl_wps_business as integer)
+     end                                                            as wps_business_ind
+   , case when trim(cd.fl_wps_casual)='' then cast(null as integer)
+     else cast(cd.fl_wps_casual as integer)
+     end                                                            as wps_casual_ind
+   , case when trim(cd.fl_wps_eveningwear)='' then cast(null as integer)
+     else cast(cd.fl_wps_eveningwear as integer)
+     end                                                            as wps_eveningwear_ind
+   , case when trim(cd.fl_wps_footwear)='' then cast(null as integer)
+     else cast(cd.fl_wps_footwear as integer)
+     end                                                            as wps_footwear_ind
+   , case when trim(cd.fl_wps_loungewear)='' then cast(null as integer)
+     else cast(cd.fl_wps_loungewear as integer)
+     end                                                            as wps_loungewear_ind
+   , case when trim(cd.fl_wps_maternity)='' then cast(null as integer)
+     else cast(cd.fl_wps_maternity as integer)
+     end                                                            as wps_maternity_ind
+   , case when trim(cd.fl_wps_outerwear)='' then cast(null as integer)
+     else cast(cd.fl_wps_outerwear as integer)
+     end                                                            as wps_outerwear_ind
+   , case when trim(cd.fl_wps_swimwear)='' then cast(null as integer)
+     else cast(cd.fl_wps_swimwear as integer)
+     end                                                            as wps_swimwear_ind
+   , case when trim(cd.fl_wps_underwear_hosiery)='' then cast(null as integer)
+     else cast(cd.fl_wps_underwear_hosiery as integer)
+     end                                                            as wps_underwear_hosiery_ind
+   , case when trim(cd.fl_wps_uniforms)='' then cast(null as integer)
+     else cast(cd.fl_wps_uniforms as integer)
+     end                                                            as wps_uniforms_ind
+   , case when trim(cd.fl_mob_apparel_female)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_female as integer)
+     end                                                            as mob_apparel_female_ind
+   , case when trim(cd.fl_mob_apparel_jewlery)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_jewlery as integer)
+     end                                                            as mob_apparel_jewlery_ind
+   , case when trim(cd.fl_mob_apparel_male)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_male as integer)
+     end                                                            as mob_apparel_male_ind
+   , case when trim(cd.fl_mob_apparel_plus_women)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_plus_women as integer)
+     end                                                            as mob_apparel_plus_women_ind
+   , case when trim(cd.fl_mob_apparel_teen)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_teen as integer)
+     end                                                            as mob_apparel_teen_ind
+   , case when trim(cd.fl_mob_apparel_unknown)='' then cast(null as integer)
+     else cast(cd.fl_mob_apparel_unknown as integer)
+     end                                                            as mob_apparel_unknown_ind
+   , case when trim(cd.fl_mob_art_antique)='' then cast(null as integer)
+     else cast(cd.fl_mob_art_antique as integer)
+     end                                                            as mob_art_antique_ind
+   , case when trim(cd.fl_mob_arts_creafts)='' then cast(null as integer)
+     else cast(cd.fl_mob_arts_creafts as integer)
+     end                                                            as mob_arts_creafts_ind
+   , case when trim(cd.fl_mob_art_supplies)='' then cast(null as integer)
+     else cast(cd.fl_mob_art_supplies as integer)
+     end                                                            as mob_art_supplies_ind
+   , case when trim(cd.fl_mob_beauty)='' then cast(null as integer)
+     else cast(cd.fl_mob_beauty as integer)
+     end                                                            as mob_beauty_ind
+   , case when trim(cd.fl_mob_books)='' then cast(null as integer)
+     else cast(cd.fl_mob_books as integer)
+     end                                                            as mob_books_ind
+   , case when trim(cd.fl_mob_child_mdse)='' then cast(null as integer)
+     else cast(cd.fl_mob_child_mdse as integer)
+     end                                                            as mob_child_mdse_ind
+   , case when trim(cd.fl_mob_collectable)='' then cast(null as integer)
+     else cast(cd.fl_mob_collectable as integer)
+     end                                                            as mob_collectable_ind
+   , case when trim(cd.fl_mob_computer_software)='' then cast(null as integer)
+     else cast(cd.fl_mob_computer_software as integer)
+     end                                                            as mob_computer_software_ind
+   , case when trim(cd.fl_mob_electronics)='' then cast(null as integer)
+     else cast(cd.fl_mob_electronics as integer)
+     end                                                            as mob_electronics_ind
+   , case when trim(cd.fl_mob_equestrian)='' then cast(null as integer)
+     else cast(cd.fl_mob_equestrian as integer)
+     end                                                            as mob_equestrian_ind
+   , case when trim(cd.fl_mob_food)='' then cast(null as integer)
+     else cast(cd.fl_mob_food as integer)
+     end                                                            as mob_food_ind
+   , case when trim(cd.fl_mob_general_gifts_mdse)='' then cast(null as integer)
+     else cast(cd.fl_mob_general_gifts_mdse as integer)
+     end                                                            as mob_general_gifts_mdse_ind
+   , case when trim(cd.fl_mob_gift)='' then cast(null as integer)
+     else cast(cd.fl_mob_gift as integer)
+     end                                                            as mob_gift_ind
+   , case when trim(cd.fl_mob_health)='' then cast(null as integer)
+     else cast(cd.fl_mob_health as integer)
+     end                                                            as mob_health_ind
+   , case when trim(cd.fl_mob_home_furnish_decor)='' then cast(null as integer)
+     else cast(cd.fl_mob_home_furnish_decor as integer)
+     end                                                            as mob_home_furnish_decor_ind
+   , case when trim(cd.fl_mob_high_ticket_mdse)='' then cast(null as integer)
+     else cast(cd.fl_mob_high_ticket_mdse as integer)
+     end                                                            as mob_high_ticket_mdse_ind
+   , case when trim(cd.fl_mob_low_ticket_mdse)='' then cast(null as integer)
+     else cast(cd.fl_mob_low_ticket_mdse as integer)
+     end                                                            as mob_low_ticket_mdse_ind
+   , case when trim(cd.fl_mob_music)='' then cast(null as integer)
+     else cast(cd.fl_mob_music as integer)
+     end                                                            as mob_music_ind
+   , case when trim(cd.fl_mob_outdoor_gardening)='' then cast(null as integer)
+     else cast(cd.fl_mob_outdoor_gardening as integer)
+     end                                                            as mob_outdoor_gardening_ind
+   , case when trim(cd.fl_mob_hunting_fishing)='' then cast(null as integer)
+     else cast(cd.fl_mob_hunting_fishing as integer)
+     end                                                            as mob_hunting_fishing_ind
+   , case when trim(cd.fl_mob_pet_supplies)='' then cast(null as integer)
+     else cast(cd.fl_mob_pet_supplies as integer)
+     end                                                            as mob_pet_supplies_ind
+   , case when trim(cd.fl_mob_sports_golf)='' then cast(null as integer)
+     else cast(cd.fl_mob_sports_golf as integer)
+     end                                                            as mob_sports_golf_ind
+   , case when trim(cd.fl_mob_sports)='' then cast(null as integer)
+     else cast(cd.fl_mob_sports as integer)
+     end                                                            as mob_sports_ind
+   , case when trim(cd.fl_mob_travel)='' then cast(null as integer)
+     else cast(cd.fl_mob_travel as integer)
+     end                                                            as mob_travel_ind
+   , case when trim(cd.fl_mob_video_dvd)='' then cast(null as integer)
+     else cast(cd.fl_mob_video_dvd as integer)
+     end                                                            as mob_video_dvd_ind
+   , cd.cd_mail_order_buyer as mail_order_buyer_cd
+   , cd.cd_mail_order_responder as mail_order_responder_cd
+   , case when trim(cd.fl_online_purchasing)='Y' then 1
+     when trim(cd.fl_online_purchasing)='N' then 0
+     else NULL end                                                  as online_purchasing_ind
+   , cd.fl_infobase_positive_mtch as infobase_positive_mtch_cd
+   , cd.nu_sources as sources_num
+   , case when trim(cd.fl_dma_mail_suppress)='Y' then 1
+     when trim(cd.fl_dma_mail_suppress)='N' then 0
+     else NULL end                                                  as dma_mail_suppress_ind
+   , CASE WHEN cc.id_chain= 7 then 'LB' 
+          WHEN cc.id_chain = 4 THEN 'CA' 
+     end                                                            as brand_cd
+   ,cd.extract_ts           as   source_extract_ts
+   ,'mart_plus_brand_customer_demographics'            as mart_job_nam
+   ,current_timestamp     as mart_insert_tms 
+   
+from
+(Select * from(SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci180_cust_demog_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci180_cust_demog)sub_cd
+	where sub_cd.row_num =1)cd
+	
+inner join
+(Select * from (SELECT * ,
+        ROW_NUMBER()
+        OVER (partition by plus_vmci105_chain_cust_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM plus_vmci105_chain_cust
+	where id_chain in (4,7))sub_cc
+	where sub_cc.row_num=1)cc
+on cd.id_cust = cc.id_cust
+""") 
+ 
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()

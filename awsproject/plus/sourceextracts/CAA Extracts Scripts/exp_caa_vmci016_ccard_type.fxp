@@ -1,0 +1,87 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci016_ccard_type.fxp
+*
+* Description: Export customer credit card type information*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE  $DB_WORK.vmci972_vmci016_ccard_type_caa_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST(COLUMNNAME AS CHAR(294))
+FROM(
+SELECT 'CD_BANK_CARD_TYPE|ID_CHAIN|TX_BANK_CARD_TYPE|FL_HOUSECARD|FL_COBRAND|FL_UPDT_HC_ACT|FL_UPDT_CO_ACT|FL_UPDT_HC_CLS|FL_UPDT_CO_CLS|FL_UPDT_HC_DNP|FL_UPDT_CO_DNP|FL_POPULATE_TMCI115|FL_APPLY_ACCOUNT_TERM|FL_OUTBOUND|CD_PARENT_TYPE|CD_CTYPE_PROCESS_STATUS|FL_FOREIGN_KEY|FL_HORIZON_SCORE|EXTRACT_TS' AS COLUMNNAME
+) A;
+SELECT 
+CAST (CD_BANK_CARD_TYPE              AS CHAR(2)),'|' (CHAR(1)),
+CAST (ID_CHAIN                       AS CHAR(4)),'|' (CHAR(1)),
+CAST (TX_BANK_CARD_TYPE              AS CHAR(75)),'|' (CHAR(1)),
+CAST (FL_HOUSECARD                   AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_COBRAND                     AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_HC_ACT                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_CO_ACT                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_HC_CLS                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_CO_CLS                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_HC_DNP                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_UPDT_CO_DNP                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_POPULATE_TMCI115            AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_APPLY_ACCOUNT_TERM          AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_OUTBOUND                    AS CHAR(1)),'|' (CHAR(1)),
+CAST (CD_PARENT_TYPE                 AS CHAR(2)),'|' (CHAR(1)),
+CAST (CD_CTYPE_PROCESS_STATUS        AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_FOREIGN_KEY                 AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_HORIZON_SCORE               AS CHAR(1)),'|' (CHAR(1)),
+CAST (CURRENT_TIMESTAMP AS CHAR(19)) AS EXTRACT_TS
+FROM DVZEKE.VMCI016_CCARD_TYPE
+WHERE ID_CHAIN IN (7) ; 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci016_ccard_type$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  DVZEKE.VMCI016_CCARD_TYPE " 
+      exit 1 
+   fi
+
+######################################################################
+# zip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci016_ccard_type$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+rm  /var/opt/process/extracts/aws/caa/crm/vmci016_ccard_type$DATE.txt
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------

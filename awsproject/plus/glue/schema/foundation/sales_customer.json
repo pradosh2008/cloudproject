@@ -1,0 +1,88 @@
+[
+	{
+		"source_table_name": "sales_customer",
+		"fields": [
+			
+			{
+				"name": "selling_chain_nbr",
+				"type": "int"
+			},
+			{
+				"name": "selling_store_nbr",
+				"type": "int"
+			},
+			{
+				"name": "register_nbr",
+				"type": "int"
+			},
+			{
+				"name": "transaction_nbr",
+				"type": "int"
+			},
+			{
+				"name": "transaction_dt",
+				"type": "date"
+			},
+			{
+				"name": "customer_nbr",
+				"type": "int"
+			},
+			{
+				"name": "customer_seq_nbr",
+				"type": "int"
+			},
+			{
+				"name": "customer_first_nm",
+				"type": "string"
+			},
+			{
+				"name": "customer_last_nm",
+				"type": "string"
+			},
+			{
+				"name": "customer_primary_phone_nbr",
+				"type": "string"
+			},
+			{
+				"name": "customer_secondary_phone_nbr",
+				"type": "string"
+			},
+			{
+				"name": "customer_email_address",
+				"type": "string"
+			},
+			{
+				"name": "customer_zip_cd",
+				"type": "string"
+			},
+			{
+				"name": "apply_matching_logic_cd",
+				"type": "string"
+			},
+			{
+				"name": "club_member_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "customer_external_type_cd",
+				"type": "string"
+			},
+			{
+				"name": "customer_external_nbr",
+				"type": "bigint"
+			},
+			{
+				"name": "last_update_ts",
+				"type": "timestamp"
+			},
+			{
+				"name": "ecommerce_customer_nbr",
+				"type": "string"
+			},
+			{
+				"name": "extract_ts",
+				"type": "timestamp"
+			}
+		]
+	}
+]

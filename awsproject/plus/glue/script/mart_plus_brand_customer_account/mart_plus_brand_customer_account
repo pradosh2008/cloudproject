@@ -1,0 +1,156 @@
+from martutil import *
+#testing
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci015_cust_ccard','plus_vmci016_ccard_type','plus_vmci019_customer','plus_vmci105_chain_cust']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_brand_customer_account'
+target_prefix='/plus'
+partitionKeys=['brand_cd']
+
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""select
+  cc.plus_vmci015_cust_ccard_key                                                as brand_customer_account_key
+, ccust.plus_vmci105_chain_cust_key                                             as brand_customer_key
+, cc.plus_vmci019_customer_key                                                  as customer_key
+, cc.id_cust                                                                    as brand_customer_id
+, cc.id_account                                                                 as account_id
+, cc.cd_ccard_process_status                                                    as ccard_process_status_cd
+, cc.cd_bank_card_type                                                          as bank_card_type_cd
+, cc.in_bank_card_srce                                                          as brand_card_source_cd
+, cc.da_bank_card_added                                                         as band_card_added_dt
+, cc.in_fb_acct_type                                                            as fb_account_type_cd
+, case cc.fl_account_closed     when 'Y' then 1 when 'N' then 0 else null end   as account_closed_ind
+, case cc.fl_account_active     when 'Y' then 1 when 'N' then 0 else null end   as account_active_ind
+, cc.cd_account_term                                                            as account_term_cd
+, cc.da_apply_houscard                                                          as apply_housecard_dt
+, cc.in_cust_source_2nd                                                         as customer_source_second_cd
+, cc.cd_bnk_crd_subtype                                                         as bank_card_subtype_cd
+, cc.da_card_issued                                                             as card_issued_dt
+, cc.da_tmci015_row_updated                                                     as tmci015_row_updated_dt
+, cc.id_account_prefix                                                          as account_prefix_id
+, cc.id_account_suffix                                                          as account_suffix_id
+, cc.extract_ts                                                                 as customer_ccard_extract_tms
+, cc.plus_vmci016_ccard_type_key                                                as ccard_type_key
+, cc.tx_bank_card_type                                                          as bank_card_type_des
+, case cc.fl_housecard          when 'Y' then 1 when 'N' then 0 else null end   as housecard_ind
+, case cc.fl_cobrand            when 'Y' then 1 when 'N' then 0 else null end   as cobrand_ind
+, case cc.fl_updt_hc_act        when 'Y' then 1 when 'N' then 0 else null end   as updt_hc_act_ind
+, case cc.fl_updt_co_act        when 'Y' then 1 when 'N' then 0 else null end   as updt_co_act_ind
+, case cc.fl_updt_hc_cls        when 'Y' then 1 when 'N' then 0 else null end   as updt_hc_cls_ind
+, case cc.fl_updt_co_cls        when 'Y' then 1 when 'N' then 0 else null end   as updt_co_cls_ind
+, case cc.fl_updt_hc_dnp        when 'Y' then 1 when 'N' then 0 else null end   as updt_hc_dnp_ind
+, case cc.fl_updt_co_dnp        when 'Y' then 1 when 'N' then 0 else null end   as updt_co_dnp_ind
+, case cc.fl_populate_tmci115   when 'Y' then 1 when 'N' then 0 else null end   as populate_tmci115_ind
+, case cc.fl_apply_account_term when 'Y' then 1 when 'N' then 0 else null end   as apply_account_term_ind
+, case cc.fl_outbound           when 'Y' then 1 when 'N' then 0 else null end   as outbound_ind
+, cc.cd_parent_type                                                             as parent_type_cd
+, cc.cd_ctype_process_status                                                    as ctype_process_status_cd
+, case cc.fl_foreign_key        when 'Y' then 1 when 'N' then 0 else null end   as foreign_key_ind
+, case cc.fl_horizon_score      when 'Y' then 1 when 'N' then 0 else null end   as horizon_score_ind
+, cc.ccard_type_extract_tms                                                     as source_extract_tms
+, case cc.id_chain              when 7 then 'LB' when 4 then 'CA' else null end as brand_cd
+,'mart_plus_brand_customer_account' as mart_job_nam
+,current_timestamp as mart_insert_tms
+from (
+        select 
+          ccard.*
+        , cct.id_chain
+        , cct.plus_vmci016_ccard_type_key
+        , cct.tx_bank_card_type
+        , cct.fl_housecard
+        , cct.fl_cobrand
+        , cct.fl_updt_hc_act
+        , cct.fl_updt_co_act
+        , cct.fl_updt_hc_cls
+        , cct.fl_updt_co_cls
+        , cct.fl_updt_hc_dnp
+        , cct.fl_updt_co_dnp
+        , cct.fl_populate_tmci115
+        , cct.fl_apply_account_term
+        , cct.fl_outbound
+        , cct.cd_parent_type
+        , cct.cd_ctype_process_status
+        , cct.fl_foreign_key
+        , cct.fl_horizon_score
+        , cct.extract_ts as ccard_type_extract_tms
+        from 
+              (select * 
+               ,max(extract_ts) over (partition by plus_vmci015_cust_ccard_key) as max_extract_ts
+      FROM plus_vmci015_cust_ccard) ccard
+               
+        
+inner join ( select *
+                    ,max(extract_ts) over (partition by plus_vmci016_ccard_type_key) as max_extract_ts
+                from plus_vmci016_ccard_type) cct 
+                on cct.extract_ts=cct.max_extract_ts
+               
+               and  cct.cd_bank_card_type = ccard.cd_bank_card_type
+               and cct.id_chain in (4,7)
+     ) cc
+inner join ( select id_cust
+                    ,extract_ts
+                    ,max(extract_ts) over (partition by plus_vmci019_customer_key) as max_extract_ts
+               from  plus_vmci019_customer
+           )cust 
+               on cust.extract_ts=cust.max_extract_ts
+               and cust.id_cust = cc.id_cust
+
+inner join  ( select id_cust
+                     ,id_chain
+                     ,plus_vmci105_chain_cust_key
+                     ,extract_ts
+                     ,max(extract_ts) over (partition by plus_vmci105_chain_cust_key) as max_extract_ts
+                from plus_vmci105_chain_cust
+             )ccust 
+             on ccust.extract_ts=ccust.max_extract_ts
+             and ccust.id_cust = cust.id_cust and ccust.id_chain = cc.id_chain
+""")
+
+#build_mart_df.show(truncate=False)
+
+#common step both for onetime and incremental
+#build_hash_df=mart_calc_rowhash(build_mart_df)
+
+
+#first load , so write the biuld hash df directly
+#write_to_sink(build_hash_df,target_tbl,partitionKeys,glueContext,target_prefix)
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+##incremental mart load
+#mart_df=read_mart(target_prefix,target_tbl,spark)
+
+##incremental join 
+#inc_leftjoined_mart_df=inc_leftjoin_mart(mart_df,build_hash_df)
+
+#resultant count for chnaged and new record . For checking purpose
+#logger.info('incremental count {}'.format(inc_leftjoined_mart_df.count()))
+#print("count of resultant frame {}".format(inc_leftjoined_mart_df.count()))
+
+##write incremental to mart
+#write_to_sink(inc_leftjoined_mart_df,target_tbl,partitionKeys,glueContext,target_prefix)

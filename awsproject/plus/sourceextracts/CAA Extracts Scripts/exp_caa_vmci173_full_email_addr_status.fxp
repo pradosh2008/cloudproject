@@ -1,0 +1,85 @@
+export DATE=`date +"%Y%m%d"`;
+fexp -c ASCII<<!eof
+
+/*******************************************************************
+*
+* Script Name:exp_caa_vmci173_full_email_addr_status..fxp
+*
+* Description: Export customer email attributes
+*
+
+*
+* Output: 
+*
+* AUDIT TRAIL
+* Modified By
+* ================================================================
+* Date        Person        Description
+* ----------  ------------  --------------------------------------
+* 10/30/2020  V.Kalathil      Initial Script
+*****************************************************************/
+ 
+.LOGTABLE $DB_WORK.CAA_VMCI173_FULL_EMAIL_ADDR_STATUS_LOG ;
+
+
+.logon $DB_DSN/$DB_LOGON,$DB_PASSWORD;
+ 
+.BEGIN EXPORT SESSIONS 4;
+
+SELECT CAST( COLUMNNAME AS CHAR(173))
+FROM(
+SELECT'ID_EMAIL|DA_FIRST_HARD_BB|DA_FIRST_SOFT_BB|DA_LAST_BB|DA_LAST_HARD_BB|DA_LAST_SOFT_BB|FL_EMAIL_BB_VALID|FL_HARD_BB_VALID|FL_SOFT_BB_VALID|NU_BB_HARD|NU_BB_SOFT|EXTRACT_TS'
+AS COLUMNNAME
+)A ;
+
+SELECT 
+CAST (ID_EMAIL AS CHAR(11)),'|' (CHAR(1)),
+CAST (CAST(DA_FIRST_HARD_BB AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CAST(DA_FIRST_SOFT_BB AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CAST(DA_LAST_BB AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CAST(DA_LAST_HARD_BB AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (CAST(DA_LAST_SOFT_BB AS DATE FORMAT 'YYYY-MM-DD') AS CHAR(10)),'|' (CHAR(1)),
+CAST (FL_EMAIL_BB_VALID AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_HARD_BB_VALID AS CHAR(1)),'|' (CHAR(1)),
+CAST (FL_SOFT_BB_VALID AS CHAR(1)),'|' (CHAR(1)),
+CAST (NU_BB_HARD AS CHAR(11)),'|' (CHAR(1)),
+CAST (NU_BB_SOFT AS CHAR(11)),'|' (CHAR(1)),
+CAST ( CURRENT_TIMESTAMP AS CHAR(19)) 
+FROM 
+DMMCIPI04.VMCI173_FULL_EMAIL_ADDR_STATUS
+;
+ 
+.EXPORT OUTFILE "/var/opt/process/extracts/aws/caa/crm/vmci173_full_email_addr_status$DATE.txt" MODE RECORD FORMAT TEXT  ;
+
+.END EXPORT ;
+
+.LOGOFF ;
+!eof
+
+### Error Handling for Fast Export
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 Error in fast export script for table  DMMCIPI04.VMCI173_FULL_EMAIL_ADDR_STATUS" 
+      exit 1 
+   fi
+
+######################################################################
+# gzip the file with current date. 
+######################################################################
+
+echo "Starting compression"
+bzip2 /var/opt/process/extracts/aws/caa/crm/vmci173_full_email_addr_status$DATE.txt
+
+return_code=$?
+   if [ ${return_code} -ne 0 ]
+     then 
+      echo "$0 ABENDED while zipping the file with Return Code ${return_code}." 
+      exit 1 
+   fi
+
+   echo "Compression step completed!"
+   
+echo -------------------------------------------------------------
+echo PROCESSING COMPLETE!
+echo -------------------------------------------------------------

@@ -1,0 +1,107 @@
+from martutil import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+#Specify job_name
+job_name=args['JOB_NAME']
+
+logger = glueContext.get_logger()
+
+#edw_fdn_tbl_list=['plus_sales_transaction_detail','plus_sales_transaction_header','plus_sales_customer']
+crm_fdn_tbl_list=['plus_vmci025_mailing']
+#edw_fdn_prefix='/plus/edwd'
+crm_fdn_prefix='/plus/crm'
+
+#target_tbl='dim_customer_test'
+target_tbl='plus_direct_marketing_cell_mailing'
+target_prefix='/plus'
+#partitionKeys=[]
+partitionKeys=['brand_cd']
+
+#common step both for onetime and incremental
+
+#register_fdn_view(edw_fdn_prefix,edw_fdn_tbl_list,spark)
+register_fdn_view(crm_fdn_prefix,crm_fdn_tbl_list,spark)
+
+
+#common step both for onetime and incremental
+
+build_mart_df = glueContext.sql("""SELECT
+  m.plus_vmci025_mailing_key           AS   direct_marketing_cell_mailing_key
+, m.ID_MAILING                         AS   mailing_id
+, m.TX_MAIL_DESC_SHORT                 AS   mail_short_des
+, m.TX_MAIL_DESC_LONG                  AS   mail_long_des
+, m.DA_MAIL_EFF                        AS   mail_effective_dt
+, m.DA_MAIL_EXP                        AS   mail_expired_dt
+, m.DA_FILE_CREATED                    AS   file_created_dt
+, m.DA_MAILED                          AS   mailed_dt
+, m.NU_MAX_CUSTS                       AS   max_custs_num
+, m.IN_DEDUP_TYPE                      AS   dedup_type_cd
+, m.DA_RCD_CREATED                     AS   record_created_dt
+, m.DA_RCD_UPDATED                     AS   record_updated_dt
+, m.FL_EXCL_EMP                        AS   excl_emp_ind
+, m.CD_MAIL_TYPE                       AS   mail_type_cd
+, m.CD_PROCESS_TYPE                    AS   process_type_cd
+, m.DA_STATUS                          AS   status_dt
+, m.TI_STATUS                          AS   status_ind
+, m.TX_STATUS                          AS   status_des
+, m.NA_JOB                             AS   job_nam
+, m.CD_GROUP                           AS   group_cd
+, m.CD_OUTPUT_TYPE                     AS   output_type_cd
+, m.ID_USER_CREATED                    AS   user_created_id
+, m.FL_INCLUDE_ALWAYS                  AS   include_always_ind
+, m.FL_INCLUDE_SEED                    AS   include_seed_ind
+, m.FL_INCLUDE_DECOY                   AS   include_decoy_ind
+, m.FL_INCLUDE_REQUEST                 AS   include_request_ind
+, m.FL_SKIP_COUNTS                     AS   skip_counts_ind
+, m.DA_PURGE                           AS   purge_dt
+, m.ID_LAST_CELL_DONE                  AS   last_cell_done_id
+, m.TX_INCL_STATES                     AS   incl_states_nam
+, m.FL_OK_TO_MAIL_YES_CHKD             AS   ok_to_mail_yes_checked_cd
+, m.FL_OK_TO_MAIL_NO_CHKD              AS   ok_to_mail_no_check_cd
+, m.FL_OK_TO_EMAIL_YES_CHKD            AS   ok_to_email_yes_checked_cd
+, m.FL_OK_TO_EMAIL_NO_CHKD             AS   ok_to_email_no_checked_cd
+, m.FL_EXCL_DO_NOT_PROMOTE             AS   excl_no_not_promote_cd
+, m.TX_INCL_DSFCODES                   AS   include_dsfcodes_des
+, m.FL_INCL_MAIL_UNDETERMINED          AS   include_mail_undertermined_cd
+, m.FL_INCL_EMAIL_UNDETERMINED         AS   include_email_undetermined_cd
+, m.CD_CAMPAIGN                        AS   campaign_cd
+, m.TX_INTIATIVE                       AS   initiative_des
+, m.TX_CAMPAIGN_OBJECTIVE              AS   campaign_objective_des
+, m.DA_PRELIM_COUNT_DUE                AS   prelim_count_due_dt
+, m.DA_FINAL_COUNT_DUE                 AS   final_count_due_dt
+, m.NA_MAIL_VENDOR                     AS   mail_vendor_nam
+, m.CD_ADTRAX                          AS   adtrax_cd
+, m.ID_WEEK_MAILING_EFF                AS   week_mailing_eff_id
+, m.NU_REQD_CIRCULATION                AS   reqd_circulation_des
+, m.DA_DUE_LETTERSHOP                  AS   due_lettershop_dt
+, m.extract_ts                         AS   source_extract_tms
+,'mart_plus_direct_marketing_cell_mailing'   as mart_job_nam
+,current_timestamp as mart_insert_tms
+,  CASE 
+        WHEN m.id_chain = 4 THEN 'CA'
+        WHEN m.id_chain = 7 THEN 'LB'
+   END                                 AS   brand_cd
+   from plus_vmci025_mailing as m
+    join
+   (select plus_vmci025_mailing_key
+                    ,max(extract_ts) as extract_ts
+          FROM plus_vmci025_mailing 
+		  where id_chain in (4,7)
+         group by plus_vmci025_mailing_key)mm
+         on mm.plus_vmci025_mailing_key=m.plus_vmci025_mailing_key
+         and mm.extract_ts=m.extract_ts
+""")
+
+load_refresh_mart_tbl(build_mart_df,target_tbl,target_prefix,*partitionKeys)
+
+
+print(job_name+" job completed")
+job.commit()
