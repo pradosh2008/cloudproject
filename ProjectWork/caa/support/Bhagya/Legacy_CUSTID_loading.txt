@@ -1,0 +1,45 @@
+
+------------------------------------------------Legacy Customer ID Update from Teradata-------------------------------------------------------------------------
+
+--------------------------------------------------THIS SHOULD BE RAN BEFORE THE MERGE----------------------------------------------------------------------------
+
+As part of reporting and matching process, we are extracting the legacy customer ID feed from teradata(ORPOS, ECOM, EMP and PLCC) without joining the 19 table.
+
+ 1. See attached Extraction_legacy_cust_id_FROM_TD-steps.txt which has the steps to extract and move the data to edge node.
+ 2. Once after moving to edge node decrypt all the files using the below command
+
+gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output /ascena_prod/data/secure/cem/cdp/lbca/emp_cust.txt --decrypt /ascena_prod/data/secure/cem/cdp/lbca/emp_cust.txt.gpg
+gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output /ascena_prod/data/secure/cem/cdp/lbca/ecom_cust.txt --decrypt /ascena_prod/data/secure/cem/cdp/lbca/ecom_cust.txt.gpg
+gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output /ascena_prod/data/secure/cem/cdp/lbca/orpos_cust.txt --decrypt /ascena_prod/data/secure/cem/cdp/lbca/orpos_cust.txt.gpg
+gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output /ascena_prod/data/secure/cem/cdp/lbca/plcc_cust.txt --decrypt /ascena_prod/data/secure/cem/cdp/lbca/plcc_cust.txt.gpg
+
+ 3.Load the file into HDFS – 
+
+RUN IN BEEELINE TO TRUNCATE TABLE
+Truncate table ascena_staging.lbca_orpos_cust_id;
+Truncate table ascena_staging.lbca_ecom_cust_id;          
+Truncate table ascena_staging.lbca_plcc_cust_id;
+Truncate table ascena_staging.lbca_employee_cust_id;
+
+RUN IN UNIX WINDOW
+cd /ascena_prod/data/secure/cem/cdp/lbca
+
+hdfs dfs -put emp_cust.txt /ascena_prod/data/secure/cem/cdp/lbca
+hdfs dfs -put ecom_cust.txt /ascena_prod/data/secure/cem/cdp/lbca
+hdfs dfs -put orpos_cust.txt /ascena_prod/data/secure/cem/cdp/lbca
+hdfs dfs -put plcc_cust.txt /ascena_prod/data/secure/cem/cdp/lbca
+
+
+RUN IN BEEELINE TO LOAD TABLE
+        
+load data inpath '/ascena_prod/data/secure/cem/cdp/lbca/emp_cust.txt' into table ascena_staging.lbca_employee_cust_id;
+load data inpath '/ascena_prod/data/secure/cem/cdp/lbca/ecom_cust.txt' into table ascena_staging.lbca_ecom_cust_id;
+load data inpath '/ascena_prod/data/secure/cem/cdp/lbca/orpos_cust.txt' into table ascena_staging.lbca_orpos_cust_id;
+load data inpath '/ascena_prod/data/secure/cem/cdp/lbca/plcc_cust.txt' into table ascena_staging.lbca_plcc_cust_id;
+
+
+DURING EACH STEP check the lines in the file and the count of the final table, all should match.
+
+Final Step to update the legacy customer ID into Persona table, use the below script to update the same.
+
+!run /home/ascprocessprod/cron/ctl/Update_Legacy_CUSTID_TD.q

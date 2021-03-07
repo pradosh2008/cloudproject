@@ -1,0 +1,10 @@
+#fk check: transaction return_detail
+bq query --use_legacy_sql=false <<!
+select sum(case when b.if_entry_no is null then 0 else 1 end)   as match_count
+    ,sum(case when b.if_entry_no is null then 1 else 0 end)     as orphan_count
+from edl_stage.pre_aw_transaction_return_detail    a 
+left join edl_stage.pre_aw_transaction_header  b 
+    on a.if_entry_no = b.if_entry_no
+    where a.batch_id>=20180901 and a.batch_id<=20190729
+!
+   

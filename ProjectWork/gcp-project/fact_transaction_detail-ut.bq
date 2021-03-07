@@ -1,0 +1,41 @@
+echo 'Row count'
+bq query --use_legacy_sql=false <<!
+select count(1) from jus_stage.fact_transaction_detail
+!
+
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,a.line_num
+    ,count(*)
+from jus_stage.fact_transaction_detail a
+group by a.transaction_key 
+    ,a.line_num
+having count(*) > 1
+limit 10
+!
+
+echo 'fact_transaction_detail orphan check: transaction detail count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction_detail a 
+left join jus_stage.fact_transaction b 
+    on a.transaction_key = b.transaction_key
+!
+echo 'fact_transaction no detail check: transaction detail count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction a 
+left join (select distinct transaction_key from jus_stage.fact_transaction_detail) b 
+    on a.transaction_key = b.transaction_key
+!
+echo 'dim_item fk check: transaction line count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.item_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.item_key is null then 1 else 0 end)     as orphan_count
+from jus_stage.fact_transaction_detail a 
+left join jus_stage.dim_item b 
+    on b.item_key = a.item_key
+!

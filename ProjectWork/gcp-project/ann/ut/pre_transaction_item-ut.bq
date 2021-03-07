@@ -1,0 +1,27 @@
+#pk check
+bq query --use_legacy_sql=false <<!
+select a.transaction_item_key 
+    ,count(*)
+from analytic_mart.pre_transaction_item_P a
+group by a.transaction_item_key 
+having count(*) > 1
+limit 10
+!
+
+#null check
+bq query --use_legacy_sql=false <<!
+SELECT count(*) 
+FROM    analytic_mart.pre_transaction_item_P
+where   transaction_key is null
+!
+
+#referential integrity check
+bq query --use_legacy_sql=false <<!
+select 
+sum(case when b.transaction_key is null then 0 else 1 end)   as match_count
+,sum(case when b.transaction_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.pre_transaction_item_P a 
+left join analytic_mart.pre_transaction_header b 
+    on a.transaction_key = b.transaction_key
+    where b.transaction_key is null
+!

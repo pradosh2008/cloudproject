@@ -1,0 +1,18 @@
+create or replace view edl_stage.plus_vmci972_chain_cust_fullemail_curr as
+SELECT
+ stgn.ID_CHAIN
+,stgn.ID_CUST
+,stgn.ID_EMAIL
+,stgn.ID_DOMAIN
+,stgn.CD_EMAIL_STYLE
+,stgn.DA_EMAIL_CREATED
+,stgn.FL_PRIMARY_EMAIL
+,stgn.DA_EM_CUST_VERIFIED
+,stgn.FL_EMAIL_VALID
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN,lbca.ID_CUST, lbca.ID_EMAIL
+order by lbca.EXTRACT_TS desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci972_chain_cust_fullemail as lbca
+)  as stgn where row_num=1

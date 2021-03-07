@@ -1,0 +1,60 @@
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.transaction edl_archive.transaction
+
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.transaction  'gs://p-asna-datasink-003/transaction/*'
+
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.transaction --use_legacy_sql=false <<!
+SELECT
+l.transaction_key
+,l.store_id
+,l.transaction_num
+,l.register_num
+,l.transaction_dt
+,l.store_key
+,case when CHAR_LENGTH(l.transaction_tm)=1 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.transaction_dt as string),' ','000',l.transaction_tm))
+			when CHAR_LENGTH(l.transaction_tm)=2 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.transaction_dt as string),' ','00',l.transaction_tm))
+			when CHAR_LENGTH(l.transaction_tm)=3 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.transaction_dt as string),' ','0',l.transaction_tm))
+			when CHAR_LENGTH(l.transaction_tm)=4 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.transaction_dt as string),' ',l.transaction_tm))
+       else PARSE_DATETIME('%Y-%m-%d %H%M%S', concat(cast(l.transaction_dt as string),' ',l.transaction_tm))
+       end as transaction_tms
+,l.channel_cd
+,l.transaction_type_cd
+,l.transaction_entry_type_cd
+,l.cashier_id
+,l.store_manager_id
+,l.layaway_num
+,l.multi_brand_transaction_ind
+,l.domestic_order_ind
+,l.address_capture_ind
+,l.email_capture_ind
+,l.return_receipt_ind
+,l.order_num
+,l.order_receive_dt
+,case when CHAR_LENGTH(l.order_receive_tm)=1 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.order_receive_dt as string),' ','000',l.order_receive_tm))
+			when CHAR_LENGTH(l.order_receive_tm)=2 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.order_receive_dt as string),' ','00',l.order_receive_tm))
+			when CHAR_LENGTH(l.order_receive_tm)=3 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.order_receive_dt as string),' ','0',l.order_receive_tm))
+			when CHAR_LENGTH(l.order_receive_tm)=4 then PARSE_DATETIME('%Y-%m-%d %H%M', concat(cast(l.order_receive_dt as string),' ',l.order_receive_tm))
+       else PARSE_DATETIME('%Y-%m-%d %H%M%S', concat(cast(l.order_receive_dt as string),' ',l.order_receive_tm))
+       end as order_tms
+,l.transaction_void_ind
+,l.ship_to_store_key
+,l.membership_ind
+,l.plcc_payment_reference_nbr
+,l.plcc_payment_line_object_cd
+,l.plcc_payment_tm
+,l.plcc_payment_amt
+,l.p2e_ind
+,l.edl_create_tms
+,l.edl_create_job_nam
+,l.edl_last_update_tms
+,l.edl_last_update_job_nam
+,l.brand_cd
+FROM edl_conform.transaction
+left join edl_conform.transaction c
+    on  l.transaction_key = c.transaction_key
+    where c.transaction_key is null
+!

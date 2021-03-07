@@ -1,0 +1,64 @@
+/home/ascprocessprod/cron/log
+
+/home/ascprocessprod/cron/work/
+
+/home/ascsftp/log/
+
+/ascena_prod/data/secure/cem/cdp/lbca/incremental/lbca_bc_address
+
+/ascena_prod/data/secure/cem/lbca-- Transaction
+
+/home/ascprocessprod/cron/ctl
+
+1)Login with production ascsftp 
+#go to below Directory
+--> cd /ascena_prod/data/secure/cem/cdp/lbca/history/lbca_hst_customer_activity
+
+
+
+#Enter below decryption command, make sure while giving filename 
+--> gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output outputfilename --decrypt sourcefilename
+
+Ex: gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output lbca_hst_customer_activity_20190820.txt --decrypt lbca_hst_customer_activity_20190820.txt.gpg
+
+
+2)Login with ascprocessprod
+#go to below Directory
+--> cd /ascena_prod/data/secure/cem/cdp/lbca/history/lbca_hst_customer_activity
+
+#Push the file to hdfs
+
+-->hdfs dfs -put filename /ascena_prod/data/inbound/cem/cdp/lbca/history/lbca_hst_customer_activity
+
+Ex: hdfs dfs -put lbca_hst_customer_activity_20190820.txt /ascena_prod/data/inbound/cem/cdp/lbca/history/lbca_hst_customer_activity
+
+
+3)connect to beeline prod with ascprocessprod
+
+#truncate the table 
+--> truncate table ascena_staging.lbca_hst_customer_activity;
+
+#Load the data make sure pointing to the correct decrypted file 
+--> load data inpath '/ascena_prod/data/inbound/cem/cdp/lbca/history/lbca_hst_customer_activity/filename'  into table ascena_staging.lbca_hst_customer_activity;
+
+Ex: load data inpath '/ascena_prod/data/inbound/cem/cdp/lbca/history/lbca_hst_customer_activity/lbca_hst_customer_activity_20190820.txt' into table ascena_staging.lbca_hst_customer_activity;
+
+4) check the file count and table count.
+
+wc -l lbca_hst_customer_activity_20190814.txt
+85910346
+select count(*) from ascena_staging.lbca_hst_customer_activity;
+
+85910346
+step 5:
+
+after completion of loading the data,
+remove the decrypted file using
+rm lbca_hst_customer_activity_20190820.txt (change date daily)
+
+then move the .gpg(encrypted) file to archive path
+
+using mv command
+
+mv lbca_hst_customer_activity_20190820.txt.gpg /ascena_prod/data/archive/cem/cdp/lbca/history/lbca_hst_customer_activity
+

@@ -1,0 +1,101 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq load --replace=true --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/schema/edl_conform/plus_sku_store_inventory.json edl_landing.plus_store_sku_inventory \
+        'gs://p-asna-datasink-003/plus/lb_ACC_DF_SKU_STORE_INVENTORY_*.txt.gz'
+
+
+bq load --replace=false --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/schema/edl_conform/plus_sku_store_inventory.json edl_landing.plus_store_sku_inventory \
+        'gs://p-asna-datasink-003/plus/ca_ACC_DF_SKU_STORE_INVENTORY_*.txt.gz'
+
+
+rc_check $? "creating landing table"
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.plus_store_sku_inventory_new --use_legacy_sql=false <<!
+select
+chain_id
+,store_id
+,week_id
+,sku_id
+,style_id
+,color_id
+,size_id
+,cast(BOP_STORE_INV_U as int64) as bop_store_inv_unit_cnt
+,cast(BOP_STORE_INV_R as numeric) as bop_store_inv_retail_amt
+,cast(BOP_STORE_INV_C_ACTUAL as numeric) as bop_store_inv_actual_cost_amt
+,cast(BOP_STORE_INV_C_VALUED as numeric) as bop_store_inv_valued_cost_amt
+,cast(BOP_STORE_IT_U as int64) as bop_store_it_unit_cnt
+,cast(BOP_STORE_IT_R as numeric) as bop_store_it_retail_amt
+,cast(BOP_STORE_IT_C_ACTUAL as numeric) as bop_store_it_actual_cost_amt
+,cast(BOP_STORE_IT_C_VALUED as numeric) as bop_store_it_valued_cost_amt
+,cast(STORE_RECEIPT_U as int64) as store_receipt_unit_cnt
+,cast(STORE_RECEIPT_R as numeric) as store_receipt_retail_amt
+,cast(STORE_RECEIPT_C_ACTUAL as numeric) as store_receipt_actual_cost_amt
+,cast(STORE_RECEIPT_C_VALUED as numeric) as store_receipt_valued_cost_amt
+,cast(BOP_MKD_STORE_IT_U as int64) as bop_mkd_store_it_unit_cnt
+,cast(BOP_MKD_STORE_IT_R as numeric) as bop_mkd_store_it_retail_amt
+,cast(BOP_MKD_STORE_IT_C_ACTUAL as numeric) as bop_mkd_store_it_actual_cost_amt
+,cast(BOP_MKD_STORE_IT_C_VALUED as numeric) as bop_mkd_store_it_valued_cost_amt
+,cast(DMOS_U as int64) as dmos_unit_cnt
+,cast(DMOS_R as numeric) as dmos_retail_amt
+,cast(DMOS_C_ACTUAL as numeric) as dmos_actual_cost_amt
+,cast(DMOS_C_VALUED as numeric) as dmos_valued_cost_amt
+,cast(STORE_TRANS_OUT_U as int64) as store_trans_out_unit_cnt
+,cast(STORE_TRANS_OUT_R as numeric) as store_trans_out_retail_amt
+,cast(STORE_TRANS_OUT_C_ACTUAL as numeric) as store_trans_out_actual_cost_amt
+,cast(STORE_TRANS_OUT_C_VALUED as numeric) as store_trans_out_valued_cost_amt
+,cast(STORE_TRANS_IN_U as int64) as store_trans_in_unit_cnt
+,cast(STORE_TRANS_IN_R as numeric) as store_trans_in_retail_amt
+,cast(STORE_TRANS_IN_C_ACTUAL as numeric) as store_trans_in_actual_cost_amt
+,cast(STORE_TRANS_IN_C_VALUED as numeric) as store_trans_in_valued_cost_amt
+,cast(BOP_ALLOC_NOTSHIP_INV_U as int64) as bop_alloc_notship_inv_unit_cnt
+,cast(BOP_ALLOC_NOTSHIP_INV_R as numeric) as bop_alloc_notship_inv_retail_amt
+,cast(BOP_ALLOC_NOTSHIP_C_ACTUAL as numeric) as bop_alloc_notship_actual_cost_amt
+,cast(BOP_ALLOC_NOTSHIP_C_VALUED as numeric) as bop_alloc_notship_valued_cost_amt
+,cast(MKD_ISSUE_U as int64) as mkd_issue_unit_cnt
+,cast(MKD_ISSUE_R as numeric) as mkd_issue_retail_amt
+,cast(MKD_ISSUE_C as numeric) as mkd_issue_cost_amt
+from edl_landing.plus_store_sku_inventory
+!
+
+rc_check $? "creating temp table"
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.plus_store_sku_inventory_new --use_legacy_sql=false <<!
+SELECT
+  c.*
+FROM edl_stage.plus_store_sku_inventory c
+WHERE c.week_id NOT IN (
+  SELECT
+    w.week_id
+  FROM
+    edl_stage.plus_store_sku_inventory_new w
+    group by w.week_id
+)
+!
+
+rc_check $? "append legacy records into the temp table"
+
+
+
+#cleansing and archival
+bq cp --force edl_stage.plus_store_sku_inventory edl_archive.plus_store_sku_inventory
+rc_check $? "archive copy"
+bq cp --force edl_stage.plus_store_sku_inventory_new edl_stage.plus_store_sku_inventory
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.plus_store_sku_inventory_new
+rc_check $? "drop the temp table"
+
+
+#move the files to pre/archive folder
+gsutil mv gs://p-asna-datasink-003/plus/ca_ACC_DF_SKU_STORE_INVENTORY_*.txt.gz  gs://p-asna-datasink-003/plus/archive
+gsutil mv gs://p-asna-datasink-003/plus/lb_ACC_DF_SKU_STORE_INVENTORY_*.txt.gz  gs://p-asna-datasink-003/plus/archive
+
+rc_check $? "move the processed file to archive folder"
+

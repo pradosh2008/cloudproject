@@ -1,0 +1,61 @@
+SELECT count(*) FROM "plus_foundation_dev"."plus_vmci972_chain_cust_fullemail" limit 10; --28538301
+
+SELECT count(*) FROM "plus_foundation_dev"."plus_vmci972_chain_cust_fullemail" limit 10; --28600436
+
+
+SELECT row_hashed_val,
+        count(*) AS cnt
+FROM "plus_foundation_dev"."plus_vmci972_chain_cust_fullemail"
+GROUP BY  1
+HAVING count(*)>1;
+
+
+SELECT a.plus_vmci972_chain_cust_full_email_key,
+        count(*)
+FROM 
+    (SELECT plus_vmci972_chain_cust_full_email_key,
+        row_number()
+        OVER (partition by plus_vmci972_chain_cust_full_email_key
+    ORDER BY  extract_ts desc) AS row_num
+    FROM "plus_foundation_dev"."plus_vmci972_chain_cust_fullemail") a
+WHERE row_num = 1
+GROUP BY  a.plus_vmci972_chain_cust_full_email_key
+HAVING count(*)>1
+
+
+
+SELECT fdn.plus_vmci972_chain_cust_full_email_key	
+FROM "plus_foundation_dev".plus_vmci972_chain_cust_fullemail fdn	
+INNER JOIN 	
+    (SELECT max(extract_ts) AS max_extract_dt	
+    FROM "plus_foundation_dev".plus_vmci972_chain_cust_fullemail ) max_ext	
+    ON fdn.extract_ts=max_ext.max_extract_dt	
+GROUP BY  fdn.plus_vmci972_chain_cust_full_email_key	
+HAVING count(*)>1
+
+
+
+
+erroneous rows
+SELECT extract_ts,source_file_nam,count(*)	
+    FROM "plus_foundation_dev".plus_vmci972_chain_cust_fullemail 
+    group by 1,2
+
+extract_ts			source_file_nam									count
+2020-07-21 05:24:14	vmci972_chain_cust_fullemail20200721.txt.bz2	28538292
+2020-09-07 08:58:25	vmci972_chain_cust_fullemail20200907.txt.bz2	62135
+					vmci972_chain_cust_fullemail20200721.txt.bz2	1
+Y					vmci972_chain_cust_fullemail20200721.txt.bz2	8
+	
+
+
+SELECT *	
+    FROM "plus_foundation_dev".plus_vmci972_chain_cust_fullemail 
+    where extract_ts is null
+
+
+SELECT *	
+    FROM "plus_foundation_dev".plus_vmci972_chain_cust_fullemail 
+    where trim(extract_ts)='Y'
+	
+	

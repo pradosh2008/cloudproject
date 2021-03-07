@@ -1,0 +1,25 @@
+create or replace view edl_stage.plus_vmci067_cust_block_curr as
+SELECT
+stg.ID_CUST
+,stg.ID_BLOCK_GRP
+,stg.CD_CENSUS_STATE
+,stg.CD_CENSUS_COUNTY
+,stg.CD_CENSUS_TRACT
+,stg.CD_CENSUS_BG
+,stg.CD_CENSUS_MSA
+,stg.CD_CENSUS_MCDCCD
+,stg.CD_CENSUS_PLACE
+,stg.CD_CUST_LAT
+,stg.CD_CUST_LONG
+,stg.CD_CENSUS_BLOCK
+,stg.CD_CENSUS_CBSA
+,stg.FL_CENSUS_CBSA_METRO
+,stg.CD_CENSUS_CSA
+,stg.EXTRACT_TS
+from
+(
+SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST
+order by lbca.EXTRACT_TS desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci067_cust_block as lbca
+)  as stg where row_num=1

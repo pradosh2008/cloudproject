@@ -1,0 +1,77 @@
+create or replace view edl_stage.plus_vmci019_custonly_curr as
+SELECT
+stg.ID_CUST
+,stg.IN_CUST_SOURCE_FIRST
+,stg.IN_CUST_SOURCE_2ND_FIRST
+,stg.IN_CUST_SOURCE_LAST
+,stg.IN_CUST_SOURCE_2ND_LAST
+,stg.ID_HOUSEHOLD
+,stg.ID_ADDRESS
+,stg.AD_TYPE
+,stg.AD_RURAL_TYP
+,stg.ZC_ZIP_5
+,stg.ZC_ZIP_4
+,stg.NA_COUNTRY
+,stg.CD_COUNTRY
+,stg.IN_RC_SOURCE
+,stg.IN_AQ_HIGH_RISE_RC
+,stg.IN_AQ_FIRM_RC
+,stg.CD_AQ_GENERAL_RC
+,stg.CD_AQ_FIRM_RC
+,stg.CD_AQ_STRT_DIR_RC
+,stg.CD_AQ_STRT_SUFF_RC
+,stg.CD_AQ_APT_RC
+,stg.CD_AQ_STREET_NM_RC
+,stg.CD_AQ_TRAILING_DIR_RC
+,stg.CD_AQ_POB_RC
+,stg.CD_AQ_RRHC_RC
+,stg.CD_AQ_CITY_ST_RC
+,stg.CD_AQ_STATE_PROV_RC
+,stg.CD_AQ_ZIP5_RC
+,stg.CD_AQ_ZIP4_RC
+,stg.CD_AQ_ZIPOUT_RC
+,stg.CD_AQ_DSF_LIST_RC
+,stg.CD_AQ_ADDR_CORRECT_RC
+,stg.CD_AQ_OVERALL_CORRECT_RC
+,stg.CD_AQ_CDQP_CONFIDENCE_RC
+,stg.CD_AQ_DPV_RC
+,stg.FL_AQ_DPV_RC
+,stg.CD_AQ_DPV_FOOTNOTE_LIST_RC
+,stg.FL_AQ_DPV_CMRA_RC
+,stg.CD_AQ_LACS_RC
+,stg.IN_AQ_LACS_RC
+,stg.IN_VM_NCOA_MATCH_RC
+,stg.CD_VM_NCOA_FOOTNOTE_RC
+,stg.CD_VM_NCOA_FWD_TYPE_RC
+,stg.FL_VM_NCOA_FWD_RC
+,stg.CD_NCOA_NIX_ACTION
+,stg.CD_NCOA_ZIP_CORRCT
+,stg.CD_NCOA_COA_INDEX
+,stg.CD_NCOA_ADDR_TYPE
+,stg.CD_NCOA_MATCH
+,stg.ID_NCOA_VENDOR
+,stg.DA_CUST_ADDED
+,stg.MO_CUST_ADDED
+,stg.YR_CUST_ADDED
+,stg.FL_DECEASED
+,stg.FL_TP_CARDHOLDER
+,stg.DA_CUST_MODIFIED
+,stg.IN_ADDR_RELIABLE
+,stg.ID_CARRIER_RTE
+,stg.ID_DPBC
+,stg.ID_ELOT
+,stg.DA_MOVED
+,stg.CD_CHAIN_REF
+,stg.NU_PRIORITY
+,stg.FL_DMA_DONT_MAIL
+,stg.FL_DMA_DONT_CALL
+,stg.FL_BRYLANE
+,stg.DA_CUST_VERIFIED
+,stg.ID_HYG_HOUSEHOLD
+,stg.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST
+order by lbca.EXTRACT_TS desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci019_custonly as lbca
+)  as stg where row_num=1

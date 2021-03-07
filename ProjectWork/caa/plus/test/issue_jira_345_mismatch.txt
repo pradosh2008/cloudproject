@@ -1,0 +1,68 @@
+
+
+on the prod side 
+----------------
+SELECT 
+  d.transaction_dt
+  , count(distinct d.transaction_key) AS TRANSACTION_COUNT
+  , count(distinct d.brand_customer_key) AS CUSTOMER_COUNT
+  , count(distinct d.item_key) AS SKU_COUNT
+  , count(distinct i.class_id) AS CLASS_COUNT
+  , count(distinct i.department_id) AS DEPARTMENT_COUNT
+  , count(distinct s.store_id) as STORE_COUNT
+  , sum(case when d.return_ind = 0 then d.sku_retail_amt else 0 end) AS SUM_NET_SALES_AMT
+  , sum(case when d.return_ind = 1 then -1*d.sku_retail_amt else 0 end) AS SUM_RETURN_SALES_AMT
+  , SUM(CASE WHEN d.return_ind = 0 THEN d.sku_quantity_num ELSE 0 END) AS SUM_NET_QTY
+  , SUM(CASE WHEN d.return_ind = 1 THEN d.sku_quantity_num ELSE 0 END) AS SUM_RETURN_QTY
+  , sum(case when d.return_ind = 0 then d.markdown_amt else 0 end) AS SUM_NET_MARKDOWN_AMT
+  , sum(case when d.return_ind = 1 then d.markdown_amt else 0 end) AS SUM_RETURN_MARKDOWN_AMT
+  , sum(d.original_unit_retail_amt) AS SUM_ORIGINAL_PRICE_AMT
+
+FROM 
+  `p-ascn-da-aadp-001.analytic_mart_0311.fact_transaction_merch_line` d
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart_0311.dim_brand_customer` c 
+  ON c.brand_customer_key = d.brand_customer_key
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart_0311.dim_item` i 
+  ON i.item_key = d.item_key
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart_0311.dim_store` s 
+  ON s.store_key = d.store_key
+WHERE d.transaction_dt BETWEEN '2020-02-15' AND '2020-03-10' 
+AND c.brand_customer_id != '0' 
+AND d.brand_cd = 'CA'
+GROUP BY 1												
+order by 1 asc														
+														
+										
+																		
+												
+--on the dev side
+
+SELECT 
+  d.transaction_dt
+  , count(distinct d.transaction_key) AS TRANSACTION_COUNT
+  , count(distinct d.brand_customer_key) AS CUSTOMER_COUNT
+  , count(distinct d.item_key) AS SKU_COUNT
+  , count(distinct i.class_id) AS CLASS_COUNT
+  , count(distinct i.department_id) AS DEPARTMENT_COUNT
+  , count(distinct s.store_id) as STORE_COUNT
+  , sum(case when d.return_ind = 0 then d.sku_retail_amt else 0 end) AS SUM_NET_SALES_AMT
+  , sum(case when d.return_ind = 1 then -1*d.sku_retail_amt else 0 end) AS SUM_RETURN_SALES_AMT
+  , SUM(CASE WHEN d.return_ind = 0 THEN d.sku_quantity_num ELSE 0 END) AS SUM_NET_QTY
+  , SUM(CASE WHEN d.return_ind = 1 THEN d.sku_quantity_num ELSE 0 END) AS SUM_RETURN_QTY
+  , sum(case when d.return_ind = 0 then d.markdown_amt else 0 end) AS SUM_NET_MARKDOWN_AMT
+  , sum(case when d.return_ind = 1 then d.markdown_amt else 0 end) AS SUM_RETURN_MARKDOWN_AMT
+  , sum(d.original_unit_retail_amt) AS SUM_ORIGINAL_PRICE_AMT
+
+FROM 
+  `p-ascn-da-aadp-001.analytic_mart.fact_transaction_merch_line` d
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart.dim_brand_customer` c 
+  ON c.brand_customer_key = d.brand_customer_key
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart.dim_item` i 
+  ON i.item_key = d.item_key
+  LEFT OUTER JOIN `p-ascn-da-aadp-001.analytic_mart.dim_store` s 
+  ON s.store_key = d.store_key
+WHERE d.transaction_dt BETWEEN '2020-02-15' AND '2020-03-09' 
+AND c.brand_customer_id != '0' 
+AND d.brand_cd = 'CA'
+GROUP BY 1
+order by 1 asc		

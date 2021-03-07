@@ -1,0 +1,18 @@
+#pk check : now rows means success
+bq query --use_legacy_sql=false <<!
+select a.if_entry_no 
+    ,count(*)
+from edl_stage.pre_aw_transaction_header a
+group by a.if_entry_no 
+having count(*) > 1
+limit 10
+!
+
+#null check : zero count means success
+bq query --use_legacy_sql=false <<!
+select count(*) 
+from edl_stage.pre_aw_transaction_header 
+where if_entry_no is null
+!
+
+

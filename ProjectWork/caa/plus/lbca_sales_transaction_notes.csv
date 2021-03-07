@@ -1,0 +1,16 @@
+notes_seq_nbr,string
+note_type_desc,string
+free_form_note_desc,string
+selling_chain_nbr,string
+selling_store_nbr,string
+register_nbr,string
+transaction_nbr,string
+transaction_dt,string
+transaction_tm,string
+detail_fee_seq_nbr,string
+detail_fee_ind,string
+cashier_nbr,string
+record_seq_nbr,string
+note_type_cd,string
+last_update_ts,string
+extract_ts,string

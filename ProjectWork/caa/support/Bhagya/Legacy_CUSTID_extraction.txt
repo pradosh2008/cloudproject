@@ -1,0 +1,62 @@
+DEV server(l00dlmfeapp01)
+
+Note: run the job /app/dev/scripts/job/all_cust_inc.ksh in l00dlmfeapp01 server to run the below steps
+
+1) Login to the MFEP Server and sudo to mfeapp
+
+sudo su - mfeapp
+
+Step 1 : Extraction of the of the files, before extraction rename all the old files with the data of the extraction:
+
+mv /CEM/phoenix/data/orpos_cust.txt /CEM/phoenix/data/orpos_cust_0820.txt
+mv /CEM/phoenix/data/plcc_cust.txt /CEM/phoenix/data/plcc_cust_0820.txt
+mv /CEM/phoenix/data/emp_cust.txt /CEM/phoenix/data/emp_cust_0820.txt
+mv /CEM/phoenix/data/ecom_cust.txt /CEM/phoenix/data/ecom_cust_0820.txt
+
+Go to the path /CEM/phoenix/scripts/ctrl in DEV server(l00dlmfeapp01) and run below commands in putty.
+
+tbuild -f orpos_cust.tpt
+tbuild -f emp_cust.tpt
+tbuild -f ecom_cust.tpt
+tbuild -f plcc_cust.tpt
+
+It will create below files :
+
+/CEM/phoenix/data/orpos_cust.txt
+/CEM/phoenix/data/plcc_cust.txt
+/CEM/phoenix/data/emp_cust.txt
+/CEM/phoenix/data/ecom_cust.txt
+
+Step 2: Encrption
+
+Check if already files are available in /CEM/phoenix/data/ENC/ path. Go to path /CEM/phoenix/data/ENC/
+
+ls -ltr orpos_cust.txt.gpg
+ls -ltr plcc_cust.txt.gpg
+ls -ltr emp_cust.txt.gpg
+ls -ltr ecom_cust.txt.gpg
+
+If files are already available then remove those files.
+
+rm orpos_cust.txt.gpg
+rm plcc_cust.txt.gpg
+rm emp_cust.txt.gpg
+rm ecom_cust.txt.gpg
+
+Execute the below commands to encrypt the files.
+
+gpg --batch --trust-model always -o /CEM/phoenix/data/ENC/orpos_cust.txt.gpg -e -r 8786828B /CEM/phoenix/data/orpos_cust.txt
+gpg --batch --trust-model always -o /CEM/phoenix/data/ENC/plcc_cust.txt.gpg -e -r 8786828B /CEM/phoenix/data/plcc_cust.txt
+gpg --batch --trust-model always -o /CEM/phoenix/data/ENC/emp_cust.txt.gpg -e -r 8786828B /CEM/phoenix/data/emp_cust.txt
+gpg --batch --trust-model always -o /CEM/phoenix/data/ENC/ecom_cust.txt.gpg -e -r 8786828B /CEM/phoenix/data/ecom_cust.txt
+
+Step 3: Move to Edge node
+
+Execute the below commands to trasfer the files from CRM server to edge node. Check with EDL team to confirm the path.
+
+sftp ascsftp@169.61.94.13
+put /CEM/phoenix/data/ENC/orpos_cust.txt.gpg /ascena_prod/data/secure/cem/cdp/lbca
+put /CEM/phoenix/data/ENC/plcc_cust.txt.gpg /ascena_prod/data/secure/cem/cdp/lbca
+put /CEM/phoenix/data/ENC/emp_cust.txt.gpg /ascena_prod/data/secure/cem/cdp/lbca
+put /CEM/phoenix/data/ENC/ecom_cust.txt.gpg /ascena_prod/data/secure/cem/cdp/lbca
+

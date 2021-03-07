@@ -1,0 +1,15 @@
+create or replace table work.survey_response_stg as
+select
+My_age_is as age,
+I_last_shopped_on as shopped_on_date,
+How_much_did_I_spend_on_last_purchase___INR_ as amount_spent_on_last_purchase,
+Number_of_times_I_shopped_in_2019_ as no_of_times_shopped_on_2019,
+I_find_most_relevant__offers_product_on__ as relevant_offers_channel,
+Total_amount_I_spent__on_clothing_in_2019___INR_ as total_amount_spent_in_2019,
+I_generally_tend_to_buy_my_clothes_from_ as customer_buy_clothes_from,
+I_generally__buy_from_ as preferred_purchase_channel,
+Gender as gender,
+Which_of_these_would_I_buy_ as items_interested_to_purchase_by_female,
+I_would_buy_ as items_interested_to_purchase_by_male
+from
+work.survey_response;

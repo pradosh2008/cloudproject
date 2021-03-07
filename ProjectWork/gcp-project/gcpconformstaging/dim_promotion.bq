@@ -1,0 +1,84 @@
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_promotion_new --use_legacy_sql=false <<!
+SELECT c.*
+from jus_stage.work_dim_promotion c
+!
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table jus_stage.dim_promotion_new --use_legacy_sql=false <<!
+select c.*
+from jus_stage.dim_promotion c
+left join jus_stage.work_dim_promotion w
+    on  w.promotion_key = c.promotion_key
+where w.promotion_key is null
+!
+bq cp --force jus_stage.dim_promotion edl_archive.dim_promotion
+bq cp --force jus_stage.dim_promotion_new jus_stage.dim_promotion
+bq rm --force jus_stage.dim_promotion_new
+
+
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table jus_stage.dim_promotion_new --use_legacy_sql=false '
+SELECT c.*
+from jus_stage.work_dim_promotion c'
+
+
+
+bq cp --force edl_landing.transaction edl_archive.transaction
+
+brand_customer brand_customer_phone 
+
+
+GCPcnfm - Full & Incr Data Load from EDL Analytic Mart to GCP edl_conform
+
+run_hql -f brand_customer.hql 10
+
+select brand_customer_key,count(*) from ascena_conform.brand_customer group by brand_customer_key having count(*)>1 limit 5;
+
+select
+brand_customer_key            
+,phone_key 
+,count(*)                    
+from ascena_conform.brand_customer_phone
+group by brand_customer_key            
+,phone_key 
+having count(*)>1
+limit 5;
+
+
+select  edl_last_update_tms from ascena_conform.brand_customer group by  edl_last_update_tms limit 5;
+
+Need to extract Data from ascena_analytic_mart schema for tables:
+brand_customer 
+brand_customer_phone
+store
+transaction
+transaction_fee
+transaction_notes
+And Load full data first in GCP Buckets -> edl_landing -> edl_conform
+After full load complete, need to write Incremental scripts for the same.
+
+
+-------------------------------------------------------------------------------
+mart - in gcp
+whatever the data science team wants
+
+
+cassandra piece - ibm infrastructure
+
+brand_customer_key - it will be stamped in transaction table 
+
+transaction_dt
+order_dt is null put transaction_dt into order_dt
+
+original -  up at the top 
+
+dont include register num, transaction_num
+
+they should not be null
+if they are null - 
+
+header_key
+store_key
+
+original order_dt ,  return 

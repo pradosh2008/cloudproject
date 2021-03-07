@@ -1,0 +1,36 @@
+SELECT count(*) FROM "plus_foundation_dev"."plus_sales_transaction_detail" limit 10; --73671665
+
+
+SELECT plus_sales_transaction_detail_key,
+         element_at(split(source_file_nam,'_'),1),
+         count(*) AS cnt
+    FROM "plus_foundation_dev"."plus_sales_transaction_detail"
+    GROUP BY  plus_sales_transaction_detail_key, element_at(split(source_file_nam,'_'),1)
+    HAVING count(*)>1
+	
+
+	
+why these duplicate records have different hash value?
+select * from "plus_foundation_dev"."plus_sales_transaction_detail" where 
+plus_sales_transaction_detail_key in ( select
+         plus_sales_transaction_detail_key
+    FROM "plus_foundation_dev"."plus_sales_transaction_detail"
+    GROUP BY  plus_sales_transaction_detail_key
+    HAVING count(*)>1)
+    order by plus_sales_transaction_detail_key
+
+because the last_update_ts	
+
+
+post incremental
+SELECT count(*) FROM "plus_foundation_dev"."plus_sales_transaction_detail" limit 10;
+	145411689
+	
+	
+SELECT plus_sales_transaction_detail_key,
+         element_at(split(source_file_nam,'_'),1),
+         count(*) AS cnt
+    FROM "plus_foundation_dev"."plus_sales_transaction_detail"
+    GROUP BY  plus_sales_transaction_detail_key, element_at(split(source_file_nam,'_'),1)
+    HAVING count(*)>1
+	

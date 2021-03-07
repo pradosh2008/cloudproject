@@ -1,0 +1,38 @@
+echo 'Row count'
+bq query --use_legacy_sql=false <<!
+select count(1) from analytic_mart.fact_transaction
+!
+
+
+echo 'PK Check: now rows means success'
+bq query --use_legacy_sql=false <<!
+select a.transaction_key
+    ,count(*)
+from analytic_mart.fact_transaction a
+group by a.transaction_key
+having count(*) > 1
+limit 10
+!
+
+echo 'dim_store fk check: store key count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.store_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.store_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction a
+left join analytic_mart.dim_store b
+    on b.store_key = a.store_key
+!
+
+#198765466    0
+
+echo 'dim_brand_customer fk check: transaction line count'
+bq query --use_legacy_sql=false <<!
+select sum(case when b.brand_customer_key is null then 0 else 1 end)   as match_count
+    ,sum(case when b.brand_customer_key is null then 1 else 0 end)     as orphan_count
+from analytic_mart.fact_transaction a
+left join analytic_mart.dim_brand_customer b
+    on b.brand_customer_key = a.brand_customer_key
+!
+
+#198751919  13547
+

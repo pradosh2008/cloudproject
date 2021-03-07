@@ -1,0 +1,54 @@
+Encryption
+------------
+gpg -e -r 8786828B ANN_ANN_CM_IIDKEYS_20181122.dat
+
+for i in *.txt;do gpg -e -r 8786828B $i;done
+
+Decryption
+-------------   
+gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output LBCA_CA_COUPON_20200405_184307.txt --decrypt LBCA_CA_COUPON_20200405_184307.txt.pgp
+
+for i in *.gpg;do gpg --passphrase "Ascena2018" --batch --no-tty --yes --quiet --output $(echo $i | rev | cut -c 5- | rev) --decrypt $i;done
+
+Find
+-------
+find / -iname *lbca_lb_coupon_20200402* 2>&1 | grep -ve "Permission denied"
+
+
+To check column count:
+----------------------
+ awk -F"," '{print NF}'	all_twe_DR_jus_hst_promotion_history_3_20190508_155327.txt | sort | uniq 
+
+awk -F"," '{if(NF==7) print $0'} ANN_ANN_OMNI_VISITCATGLOFT_20190114_temp.dat >> ANN_ANN_OMNI_VISITCATGLOFT_20190114_temp_1.dat
+
+remove special characters and empty line - sed -i -e 's:^M::g' -e's:'"$(printf '\015')"'::g' -e '/^$/d' MAU_CLICKSTREAM_JSON_DATA_SEQ_20181024.txt_
+ iconv -f utf8 -t ascii//TRANSLIT 
+ 
+MONTHLYFILES:
+-------------
+ 
+ 1)iconv -f latin1 -t ascii//TRANSLIT -- convert all accented/frecnch characters in unix
+ 
+ 2) sed -i -e 's:^M::g' -e 's:'"$(printf '\015')"'::g' -e '/^$/d' filename
+
+# Remove non-ascii characters
+      iconv -c -f UTF-8 -t ASCII ${DATAPATH}/${INPUTFILE} > ${DATAPATH}/${OUTPUTFILE}_tmp
+	  
+	  iconv -c -f  iso-8859-1 -t ASCII
+
+# Remove non-ascii characters
+      iconv -c -f UTF-16 -t ASCII ${DATAPATH}/${INPUTFILE} > ${DATAPATH}/${OUTPUTFILE}_tmp
+	  
+Delete empty lines or blank line ---------sed '/^$/d' file
+
+Delete lines that contain a pattern -------sed '/debian/d' file
+  
+ sed 's:""":":g' LBCA_CaNewEcom_20181205.csv
+  
+grep "E" eplus_ann_hst_ent_f_brand_email_vw.txt | awk -F"|" '{print $65}' >> E_eplus_ann_hst_ent_f_brand_email_vw.txt
+	  
+awk '{print(length($0))'} *TYPE01*.txt | sort | uniq
+
+awk '{if(length($0)=="267") print $0'} *TYPE01*.txt | head -10
+ 
+ 

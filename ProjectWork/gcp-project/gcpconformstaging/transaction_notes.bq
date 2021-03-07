@@ -1,0 +1,17 @@
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.transaction_notes edl_archive.transaction_notes
+
+#LOAD DATA FROM BUCKET TO EDL_LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.transaction_notes  'gs://p-asna-datasink-003/transaction_notes/*'
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.transaction_notes --use_legacy_sql=false <<!
+select l.*
+from edl_landing.transaction_notes l
+left join edl_conform.transaction_notes c
+    on  l.transaction_key = c.transaction_key
+	and l.transaction_notes_line_num = c.transaction_notes_line_num
+	and l.transaction_notes_sequence_num = c.transaction_notes_sequence_num
+    where c.transaction_key is null
+!
+

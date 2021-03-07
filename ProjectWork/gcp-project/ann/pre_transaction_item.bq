@@ -1,0 +1,73 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#bq query --use_legacy_sql=false --parameter=days:INT64:$1 <<!
+#select
+#count(*)
+#    FROM  edl_stage.pre_atg_order_header_curr ord
+#    where --PARSE_DATE('%Y%m%d',cast(ord.batch_id as string)) > PARSE_DATE('%Y-%m-%d','2019-05-04') -- the one time load
+	 PARSE_DATE('%Y%m%d',cast(ord.batch_id as string))>date_sub(current_date,interval @days day); -- this will be the future standard
+#!
+
+
+
+#one time load
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart_dev.pre_transaction_item --use_legacy_sql=false <<!
+    select
+	 FARM_FINGERPRINT(concat(replace(h.txn_nbr,':', '|'),'|',cast(i.txn_item_nbr as string))) 		as transaction_item_key
+	,FARM_FINGERPRINT(replace(h.txn_nbr,':', '|')) 													as transaction_key	
+	,h.txn_nbr 																						as transaction_num
+	,i.txn_item_nbr 																				as line_num
+	,i.txn_source_cd 																				as transaction_source_cd
+	,FARM_FINGERPRINT(cast(i.store_nbr as string)) 													as store_key
+	,i.register_nbr 																				as register_num
+	,FARM_FINGERPRINT(p.sku)																		as item_key
+	--placeholder for class_key
+   ,cal.week_id																					as week_id
+    ,case 
+	  when ret.txn_nbr is null 
+		then null
+	 else FARM_FINGERPRINT(replace(ret.txn_nbr,':', '|'))
+     END 																							as original_transaction_key	
+	,EXTRACT(DATE FROM i.txn_dt) 																	as transaction_dt
+	,CAST(i.txn_time AS TIME) 																		as transaction_tms
+	,i.txn_type_cd 																					as transaction_type_cd
+	,i.txn_channel_cd 																				as channel_cd
+	,i.item_cogs																					as item_cogs_amt
+	,ROUND(i.item_list_price,2) 																	as list_price_amt
+	,i.item_sold_qty 																				as item_sold_qty
+	,ROUND(i.item_sold_price,2) 																	as item_sold_amt
+	,ROUND(i.item_gross_amt,2) 																		as item_gross_amt
+	,ROUND(i.item_disc_amt,2) 																		as item_disc_amt
+	,ROUND(i.item_net_amt,2) 																		as item_net_amt
+	,ret.txn_nbr 																					as item_return_from_transaction_num
+	,i.item_ret_cd 																					as item_return_cd
+	,EXTRACT(DATE FROM i.item_ret_dt) 																as item_return_dt
+	,i.item_ret_qty 																				as item_return_qty
+	,ROUND(i.item_ret_amt,2) 																		as item_return_amt
+	,case 
+		when i.full_price_flg = 'N' 
+			THEN 0 
+		else 1			
+	END 																							as full_price_ind
+	,20160101 																						as batch_id
+FROM    edl_stage.pre_hst_transaction_item i
+JOIN edl_stage.pre_hst_transaction_header h 
+		on i.txn_nbr =h.txn_nbr
+LEFT JOIN (select 
+					txn_nbr
+					,txn_id 
+ 				from edl_stage.pre_hst_transaction_header ret
+ 				)ret
+		on ret.txn_id = i.item_ret_from_txn_id
+LEFT JOIN edl_stage.pre_lu_product_vw as p 
+ 		on i.product_id =p.product_id
+LEFT JOIN edl_stage.pre_ann_calendar as cal
+ 		ON CAST (day_dt AS date) = EXTRACT(date FROM i.txn_dt)
+    where EXTRACT(DATE FROM i.txn_dt) between '2016-01-01' and '2019-05-04'
+!
+
+rc_check $? "One time history load to mart"

@@ -1,0 +1,23 @@
+create or replace view edl_stage.plus_vmci015_cust_ccard_curr as
+SELECT
+stg.ID_CUST
+,stg.ID_ACCOUNT
+,stg.CD_CCARD_PROCESS_STATUS
+,stg.CD_BANK_CARD_TYPE
+,stg.IN_BANK_CARD_SRCE
+,stg.DA_BANK_CARD_ADDED
+,stg.IN_FB_ACCT_TYPE
+,stg.FL_ACCOUNT_CLOSED
+,stg.FL_ACCOUNT_ACTIVE
+,stg.CD_ACCOUNT_TERM
+,stg.DA_APPLY_HOUSCARD
+,stg.IN_CUST_SOURCE_2ND
+,stg.CD_BNK_CRD_SUBTYPE
+,stg.DA_CARD_ISSUED
+,stg.DA_TMCI015_ROW_UPDATED
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CUST,lbca.ID_ACCOUNT,lbca.CD_CCARD_PROCESS_STATUS order by lbca.extract_ts desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci015_cust_ccard as lbca
+)  as stg where row_num=1

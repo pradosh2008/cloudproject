@@ -1,0 +1,25 @@
+--This is the first step onetime step we have to do 
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.ann_ann_aw_transactions_header
+
+--This is the first thing needs to happen
+--gsutil -m rm -r 'gs://p-asna-datasink-003/ann_ann_aw_transactions_header/'
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_aw_transactions_header  'gs://p-asna-datasink-003/ann_ann_aw_transactions_header/*'
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+SELECT c.* from edl_landing.ann_ann_aw_transactions_header c
+!
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_ann_aw_transactions_header_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.ann_ann_aw_transactions_header c
+left join edl_landing.ann_ann_aw_transactions_header w
+    on  w.if_entry_no = c.if_entry_no
+    where w.if_entry_no is null
+!
+
+bq cp --force edl_stage.ann_ann_aw_transactions_header edl_archive.ann_ann_aw_transactions_header
+bq cp --force edl_stage.ann_ann_aw_transactions_header_new edl_stage.ann_ann_aw_transactions_header
+bq rm --force edl_stage.ann_ann_aw_transactions_header_new
+

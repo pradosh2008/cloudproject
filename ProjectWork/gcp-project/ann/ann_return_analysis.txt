@@ -1,0 +1,67 @@
+select EXTRACT(YEAR FROM  transaction_date) AS year,EXTRACT(MONTH FROM  transaction_date) AS month ,
+sum(
+        case 
+            when h.tender_total=l.tender_total_from_line then 1 
+            else 0 
+        end)/count(*) as perc_matching_cnt from
+edl_landing.ann_ann_aw_transactions_header as h
+inner join
+(select if_entry_no,sum(transact_sum1)-sum(transact_sum2)-sum(return_sum) as tender_total_from_line from
+(select 
+if_entry_no
+,case when 
+		(line_object_type=1 and line_action=1) or
+		(line_object_type=5	and	line_action=11) or
+		(line_object_type=2	and	line_action=11) or
+        (line_object_type=7	and	line_action=16) or
+		(line_object_type=4	and	line_action=1 and db_cr_none=-1) or
+		(line_object_type=16 and	line_action=21) then gross_line_amount- pos_discount_amount* (-1)*db_cr_none 
+		else 0 end as transact_sum1
+,case  when
+		(line_object_type=16 and	line_action=20) or
+		(line_object_type=4	and	line_action=1 and db_cr_none=1) or
+		(line_object_type=7	and	line_action=15)  then gross_line_amount- pos_discount_amount* (1)*db_cr_none
+		else 0 	end as transact_sum2
+,case  when
+		(line_object_type=1 and line_action=2) or
+		(line_object_type=5	and line_action=12) or
+		(line_object_type=2	and line_action=12) then gross_line_amount- pos_discount_amount* (1)*db_cr_none
+		else 0 end as return_sum
+from edl_landing.ann_ann_aw_transactions_line where db_cr_none in (1,-1) and line_void_flag='0')
+group by if_entry_no) as l
+on h.if_entry_no=l.if_entry_no 
+group by year,month;
+
+
+---------------------------------------------------------------------------------------------------------
+
+select h.if_entry_no,h.tender_total,l.tender_total_from_line
+from
+edl_landing.ann_ann_aw_transactions_header as h
+inner join
+(select if_entry_no,sum(transact_sum1)-sum(transact_sum2)-sum(return_sum) as tender_total_from_line from
+(select 
+if_entry_no
+,case when 
+		(line_object_type=1 and line_action=1) or
+		(line_object_type=5	and	line_action=11) or
+		(line_object_type=2	and	line_action=11) or
+    (line_object_type=7	and	line_action=16) or
+		(line_object_type=4	and	line_action=1 and db_cr_none=-1) or
+		(line_object_type=16 and	line_action=21) then gross_line_amount- pos_discount_amount* (-1)*db_cr_none 
+		else 0 end as transact_sum1
+,case  when
+		(line_object_type=16 and	line_action=20) or
+		(line_object_type=4	and	line_action=1 and db_cr_none=1 ) or
+		(line_object_type=7	and	line_action=15)  then gross_line_amount- pos_discount_amount* (1)*db_cr_none
+		else 0 	end as transact_sum2
+,case  when
+		(line_object_type=1 and line_action=2) or
+		(line_object_type=5	and line_action=12) or
+		(line_object_type=2	and line_action=12) then gross_line_amount- pos_discount_amount* (1)*db_cr_none
+		else 0 end as return_sum
+from edl_landing.ann_ann_aw_transactions_line where db_cr_none in (1,-1) and line_void_flag='0')
+group by if_entry_no) as l
+on h.if_entry_no=l.if_entry_no
+where  h.tender_total!=l.tender_total_from_line
+;

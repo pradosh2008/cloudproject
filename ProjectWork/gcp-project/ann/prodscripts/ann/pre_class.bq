@@ -1,0 +1,59 @@
+--select * from `edl_stage.pre_sap_prod_hier` 
+
+#loading the temporary table in staging (it has new records)
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_class --use_legacy_sql=false <<!
+
+#create or replace table analytic_mart.pre_class as
+select class_key
+,class_cd
+,class_des
+,brand_cd
+,brand_name
+,division_id
+,division_des
+,department_cd
+,department_des
+,batch_id
+from
+(select 
+FARM_FINGERPRINT(CAST(class_id AS STRING)) as class_key
+,class_id as class_cd
+,class_name as class_des
+,brand_id as brand_cd
+,brand_name
+,div_id as division_id
+,div_name as division_des
+,dept_id as department_cd
+,dept_name as department_des
+,batch_id
+,row_number() over (partition by class_id order by batch_id desc) rn
+ from edl_stage.pre_sap_prod_hier)
+where rn = 1
+!
+rc_check $? "Load incremental pre_sap_prod_hier data from edl_stage table into temp table"
+
+#load edl_stage.pre_sap_prod_hier to temporary table for incremental load
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_class_new --use_legacy_sql=false <<!
+SELECT * FROM edl_stage.pre_class
+!
+rc_check $? "Load new data into analytic_mart pre_class_new table"
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.pre_class_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.pre_class c
+left join edl_stage.pre_class w
+    on  w.store_id = c.store_id
+        where w.store_id is null
+!
+rc_check $? "append old data to temp table which has incremental data"
+
+#cleansing and archival
+bq cp --force analytic_mart.pre_class edl_archive.pre_class
+rc_check $? "archive copy"
+bq cp --force analytic_mart.pre_class_new analytic_mart.pre_class
+rc_check $? "replace the temp table as the actual table"
+bq rm --force analytic_mart.pre_class_new
+rc_check $? "drop the temp table in analytic_mart"
+bq rm --force edl_stage.pre_class
+rc_check $? "drop the temp table in stage"

@@ -1,0 +1,300 @@
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_atg_transactions  'gs://p-asna-datasink-003/ann_ann_atg_transactions/*'
+
+#loading the temporary table in staging
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_header_new --use_legacy_sql=false <<!
+select  distinct
+        orderid
+        ,profileid
+        ,orderstate
+        ,createdbyorder
+        ,originoforder
+        ,createddate
+        ,submitteddate
+        ,lastmodifieddate
+        ,completeddate
+        ,agentid
+        ,saleschannel
+        ,siteid
+        ,isassociateuser
+        ,associatenumber
+        ,ipaddress
+        ,couponcode
+        ,useremailaddress
+        ,international
+        ,storeassoclogin
+        ,storeassocstoreid
+        ,storeassocreason
+        ,itempriceoverridden
+        ,shippriceoverridden
+        ,priceinfotype
+        ,rawsubtotal
+        ,orderpriceinfotax
+        ,shipping
+        ,priceinfocurrencycode
+        ,priceinfoamount
+        ,priceinfodiscounted
+        ,priceinfoamountisfinal
+        ,priceinfofullprice
+        ,priceinfononfullprice
+        ,partnerid
+        ,loyaltyid
+        ,mask_identifier
+        ,batch_id
+        from         
+            (select
+                    orderid
+                    ,profileid
+                    ,orderstate
+                    ,createdbyorder
+                    ,originoforder
+                    ,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",createddate) as createddate
+                    --,createddate
+                    ,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",submitteddate) as submitteddate
+                    --,submitteddate
+                    ,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) as lastmodifieddate
+                    --,lastmodifieddate
+                    --,PARSE_TIMESTAMP('%Y/%m/%d:%H:%M',completeddate) as completeddate --- No Date in this 
+                    ,completeddate
+                    ,agentid
+                    ,saleschannel
+                    ,siteid
+                    ,isassociateuser
+                    ,associatenumber
+                    ,ipaddress
+                    ,couponcode
+                    ,useremailaddress
+                    ,international
+                    ,storeassoclogin
+                    ,storeassocstoreid
+                    ,storeassocreason
+                    ,itempriceoverridden
+                    ,shippriceoverridden
+                    ,priceinfotype
+                    ,CAST(rawsubtotal as FLOAT64) as rawsubtotal
+                    ,CAST(orderpriceinfotax as FLOAT64) as orderpriceinfotax
+                    ,CAST(shipping as FLOAT64) as shipping
+                    ,priceinfocurrencycode
+                    ,CAST(priceinfoamount as FLOAT64) as priceinfoamount
+                    ,priceinfodiscounted
+                    ,priceinfoamountisfinal
+                    ,CAST(priceinfofullprice as FLOAT64) as priceinfofullprice
+                    ,CAST(priceinfononfullprice as FLOAT64) as priceinfononfullprice
+                    ,partnerid
+                    ,loyaltyid
+                    ,mask_identifier
+                    ,batch_id
+                    ,dense_rank() over (PARTITION BY orderid order by atg.batch_id desc,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) desc) rn /*--- Get latest Batch_id,lastmodifieddate*/
+                    from edl_landing.ann_ann_atg_transactions atg
+          where submitteddate not like "%sub%"
+                )where rn = 1
+!
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_commerceitemadjustments_new --use_legacy_sql=false <<!
+SELECT 
+        orderid
+        ,commerceitemid
+        ,catalogrefid
+        ,commerceitemstate
+        ,CAST(totaladjustment_Saleprice AS FLOAT64) AS totaladjustment_Saleprice
+        ,CAST(quantityadjusted_Saleprice AS INT64) AS quantityadjusted_Saleprice
+        ,CAST(totaladjustment_ItemDiscount AS FLOAT64) AS totaladjustment_ItemDiscount
+        ,CAST(quantityadjusted_ItemDiscount AS INT64) AS quantityadjusted_ItemDiscount
+        ,CAST(totaladjustment_SA_PR_OV_ITEM AS FLOAT64) AS totaladjustment_SA_PR_OV_ITEM
+        ,CAST(quantityadjusted_SA_PR_OV_ITEM AS INT64) AS quantityadjusted_SA_PR_OV_ITEM
+        ,CAST(totaladjustment_Listprice AS FLOAT64) AS totaladjustment_Listprice
+        ,CAST(quantityadjusted_Listprice AS INT64) AS quantityadjusted_Listprice
+        ,CAST(totaladjustment_Agentpriceoverride AS FLOAT64) AS totaladjustment_Agentpriceoverride
+        ,CAST(quantityadjusted_Agentpriceoverrid AS INT64) AS quantityadjusted_Agentpriceoverrid
+        ,CAST(totaladjustment_other AS FLOAT64) AS totaladjustment_other
+        ,CAST(quantityadjusted_other AS INT64) AS quantityadjusted_other
+        ,batch_id
+        FROM
+            (select
+                orderid
+                ,commerceitemid
+                ,catalogrefid
+                ,commerceitemstate
+                ,MAX(CASE when adjustmentdescription = 'Sale price' 
+                            then totaladjustment 
+                    end)                                                         AS totaladjustment_Saleprice
+                ,MAX(CASE when adjustmentdescription = 'Sale price'     
+                            then quantityadjusted     
+                    end)                                                         AS quantityadjusted_Saleprice
+                ,MAX(CASE when adjustmentdescription = 'Item Discount'     
+                            then totaladjustment     
+                    end)                                                         AS totaladjustment_ItemDiscount
+                ,MAX(CASE when adjustmentdescription = 'Item Discount'     
+                            then quantityadjusted     
+                    end)                                                         AS quantityadjusted_ItemDiscount
+                ,MAX(CASE when adjustmentdescription = 'SA_PR_OV_ITEM'     
+                            then totaladjustment     
+                    end)                                                         AS totaladjustment_SA_PR_OV_ITEM
+                ,MAX(CASE when adjustmentdescription = 'SA_PR_OV_ITEM'     
+                            then quantityadjusted     
+                    end)                                                         AS quantityadjusted_SA_PR_OV_ITEM
+                ,MAX(CASE when adjustmentdescription = 'List price'     
+                            then totaladjustment     
+                    end)                                                         AS totaladjustment_Listprice
+                ,MAX(CASE when adjustmentdescription = 'List price' 
+                            then quantityadjusted 
+                    end)                                                         AS quantityadjusted_Listprice
+                ,MAX(CASE when adjustmentdescription = 'Agent price override' 
+                            then totaladjustment 
+                    end)                                                         AS totaladjustment_Agentpriceoverride
+                ,MAX(CASE when adjustmentdescription = 'Agent price override' 
+                            then quantityadjusted 
+                    end)                                                         AS quantityadjusted_Agentpriceoverrid
+                ,MAX(CASE when adjustmentdescription = 'NotAvailable' 
+                            or adjustmentdescription is null 
+                            then totaladjustment 
+                    end)                                                         AS totaladjustment_other
+                ,MAX(CASE when adjustmentdescription = 'NotAvailable' 
+                            or adjustmentdescription is null 
+                            then quantityadjusted 
+                    end)                                                         AS quantityadjusted_other
+                ,batch_id
+                ,lastmodifieddate
+                ,dense_rank() over (PARTITION BY orderid order by atg.batch_id desc,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) desc) rn
+            FROM edl_landing.ann_ann_atg_transactions atg            
+            where submitteddate not like "%sub%"
+            GROUP BY 1,2,3,4,batch_id,lastmodifieddate
+        ) 
+        where rn = 1
+
+!
+
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_atg_order_commerceItem_new --use_legacy_sql=false <<!
+select distinct
+    orderid
+    ,profileid
+    ,commerceitemid
+    ,commerceitemtype
+    ,producttype
+    ,catalogrefid
+    ,commerceitemquantity
+    ,finalsale
+    ,giftcardstatus
+    ,message
+    ,quantitydiscounted
+    ,saleprice
+    ,listprice
+    ,onsale
+    ,rawtotalprice
+    ,itempriceinfoorderdiscountshare
+    ,detaileditempriceinfoquantity
+    ,detaileditempriceinfoorderdiscountshare
+    ,detaileditempriceinfotax
+    ,ordermanualadjustmentshare
+    ,commerceitempriceinfoamount
+    ,commerceitempriceinfodiscounted
+    ,commerceitempriceinfoamountisfinal
+    ,commerceitempriceinfofullprice
+    ,commerceitempriceinfononfullprice
+    ,catalogid
+    ,catalogkey
+    ,productid
+    ,commerceitemstate
+    ,commerceitemstatedetail
+    ,order_ref
+    ,lastmodified
+    ,maxsvscalls
+    ,giftboxed
+    ,messageto
+    ,messagefrom
+    ,commerceitempartnerid
+     ,batch_id
+    from
+        (select 
+                orderid
+                ,profileid
+                ,commerceitemid
+                ,commerceitemtype
+                ,producttype
+                ,catalogrefid
+                ,CAST(commerceitemquantity as INT64) as commerceitemquantity
+                ,finalsale
+                ,giftcardstatus
+                ,message
+                ,CAST(quantitydiscounted as INT64) as quantitydiscounted
+                ,CAST(saleprice as FLOAT64) as saleprice
+                ,CAST(listprice as FLOAT64) as listprice 
+                ,onsale
+                ,CAST(rawtotalprice as FLOAT64) as rawtotalprice
+                ,CAST(itempriceinfoorderdiscountshare as FLOAT64) as itempriceinfoorderdiscountshare
+                ,CAST(detaileditempriceinfoquantity as INT64) as detaileditempriceinfoquantity
+                ,CAST(detaileditempriceinfoorderdiscountshare as FLOAT64) as detaileditempriceinfoorderdiscountshare
+                ,CAST(detaileditempriceinfotax as FLOAT64) as detaileditempriceinfotax
+                ,CAST(ordermanualadjustmentshare as FLOAT64) as ordermanualadjustmentshare
+                ,CAST(commerceitempriceinfoamount as FLOAT64) as commerceitempriceinfoamount
+                ,commerceitempriceinfodiscounted
+                ,commerceitempriceinfoamountisfinal
+                ,CAST(commerceitempriceinfofullprice as FLOAT64) as commerceitempriceinfofullprice
+                ,CAST(commerceitempriceinfononfullprice as FLOAT64) as commerceitempriceinfononfullprice
+                ,catalogid
+                ,catalogkey
+                ,productid
+                ,commerceitemstate
+                ,commerceitemstatedetail
+                ,order_ref
+                ,CAST(lastmodified AS TIMESTAMP) as lastmodified
+                ,maxsvscalls
+                ,giftboxed
+                ,messageto
+                ,messagefrom
+                ,commerceitempartnerid
+                    ,batch_id
+                ,dense_rank() over (PARTITION BY orderid order by atg.batch_id desc,PARSE_TIMESTAMP("%Y/%m/%d:%H:%M",lastmodifieddate) desc) rn /*--- Get latest Batch_id,lastmodifieddate*/
+        from edl_landing.ann_ann_atg_transactions atg
+    where submitteddate not like "%sub%"
+    )a    
+    where rn = 1
+!
+
+
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_header_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_atg_order_header c
+left join edl_stage.pre_atg_order_header_new w
+    on  w.orderid = c.orderid
+    where w.orderid is null
+!
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_commerceitemadjustments_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_atg_order_commerceitemadjustments c
+left join edl_stage.pre_atg_order_commerceitemadjustments_new w
+    on  w.orderid = c.orderid
+	and w.commerceitemid=c.commerceitemid
+    where w.orderid is null
+!
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_commerceItem_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_atg_order_commerceItem c
+left join edl_stage.pre_atg_order_commerceItem_new w
+    on  w.orderid = c.orderid
+	and w.commerceitemid=c.commerceitemid
+    where w.orderid is null
+!
+
+
+#cleansing and archival
+bq cp --force edl_stage.pre_atg_order_header edl_archive.pre_atg_order_header
+bq cp --force edl_stage.pre_atg_order_header_new edl_stage.pre_atg_order_header
+bq rm --force edl_stage.pre_atg_order_header_new
+
+bq cp --force edl_stage.pre_atg_order_commerceitemadjustments edl_archive.pre_atg_order_commerceitemadjustments
+bq cp --force edl_stage.pre_atg_order_commerceitemadjustments_new edl_stage.pre_atg_order_commerceitemadjustments
+bq rm --force edl_stage.pre_atg_order_commerceitemadjustments_new
+
+bq cp --force edl_stage.pre_atg_order_commerceItem edl_archive.pre_atg_order_commerceItem
+bq cp --force edl_stage.pre_atg_order_commerceItem_new edl_stage.pre_atg_order_commerceItem
+bq rm --force edl_stage.pre_atg_order_commerceItem_new

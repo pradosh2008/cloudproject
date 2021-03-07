@@ -1,0 +1,489 @@
+bq query --use_legacy_sql=false 'drop table `p-asna-analytics-002.edl_landing.f_txn_item`'
+bq cp --force edl_landing.f_txn_item work.f_txn_item
+bq cp --force edl_landing.f_txn_item edl_landing.ann_hst_f_txn_item
+
+
+gscp -rd ascena_analytic_mart ann_ann_aw_transactions_header >ann_ann_aw_transactions_header.out 2>&1
+gscp -rd ascena_analytic_mart ann_ann_aw_transactions_line >ann_ann_aw_transactions_line.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_aw_transactions_linenotes >ann_ann_aw_transactions_linenotes.out 2>&1
+gscp -rd ascena_analytic_mart ann_ann_aw_transactions_merchdtl >ann_ann_aw_transactions_merchdtl.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_aw_transactions_returndtl >ann_ann_aw_transactions_returndtl.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_aw_transactions_taxdetail >ann_ann_aw_transactions_taxdetail.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_aw_transactions_discountdtl >ann_ann_aw_transactions_discountdtl.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_atg_transactions >ann_ann_atg_transactions.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_atg_returns >ann_ann_atg_returns.out 2>&1
+#gscp -rd ascena_analytic_mart ann_ann_bi_transaction_fpnfp >ann_ann_bi_transaction_fpnfp.out 2>&1
+
+
+run_hql -f ann/ann_ann_aw_transactions_header.hql 70
+run_hql -f ann/ann_ann_aw_transactions_line.hql 70
+run_hql -f ann/ann_ann_aw_transactions_merchdtl.hql 70
+
+--This is the first step onetime step we have to do 
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_header
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_line
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_linenotes
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_merch_detail
+--bq cp --force edl_landing.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_return_detail
+
+
+--history table copy
+bq cp --force edl_landing.ann_hst_f_txn_header edl_stage.pre_hst_transaction_header
+bq cp --force edl_landing.ann_hst_f_txn_item edl_stage.pre_hst_transaction_item
+bq cp --force edl_landing.ann_hst_f_txn_item_discount edl_stage.pre_hst_transaction_item_discount
+bq cp --force edl_landing.ann_hst_f_txn_tender edl_stage.pre_hst_transaction_tender
+
+
+-- intial backup
+bq cp --force edl_stage.ann_ann_aw_transactions_header work.pre_aw_transaction_header
+bq cp --force edl_stage.ann_ann_aw_transactions_header edl_stage.pre_aw_transaction_header
+
+bq cp --force edl_landing.ann_ann_aw_transactions_line edl_stage.pre_aw_transaction_line
+bq cp --force edl_landing.ann_ann_aw_transactions_line work.ann_ann_aw_transactions_line
+
+bq cp --force edl_landing.ann_ann_aw_transactions_merchdtl edl_stage.pre_aw_transaction_merch_detail
+bq cp --force edl_landing.ann_ann_aw_transactions_merchdtl work.ann_ann_aw_transactions_merchdtl
+
+bq cp --force edl_landing.ann_ann_atg_transactions work.ann_ann_atg_transactions
+
+bq cp --force edl_stage.pre_aw_transaction_header work.pre_aw_transaction_header
+bq cp --force edl_stage.pre_aw_transaction_header_convert edl_stage.pre_aw_transaction_header
+
+
+bq cp --force edl_stage.pre_aw_transaction_line work.pre_aw_transaction_line
+bq cp --force edl_stage.pre_aw_transaction_merch_detail work.pre_aw_transaction_merch_detail
+
+bq cp --force edl_stage.pre_aw_transaction_line_convert edl_stage.pre_aw_transaction_line
+bq cp --force edl_stage.pre_aw_transaction_merch_detail_convert edl_stage.pre_aw_transaction_merch_detail
+
+bq cp --force edl_landing.ann_ann_atg_transactions edl_landing.ann_ann_atg_transactions_old
+
+bq cp --force edl_archive.pre_atg_order_header edl_stage.pre_atg_order_header
+bq cp --force edl_archive.pre_atg_order_commerceitemadjustments edl_stage.pre_atg_order_commerceitemadjustments
+bq cp --force edl_archive.pre_atg_order_commerceItem edl_stage.pre_atg_order_commerceItem
+
+bq cp --force edl_landing.ann_ann_atg_returns edl_landing.ann_ann_atg_returns_old
+
+8/12/2019	1/1/2011
+
+
+-- replace and edit
+%s/\<edl_stage.ann_ann_aw_transactions_header\>/edl_stage.pre_aw_transaction_header/g
+%s/\<edl_stage.ann_ann_aw_transactions_line\>/edl_stage.pre_aw_transaction_line/g
+%s/\<edl_stage.ann_ann_aw_transactions_merchdtl\>/edl_stage.pre_aw_transaction_merch_detail/g
+
+
+
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_header  
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_line
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_linenotes
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_merchdtl
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_returndtl
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_taxdetail
+select max(batch_id) from edl_stage.ann_ann_aw_transactions_discountdtl
+select max(batch_id) from edl_stage.ann_ann_bi_transaction_fpnfp
+
+select max(batch_id) from edl_stage.pre_aw_transaction_header 20190729
+select max(batch_id) from edl_stage.pre_aw_transaction_line 20190729
+select max(batch_id) from edl_stage.pre_aw_transaction_linenotes 20190730
+select max(batch_id) from edl_stage.pre_aw_transaction_merch_detail 20190729
+select max(batch_id) from edl_stage.pre_aw_transaction_return_detail 20190730
+select max(batch_id) from edl_stage.pre_aw_transaction_tax_detail 20190730
+select max(batch_id) from edl_stage.pre_aw_transaction_discount_detail 20190730
+
+
+ann_ann_aw_transactions_authdtl
+ann_ann_aw_transactions_custdtl
+ann_ann_aw_transactions_expandcustdtl
+select max(batch_id) from edl_landing.ann_ann_atg_transactions
+select max(batch_id) from edl_landing.ann_ann_atg_returns
+
+
+select max(batch_id) from edl_stage.pre_atg_order_header 20190812   30
+select max(batch_id) from edl_stage.pre_atg_order_commerceItem
+select max(batch_id) from edl_stage.pre_atg_order_commerceitemadjustments
+select max(batch_id) from edl_stage.pre_atg_order_return
+
+
+
+
+nohup edl_hql_to_gcp -t ann_ann_bi_transaction_fpnfp 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_sap_exchrate 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_atg_transactions 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_atg_returns 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_merchdtl 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_linenotes 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_line 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_header 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_returndtl 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_taxdetail 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_aw_transactions_discountdtl 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_sap_product 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_sap_style 5 &
+sleep 30
+nohup edl_hql_to_gcp -t ann_ann_sap_store 5
+
+
+% sed -e "s/^M//" all_aw_hql.sh > all_aw_hql.sh
+
+
+Time taken :
+INFO  : Table ascena_analytic_mart.ann_ann_atg_transactions stats: [numFiles=5, numRows=8186809, totalSize=1028290186, rawDataSize=0]
+No rows affected (3533.006 seconds)
+
+
+
+
+
+--SELECT transaction_nbr, item_sku FROM `p-asna-analytics-002.edl_stage.pre_ann_ann_bi_transaction_fpnfp` group by transaction_nbr, item_sku having count(*)>1
+
+SELECT * FROM `p-asna-analytics-002.edl_stage.pre_ann_ann_bi_transaction_fpnfp` where transaction_nbr='1484:2:20180909:7044' and item_sku='25934892'
+--1484:2:20180909:7044
+--25934892
+
+-- transaction_nbr	transaction_type_cd	item_sku	full_price_flg	batch_id
+-- 1484:2:20180909:7044	PUR	25934892	F	20190630
+-- 1484:2:20180909:7044	PUR	25934892	N	20190630
+
+
+select max(batch_id) from ascena_staging.ann_ann_bi_transaction_fpnfp;
+select max(batch_id) from ascena_staging.ann_ann_sap_exchrate;
+select max(batch_id) from ascena_staging.ann_ann_atg_transactions;
+select max(batch_id) from ascena_staging.ann_ann_atg_returns;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_merchdtl;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_linenotes;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_line;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_header;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_returndtl;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_taxdetail;
+select max(batch_id) from ascena_staging.ann_ann_aw_transactions_discountdtl;
+select max(batch_id) from ascena_staging.ann_ann_sap_product;
+select max(batch_id) from ascena_staging.ann_ann_sap_style;
+select max(batch_id) from ascena_staging.ann_ann_sap_store;
+
+ 4from_unixtime(UNIX_TIMESTAMP(a.last_update_date,"MM/dd/yyyy HH:mm:ss"))
+
+drop table ascena_analytic_mart.ann_ann_aw_transactions_header;
+CREATE TABLE IF NOT EXISTS ascena_analytic_mart.ann_ann_aw_transactions_header (
+ if_entry_no                decimal(13,0)         
+ ,interface_control_flag     decimal(3,0)          
+ ,record_type                string                
+ ,store_no                   decimal(10,0)         
+ ,register_no                decimal(5,0)          
+ ,transaction_date           date                  
+ ,entry_date_time            string                
+ ,transaction_series         string                
+ ,transaction_no             decimal(10,0)         
+ ,cashier_no                 decimal(10,0)         
+ ,transaction_category       decimal(3,0)          
+ ,tender_total               decimal(13,0)         
+ ,transaction_void_flag      decimal(5,0)          
+ ,exception_flag             decimal(1,0)          
+ ,deposit_declaration_flag   decimal(1,0)          
+ ,closeout_flag              decimal(1,0)          
+ ,media_count_flag           decimal(1,0)          
+ ,tax_override_flag          decimal(1,0)          
+ ,pos_tax_jurisdiction       string                
+ ,employee_no                decimal(9,0)          
+ ,transaction_remark         string                
+ ,updated_by_user_name       string                
+ ,company_no                 decimal(5,0)          
+ ,till_no                    decimal(29,0)         
+ ,batch_id                   bigint                           
+ )
+STORED AS AVRO
+TBLPROPERTIES("avro.output.codec"="snappy")
+;
+
+CREATE TABLE IF NOT EXISTS  ascena_analytic_mart.ann_ann_aw_transactions_line(
+ if_entry_no               decimal(13,0)         
+ ,interface_control_flag    decimal(3,0)          
+ ,record_type               string                
+ ,line_id                   decimal(5,0)          
+ ,line_object_type          decimal(3,0)          
+ ,line_object               decimal(5,0)          
+ ,line_action               decimal(3,0)          
+ ,reference_no              string                
+ ,gross_line_amount         decimal(19,7)         
+ ,pos_discount_amount       decimal(19,7)         
+ ,db_cr_none                decimal(2,0)          
+ ,reference_type            decimal(3,0)          
+ ,voiding_reversal_flag     decimal(5,0)          
+ ,line_void_flag            string                
+ ,batch_id                  bigint                               
+ )
+STORED AS AVRO
+TBLPROPERTIES("avro.output.codec"="snappy")
+;
+
+drop table ascena_analytic_mart.ann_ann_aw_transactions_merchdtl;
+CREATE TABLE IF NOT EXISTS  ascena_analytic_mart.ann_ann_aw_transactions_merchdtl(
+ if_entry_no                    decimal(13,0)         
+ ,interface_control_flag         decimal(3,0)          
+ ,record_type                    string                
+ ,line_id                        decimal(5,0)          
+ ,merchandise_category           decimal(4,0)          
+ ,upc_lookup_division            decimal(2,0)          
+ ,upc_no                         decimal(14,0)         
+ ,sku_id                         decimal(14,0)         
+ ,style_reference_id             decimal(13,0)         
+ ,class_code                     decimal(10,0)         
+ ,subclass_code                  decimal(5,0)          
+ ,pos_identifier_type            decimal(3,0)          
+ ,pos_identifier                 string                
+ ,pos_dept_class                 decimal(10,0)         
+ ,units                          decimal(15,0)         
+ ,salesperson                    decimal(10,4)         
+ ,salesperson2                   decimal(10,0)         
+ ,ticket_price                   decimal(13,0)         
+ ,sold_at_price                  decimal(13,0)         
+ ,price_override                 string                
+ ,upc_missing_in_pos_iplu_flag   string                
+ ,scanned                        decimal(11,0)         
+ ,upc_on_file                    decimal(1,0)          
+ ,plu_price                      decimal(13,0)         
+ ,origination_store_no           decimal(10,0)         
+ ,source_store_no                decimal(10,0)         
+ ,fulfillment_store_no           decimal(10,0)         
+ ,batch_id                       bigint                
+ )
+STORED AS AVRO
+TBLPROPERTIES("avro.output.codec"="snappy")
+;
+
+
+drop table ascena_analytic_mart.ann_ann_aw_transactions_header;
+CREATE TABLE IF NOT EXISTS ascena_analytic_mart.ann_ann_aw_transactions_header (
+ if_entry_no               INT
+ ,interface_control_flag    INT
+ ,record_type                string                
+ ,store_no                  INT
+ ,register_no               INT
+ ,transaction_date           date                  
+ ,entry_date_time            timestamp                
+ ,transaction_series         string                
+ ,transaction_no            INT
+ ,cashier_no                INT
+ ,transaction_category      INT
+ ,tender_total              INT
+ ,transaction_void_flag     INT
+ ,exception_flag            INT
+ ,deposit_declaration_flag  INT
+ ,closeout_flag             INT
+ ,media_count_flag          INT
+ ,tax_override_flag         INT
+ ,pos_tax_jurisdiction       string                
+ ,employee_no               INT
+ ,transaction_remark         string                
+ ,updated_by_user_name       string                
+ ,company_no                INT
+ ,till_no                    decimal(29,0)         
+ ,batch_id                   bigint                                        
+ )
+STORED AS AVRO
+TBLPROPERTIES("avro.output.codec"="snappy")
+;
+
+set hivevar:days=${p1};
+where to_date(from_unixtime(unix_timestamp(cast(batch_id as string),'yyyyMMdd'), 'yyyy-MM-dd')) > date_sub(current_date,${days})
+
+ALTER TABLE ascena_analytic_mart.ann_ann_aw_transactions_merchdtl CHANGE sku_id  sku_id  string;
+ALTER TABLE ascena_analytic_mart.ann_ann_aw_transactions_merchdtl CHANGE ticket_price  ticket_price  float;
+ALTER TABLE ascena_analytic_mart.ann_ann_aw_transactions_merchdtl CHANGE sold_at_price  sold_at_price  float;
+ALTER TABLE ascena_analytic_mart.ann_ann_aw_transactions_merchdtl CHANGE salesperson  salesperson  int; 
+ALTER TABLE ascena_analytic_mart.ann_ann_aw_transactions_header CHANGE tender_total  tender_total  float;
+
+   
+edl side 
+---------
+select count(*) from ascena_staging.ann_ann_aw_transactions_header
+where to_date(from_unixtime(unix_timestamp(cast(batch_id as string),'yyyyMMdd'), 'yyyy-MM-dd')) >= date_format(from_unixtime(unix_timestamp(cast('2018-09-01' as string),'yyyy-MM-dd')),'yyyy-MM-dd') --37685849
+
+gcp side 
+-------
+--SELECT count(*) FROM `p-asna-analytics-002.work.ann_ann_aw_transactions_header` LIMIT 1000 -- after first load 32136258
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_header` LIMIT 1000 --after incremental load 37685849 
+--SELECT max(batch_id) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_header` LIMIT 1000--20190728
+--SELECT if_entry_no FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_header` group by if_entry_no having count(*)>1 --no duplicates
+--SELECT if_entry_no FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_header` where if_entry_no is null --noresult
+
+
+
+select count(*) from ascena_staging.ann_ann_aw_transactions_line
+where to_date(from_unixtime(unix_timestamp(cast(batch_id as string),'yyyyMMdd'), 'yyyy-MM-dd')) >= date_format(from_unixtime(unix_timestamp(cast('2018-09-01' as string),'yyyy-MM-dd')),'yyyy-MM-dd')  -- 465870232
+
+gcp side
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_line` LIMIT 1000  --after 1st load 392288017
+--SELECT if_entry_no, line_id FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_line` group by if_entry_no, line_id having count(*)>1 -- no duplicates
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_line`  -- after 2nd load 465870232
+--SELECT if_entry_no, line_id FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_line` group by if_entry_no, line_id having count(*)>1 --no duplicates
+--SELECT if_entry_no FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_line` where if_entry_no is null -- no result
+
+
+edl side 
+select count(*) from ascena_staging.ann_ann_aw_transactions_merchdtl
+where to_date(from_unixtime(unix_timestamp(cast(batch_id as string),'yyyyMMdd'), 'yyyy-MM-dd')) >= date_format(from_unixtime(unix_timestamp(cast('2018-09-01' as string),'yyyy-MM-dd')),'yyyy-MM-dd') --117032288
+
+
+gcp side 
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_merch_detail` --99858091  --after 1st load
+--SELECT if_entry_no, line_id FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_merch_detail` group by if_entry_no, line_id having count(*)>1
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_merch_detail` --117032288 after 2nd incremental load
+--SELECT if_entry_no, line_id FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_merch_detail` group by if_entry_no, line_id having count(*)>1
+--SELECT if_entry_no FROM `p-asna-analytics-002.edl_stage.pre_aw_transaction_merch_detail` where if_entry_no is null -- no result
+
+
+CREATE TABLE IF NOT EXISTS ascena_analytic_mart.ann_ann_aw_transactions_header (
+  if_entry_no                decimal(13,0)         
+ ,interface_control_flag     decimal(3,0)          
+ ,record_type                string                
+ ,store_no                   decimal(10,0)         
+ ,register_no                decimal(5,0)          
+ ,transaction_date           date                  
+ ,entry_date_time            string                
+ ,transaction_series         string                
+ ,transaction_no             decimal(10,0)         
+ ,cashier_no                 decimal(10,0)         
+ ,transaction_category       decimal(3,0)          
+ ,tender_total               decimal(13,0)         
+ ,transaction_void_flag      decimal(5,0)          
+ ,exception_flag             decimal(1,0)          
+ ,deposit_declaration_flag   decimal(1,0)          
+ ,closeout_flag              decimal(1,0)          
+ ,media_count_flag           decimal(1,0)          
+ ,tax_override_flag          decimal(1,0)          
+ ,pos_tax_jurisdiction       string                
+ ,employee_no                decimal(9,0)          
+ ,transaction_remark         string                
+ ,updated_by_user_name       string                
+ ,company_no                 decimal(5,0)          
+ ,till_no                    decimal(29,0)         
+ ,batch_id                   bigint                           
+ )
+STORED AS AVRO
+TBLPROPERTIES("avro.output.codec"="snappy")
+;
+
+
+bq query \
+--destination_table edl_stage.pre_aw_transaction_header_convert \
+--use_legacy_sql=false \
+'SELECT
+cast ( if_entry_no                as INT64) as if_entry_no
+,cast ( interface_control_flag     as INT64) as interface_control_flag
+,record_type               
+,cast ( store_no                   as INT64) as store_no
+,cast ( register_no                as INT64) as register_no
+,transaction_date          
+,PARSE_TIMESTAMP('%m/%d/%Y %H:%M:%S',entry_date_time) as entry_date_time
+,transaction_series        
+,cast ( transaction_no             as INT64) as transaction_no
+,cast ( cashier_no                 as INT64) as cashier_no
+,cast ( transaction_category       as INT64) as transaction_category
+,cast ( tender_total               as INT64) as tender_total
+,cast ( transaction_void_flag      as INT64) as transaction_void_flag
+,cast ( exception_flag             as INT64) as exception_flag
+,cast ( deposit_declaration_flag   as INT64) as deposit_declaration_flag
+,cast ( closeout_flag              as INT64) as closeout_flag
+,cast ( media_count_flag           as INT64) as media_count_flag
+,cast ( tax_override_flag          as INT64) as tax_override_flag
+,pos_tax_jurisdiction      
+,cast ( employee_no                as INT64) as employee_no
+,transaction_remark        
+,updated_by_user_name      
+,cast ( company_no                 as INT64) as company_no
+,till_no                   
+,batch_id 
+FROM
+  `edl_stage.pre_aw_transaction_header`
+'
+
+ 
+bq query \
+--destination_table edl_stage.pre_aw_transaction_header_convert \
+--use_legacy_sql=false \
+'SELECT
+ if_entry_no               
+ ,interface_control_flag    
+ ,record_type               
+ ,store_no                  
+ ,register_no               
+ ,transaction_date          
+ ,entry_date_time           
+ ,transaction_series        
+ ,transaction_no            
+ ,cashier_no                
+ ,transaction_category      
+ ,cast(tender_total/100 as FLOAT64) as tender_total              
+ ,transaction_void_flag     
+ ,exception_flag            
+ ,deposit_declaration_flag  
+ ,closeout_flag             
+ ,media_count_flag          
+ ,tax_override_flag         
+ ,pos_tax_jurisdiction      
+ ,employee_no               
+ ,transaction_remark        
+ ,updated_by_user_name      
+ ,company_no                
+ ,till_no                   
+ ,batch_id                  
+FROM
+  `edl_stage.pre_aw_transaction_header`
+' 
+
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_header` LIMIT 1000 --10122967
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceItem` LIMIT 1000 --34386953
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceitemadjustments` LIMIT 1000 --34386953
+
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_header_new` LIMIT 1000 --595164
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceItem_new` LIMIT 1000 --2130728
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceitemadjustments_new` LIMIT 1000 --2130728
+
+
+--SELECT count(*) FROM `p-asna-analytics-002.edl_archive.pre_atg_order_header` LIMIT 1000 --10558648 -20190730
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceItem` LIMIT 1000 --	36022079
+--SELECT count(*) FROM `p-asna-analytics-002.edl_stage.pre_atg_order_commerceitemadjustments` LIMIT 1000 --36022079
+
+
+
+
+cat ~/pkword | sed 's:/root:/amrood:g
+
+
+
+| 47276-0911104834                 | 2019-09-11 11:40:39.0        | ascena_analytic_mart             | ann_ann_atg_transactions             | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 53069-0911105004                 | 2019-09-11 11:21:49.0        | ascena_analytic_mart             | ann_ann_aw_transactions_linenotes    | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 3032-0911105034                  | 2019-09-11 11:20:48.0        | ascena_analytic_mart             | ann_ann_aw_transactions_line         | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 6059-0911105204                  | 2019-09-11 11:03:13.0        | ascena_analytic_mart             | ann_ann_aw_transactions_taxdetail    | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 50158-0911104934                 | 2019-09-11 11:02:18.0        | ascena_analytic_mart             | ann_ann_aw_transactions_merchdtl     | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 49889-0911105134                 | 2019-09-11 11:01:19.0        | ascena_analytic_mart             | ann_ann_aw_transactions_returndtl    | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 33001-0911105234                 | 2019-09-11 11:00:20.0        | ascena_analytic_mart             | ann_ann_aw_transactions_discountdtl  | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 49503-0911104904                 | 2019-09-11 10:58:29.0        | ascena_analytic_mart             | ann_ann_atg_returns                  | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 19449-0911105104                 | 2019-09-11 10:57:35.0        | ascena_analytic_mart             | ann_ann_aw_transactions_header       | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 46115-0911104734                 | 2019-09-11 10:56:11.0        | ascena_analytic_mart             | ann_ann_bi_transaction_fpnfp         | p-asna-datasink-003                  | NULL                                  | Complete                      |
+| 46652-0911104804                 | 2019-09-11 10:50:32.0        | ascena_analytic_mart             | ann_ann_sap_exchrate                 | p-asna-datasink-003                  | NULL                                  | Complete                      |
+
+| 33001-0911105234                 | 2019-09-11 10:52:34.0        | ascena_analytic_mart             | ann_ann_aw_transactions_discountdtl  | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 6059-0911105204                  | 2019-09-11 10:52:04.0        | ascena_analytic_mart             | ann_ann_aw_transactions_taxdetail    | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 49889-0911105134                 | 2019-09-11 10:51:34.0        | ascena_analytic_mart             | ann_ann_aw_transactions_returndtl    | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 19449-0911105104                 | 2019-09-11 10:51:04.0        | ascena_analytic_mart             | ann_ann_aw_transactions_header       | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 3032-0911105034                  | 2019-09-11 10:50:34.0        | ascena_analytic_mart             | ann_ann_aw_transactions_line         | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 53069-0911105004                 | 2019-09-11 10:50:04.0        | ascena_analytic_mart             | ann_ann_aw_transactions_linenotes    | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 50158-0911104934                 | 2019-09-11 10:49:34.0        | ascena_analytic_mart             | ann_ann_aw_transactions_merchdtl     | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 49503-0911104904                 | 2019-09-11 10:49:04.0        | ascena_analytic_mart             | ann_ann_atg_returns                  | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 47276-0911104834                 | 2019-09-11 10:48:34.0        | ascena_analytic_mart             | ann_ann_atg_transactions             | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 46652-0911104804                 | 2019-09-11 10:48:04.0        | ascena_analytic_mart             | ann_ann_sap_exchrate                 | p-asna-datasink-003                  | NULL                                  | Ready                         |
+| 46115-0911104734                 | 2019-09-11 10:47:34.0        | ascena_analytic_mart             | ann_ann_bi_transaction_fpnfp         | p-asna-datasink-003                  | NULL                                  | Ready                         |

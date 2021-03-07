@@ -1,0 +1,14 @@
+create or replace view edl_stage.plus_vmci995_esp_last_click_open_curr as
+SELECT
+ stgn.ID_CHAIN
+,stgn.ID_EMAIL
+,stgn.TS_LAST_CLICK
+,stgn.TS_LAST_OPEN
+,stgn.DA_LAST_CLICK
+,stgn.DA_LAST_OPEN
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN, lbca.ID_EMAIL order by lbca.EXTRACT_TS desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci995_esp_last_click_open as lbca
+)  as stgn where row_num=1

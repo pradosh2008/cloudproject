@@ -1,0 +1,20 @@
+create or replace view edl_stage.plus_vmci172_chain_cust_email_curr as 
+SELECT
+stgn.CD_DBL_OPT_IN
+,stgn.CD_EMAIL
+,stgn.DA_EM_CUST_VERIFIED
+,stgn.DA_EMAIL_CODE
+,stgn.DA_EMAIL_CREATED
+,stgn.DA_EMAIL_UPDATED
+,stgn.FL_HABEAS_COMPL
+,stgn.FL_OK_TO_EMAIL
+,stgn.ID_CHAIN
+,stgn.ID_CUST
+,stgn.ID_EMAIL
+,stgn.EXTRACT_TS
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.ID_CHAIN,lbca.ID_CUST, lbca.ID_EMAIL
+order by lbca.EXTRACT_TS desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci172_chain_cust_email as lbca
+)  as stgn where row_num=1

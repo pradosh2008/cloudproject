@@ -1,0 +1,14 @@
+#archive the landing table
+bq cp --force edl_landing.brand_customer edl_archive.brand_customer
+
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.brand_customer  'gs://p-asna-datasink-003/brand_customer/*'
+
+
+#Add new records from landing table to conform table 
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.brand_customer --use_legacy_sql=false 'select l.*
+from edl_landing.brand_customer l
+left join edl_conform.brand_customer c
+    on l.brand_customer_key = c.brand_customer_key
+where c.brand_customer_key is null'
+
+

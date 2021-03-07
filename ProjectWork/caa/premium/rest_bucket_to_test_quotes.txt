@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_DISCOUNTDTL_20200404.dat &
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_HEADER_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_HEADER_20200404.dat &
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINENOTES_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_LINENOTES_20200404.dat &
+
+
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_LINE_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_LINE_20200404.dat &
+
+
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_MERCHDTL_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_MERCHDTL_20200404.dat &
+
+wait
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_RETURNDTL_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_RETURNDTL_20200404.dat &
+
+
+wait
+gsutil cp gs://p-ascena-aadp-landing-01/pre/aw/arc/ANN_AW_TRANSACTIONS_TAXDETAIL_20200404.dat gs://p-asna-datasink-003/pre/aw/ANN_AW_TRANSACTIONS_TAXDETAIL_20200404.dat &
+
+
+
+gsutil cp gs://p-ascena-aadp-landing-01/pre/bi/arc/ANN_BI_TRANSACTION_FPNFP_20200404.dat gs://p-asna-datasink-003/pre/bi/ANN_BI_TRANSACTION_FPNFP_20200404.dat &
+
+wait
+
+
+gsutil cp 'gs://p-ascena-aadp-landing-01/pre/dom/arc/ANN_DOM_BOPIS_TRANSACTIONS_20200111.dat' gs://p-asna-datasink-003/pre/dom/ &
+wait
+
+
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_PRODUCT_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_STORE_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_STYLE_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+
+gsutil -m cp 'gs://p-ascena-aadp-landing-01/pre/sapwm/arc/ANN_SAP_VENDOR_2020*.dat' gs://p-ascena-aadp-landing-01/pre/sapwm/ &
+wait

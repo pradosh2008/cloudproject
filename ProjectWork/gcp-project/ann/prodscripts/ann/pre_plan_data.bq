@@ -1,0 +1,270 @@
+WHERE to_date(from_unixtime(unix_timestamp(cast(batch_id as string),'yyyyMMdd'), 'yyyy-MM-dd')) > date_sub(current_date,${days})
+
+set hivevar:days=${p1};
+
+--parameter=days:INT64:$1 
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart_dev.pre_transaction_header_new --use_legacy_sql=false --parameter=days:INT64:$1 <<!
+
+
+
+
+
+
+gsutil mv gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_PLAN_*.txt gs://p-asna-datasink-003/pre/sap/archive/ANN_ACC_EDL_PLAN_*.txt
+
+gsutil mv gs://p-asna-datasink-003/pre/ANN_ACC_DF_PROD_HIER_*.txt gs://p-asna-datasink-003/pre/archive/ANN_ACC_DF_PROD_HIER_*.txt
+
+gsutil ls gs://p-asna-datasink-003/pre/ANN_ACC_DF_PROD_HIER_*.txt
+gsutil ls gs://p-asna-datasink-003/pre/archive/ANN_ACC_DF_PROD_HIER_*.txt
+
+
+gsutil ls gs://p-asna-datasink-003/pre/ANN_ACC_DF_PROD_HIER_*.txt 
+
+
+
+
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter='|' --schema=/home/gcpinteg/schema/edl_landing/ann_ann_atg_promotions.json edl_landing.ann_ann_atg_promotions 'gs://p-asna-datasink-003/ann_ann_atg_promo/ANN_ANN_ATG_PROMOTIONS_20190715_125430*'
+
+
+bq cp --force edl_landing.ann_plan_data edl_landing.ann_sap_plan_data
+
+
+select class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd from `edl_stage.pre_sap_plan_data` group by class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd having count(*)>1;
+
+
+--SELECT week_id FROM `p-asna-analytics-002.edl_archive.pre_inventory_store` group by week_id order by week_id desc
+
+--SELECT * FROM edl_stage.pre_sap_store_inventory where style_id=516383 and week_id=201927 and store_id=2509 and chain_id=63 and sku_id=27993064
+
+--SELECT * FROM edl_archive.pre_inventory_store where style_id=516383 and week_id=201927 and store_id=2509 and chain_id=63 and sku_id=27993064
+
+-- SELECT * FROM edl_stage.ann_sku_store_inventory_new
+--  where style_id=516383 and week_id=201927 and store_id=2509 and chain_id=63 and sku_id=27993064
+
+--SELECT * FROM `demand_forecast.inventory_store_sku`  where style_id=516383 and week_id=201927 and store_id=2509 and chain_id=63 and sku_id=27993064
+ 
+-- SELECT max(week_id),min(week_id) FROM edl_stage.pre_sap_store_inventory;
+
+--SELECT max( fiscal_week_dt ),min(fiscal_week_dt) FROM analytic_mart_dev.pre_store_inventory
+
+
+-- gsutil mv *.txt gs://p-asna-datasink-003/pre/sap
+--SELECT max(week_id),min(week_id) from edl_landing.ann_sku_store_inventory; --201938  201926
+--SELECT max(week_id),min(week_id) from edl_stage.pre_sap_store_inventory; --	 201938 201601
+
+--select  max(week_id),min(week_id) from  edl_archive.pre_sap_store_inventory
+--SELECT group_id from edl_landing.ann_sap_plan_data group by group_id
+--select  max(week_id),min(week_id) from  `edl_landing.ann_plan_data` 
+--select  max(week_id),min(week_id) from  `edl_stage.ann_plan_data_new`
+--select  max(week_id),min(week_id) from  `edl_stage.pre_sap_plan_data` 
+
+
+--select class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd from `edl_stage.pre_sap_plan_data` group by class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd having count(*)>1;
+
+--select class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd from `edl_stage.pre_sap_plan_data` group by class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd having count(*)>1;
+
+--select class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd from `edl_stage.ann_plan_data_new` group by class_id, department_id, division_id, chain_id, channel_id, country_id, week_id, month_id,sales_type_cd having count(*)>1;
+
+select * from `edl_stage.ann_plan_data_new` where 
+class_id='L34375008'  and  department_id=375 and  division_id='L34' and  chain_id=64 and  channel_id=5 and  country_id='US' and  week_id=201951 and  month_id=2019012
+
+
+
+
+
+#creating the mart table
+bq query --use_legacy_sql=false <<!
+create or replace table analytic_mart.pre_plan
+select
+#subclass_id
+i.class_id
+,i.department_id
+#,i.group_id
+,i.division_id
+,i.chain_id
+,i.channel_id
+,i.country_id
+,i.week_id
+,i.month_id
+,i.sales_type_cd
+,i.op_net_sls_retail_cnt
+,i.op_net_sls_unit_cnt
+,i.op_net_sls_aur_cnt
+,i.op_ttl_store_cnt
+,i.op_comp_store_cnt
+,i.op_bop_store_inv_retail_cnt
+,i.op_bop_store_inv_unit_cnt
+,i.op_eop_store_inv_retail_cnt
+,i.op_eop_store_inv_unit_cnt
+,i.cp_net_sls_retail_cnt
+,i.cp_net_sls_unit_cnt
+,i.cp_net_sls_aur_cnt
+,i.cp_ttl_store_cnt
+,i.cp_comp_store_cnt
+,i.cp_bop_store_inv_retail_cnt
+,i.cp_bop_store_inv_unit_cnt
+,i.cp_eop_store_inv_retail_cnt
+,i.cp_eop_store_inv_unit_cnt
+,i.batch_id
+from edl_stage.pre_plan_data as i
+left outer join
+(select fiscal_week_id
+        ,day_dt
+from edl_stage.pre_ann_calendar
+    where fiscal_day_of_week=1) as c
+on i.week_id=c.fiscal_week_id
+!
+
+
+pre_weekly_load.sh
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+echo "pre_sap_store_inventory.bq" >/data/ctl/pre_sap_store_inventory.ctl
+echo "pre_sap_plan_data.bq" >/data/ctl/pre_sap_plan_data.ctl
+
+
+
+
+echo "pre_store_inventory.bq" >/data/ctl/pre_store_inventory.ctl
+sleep 10
+echo "pre_sap_store_sku_cogs.bq" >/data/ctl/pre_sap_store_sku_cogs.ctl
+
+
+
+
+
+
+
+
+
+select style_id from
+(SELECT
+*
+FROM (
+    SELECT
+    *,
+    ROW_NUMBER() OVER(PARTITION BY cast(style_id as int64)
+                      ORDER BY batch_id DESC) AS rn
+    FROM
+    edl_stage.pre_acc_df_prod_hier 
+    --analytic_mart.pre_product_hier 
+    ) AS a
+WHERE rn=1
+) as ph
+where FARM_FINGERPRINT(cast(cast(ph.style_id as int64) as string)) in
+(SELECT 
+  a.style_key
+--  ,sum(case when b.style_key is null then 0 else 1 end)    as match_count
+--  ,sum(case when b.style_key is null then 1 else 0 end)     as orphan_count
+FROM `p-asna-analytics-002.analytic_mart.pre_store_inventory`  a
+LEFT OUTER JOIN analytic_mart.pre_style b
+on a.style_key = b.style_key
+where b.style_key is null
+group by a.style_key )
+--order by 1
+
+
+-- SELECT 
+--   a.style_key
+-- --  ,sum(case when b.style_key is null then 0 else 1 end)    as match_count
+-- --  ,sum(case when b.style_key is null then 1 else 0 end)     as orphan_count
+-- FROM `p-asna-analytics-002.analytic_mart.pre_store_inventory`  a
+-- LEFT OUTER JOIN analytic_mart.pre_style b
+-- on a.style_key = b.style_key
+-- where b.style_key is null
+-- group by a.style_key
+-- order by 1
+
+
+--select count(*) from  analytic_mart.pre_style --210694 class_des
+
+
+select  cast(sku_id as int64)  as sku_id
+      ,FARM_FINGERPRINT(cast(cast(sku_id as int64) as string))  as item_key
+      ,min(week_id), max(week_id)
+from edl_stage.pre_sap_store_inventory 
+where FARM_FINGERPRINT(cast(cast(sku_id as int64) as string))
+in (SELECT distinct si.item_key
+FROM `p-asna-analytics-002.analytic_mart.pre_store_inventory` si
+left join analytic_mart.pre_item p
+  on p.item_key = si.item_key
+where p.item_key is null)
+group by 1, 2
+order by 3
+
+
+
+--one time load into analytic_mart.pre_style table 
+
+
+bq cp --force analytic_mart.pre_style edl_archive.pre_style_backup
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.pre_style --use_legacy_sql=false <<!
+SELECT
+FARM_FINGERPRINT(cast(cast(a.style_id as int64) as string)) as style_key
+,cast(style_id as int64) as style_id
+,style_desc as style_des
+,div_id as division_id
+,cast(dept_id as int64) as department_cd
+,dept_name as department_des
+,cast(null as string) as department_category_cd
+,class_id as class_cd
+,class_name as class_des
+,cast(null as string) as merch_category_cd
+,cast(null as string) as merch_category_des
+,null as vendor_cd
+,cast(null as string) as vendor_nam
+,null as intern_excl_ind
+,null as intern_tallstyle_ind
+,cast(null as string) as markdown_week_num
+,cast(null as string) as exit_week_num
+,null as gift_wrap_ind
+,null as season_cd
+,cast(null as string) as season_des
+,cast(null as string) as storeset_cd
+,cast(null as string) as storeset_des
+,null as purch_org_cd
+,cast(null as string) as ean_upc_des
+,null as missy_style_num
+,null as petite_style_num
+,null as tall_style_num
+,null as fabric_profile_cd
+,cast(null as string) as fabric_profile_des
+,null as silhouette_profile_cd
+,cast(null as string) as silhouette_profile_des
+,cast(null as string) as top_silhouette_des
+,cast(null as string) as neckline_des
+,cast(null as string) as sleeve_len_des
+,cast(null as string) as novelty_des
+,cast(null as string) as end_use_des
+,cast(null as string) as pyramid_des
+,null as plus_style_num
+,batch_id
+FROM (
+    SELECT
+    *,
+    ROW_NUMBER() OVER(PARTITION BY cast(style_id as int64)
+                      ORDER BY batch_id DESC) AS rn
+    FROM
+    edl_stage.pre_acc_df_prod_hier 
+    --analytic_mart.pre_product_hier 
+    ) AS a
+WHERE rn=1
+--) as ph
+--where
+and FARM_FINGERPRINT(cast(cast(a.style_id as int64) as string)) in
+(SELECT 
+  a.style_key
+--  ,sum(case when b.style_key is null then 0 else 1 end)    as match_count
+--  ,sum(case when b.style_key is null then 1 else 0 end)     as orphan_count
+FROM analytic_mart.pre_store_inventory  a
+LEFT OUTER JOIN analytic_mart.pre_style b
+on a.style_key = b.style_key
+where b.style_key is null
+group by a.style_key )
+!

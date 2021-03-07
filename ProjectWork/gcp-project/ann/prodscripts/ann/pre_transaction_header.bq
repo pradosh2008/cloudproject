@@ -1,0 +1,293 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#One time load
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart_dev.pre_transaction_header --use_legacy_sql=false <<!
+#select 
+#     farm_fingerprint(replace(txn_nbr,':', '|'))                                as transaction_key
+#    ,txn_nbr                                                                    as transaction_num
+#    ,txn_source_cd                                                              as transaction_source_cd
+#    ,txn_type_cd                                                                as transaction_type_cd 
+#    ,txn_status_cd                                                              as transaction_status_cd
+#    ,farm_fingerprint(cast(store_nbr as string))                                as store_key
+#    ,cal.fiscal_week_id                                                         as week_id
+#    ,register_nbr                                                               as register_num
+#    ,extract(date from txn_dt)                                                  as transaction_dt
+#    ,extract(time from txn_dt)                                                  as transaction_tms
+#    ,txn_channel_cd                                                             as channel_cd 
+#    ,round(txn_net_amt,2)                                                       as transaction_net_amt
+#    ,case 
+#        when txn_source_cd = 'AW' 
+               then round(txn_tax_amt,2)
+         when txn_source_cd = 'ATG' and txn_ret_qty =0
+#              then round(txn_tax_amt,2)
+#                 else round(txn_ret_tax_amt,2)
+#     end                                                                        as transaction_tax_amt
+#    ,round(txn_ret_net_amt,2)                                                   as transaction_net_ret_amt
+#    ,20160101                                                                   as batch_id
+#from edl_stage.pre_hst_transaction_header h
+#left join edl_stage.pre_ann_calendar as cal
+#       on cast(day_dt as date) = extract(date from txn_dt)
+#where extract(date from txn_dt) between '2016-01-01' and '2019-05-04'
+#!
+#rc_check $? "One time history load epsilon header data to mart"
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart_dev.pre_transaction_header_new --use_legacy_sql=false <<! 
+select
+    transaction_key
+    ,transaction_num
+    ,transaction_source_cd
+    ,transaction_type_cd
+    ,transaction_status_cd 
+    ,store_key
+    ,cal.fiscal_week_id                                                                               	as week_id
+    ,register_num 
+    ,transaction_dt
+    ,transaction_tms
+    ,channel_cd
+    ,case when transaction_remark <> 'USD' 
+			then aw_item_net_amt*cast(ukurs_curr as float64)
+				else aw_item_net_amt 
+     end                                                                         						as transaction_net_amt
+    ,case when transaction_remark <> 'USD' 
+			then aw_item_tax_amt*cast(ukurs_curr as float64)
+				else aw_item_tax_amt
+     end                                                                        						as transaction_tax_amt
+    ,case when transaction_remark <> 'USD' 
+			then aw_item_ret_amt*cast(ukurs_curr as float64)
+				else aw_item_ret_amt
+     end                                                                         						as transaction_net_ret_amt  
+    ,h.batch_id                                                                 						as batch_id
+    from
+    (
+    select
+        FARM_FINGERPRINT(concat(cast(store_no AS string)
+        ,'|',cast(register_no AS string)
+        ,'|',cast(FORMAT_TIMESTAMP("%Y%m%d", entry_date_time) AS STRING)
+        ,'|',cast(transaction_no AS string)))                                   						as transaction_key
+        ,CONCAT(cast(store_no AS string)
+        ,':',cast (register_no AS string)
+        ,':',cast(FORMAT_TIMESTAMP("%Y%m%d", entry_date_time) AS STRING)
+        ,':',cast(transaction_no AS string))                                    						as transaction_num
+        ,'AW'                                                                   						as transaction_source_cd
+        ,case when h.tender_total > 0 
+                    then 'PUR'
+              when h.tender_total = 0 
+                    then 'EXC'
+              when h.tender_total < 0
+                    then 'RTN'
+						else NULL
+        END                                                                 							as transaction_type_cd
+        ,'C'                                                                    						as transaction_status_cd
+        ,FARM_FINGERPRINT(cast(store_no as string))                             						as store_key
+        --  ,store_no                
+        ,cast(register_no as numeric)                                                            		as register_num
+        ,entry_date_time
+        ,EXTRACT(DATE FROM entry_date_time)                                     						as transaction_dt
+        ,EXTRACT(TIME FROM entry_date_time)                                     						as transaction_tms
+        ,'RET'                                                                  						as channel_cd
+        ,batch_id                                                               						as batch_id
+        ,row_number() 
+                over(partition by 
+                        CONCAT(cast(store_no AS string)
+                        ,'|',cast (register_no AS string)
+                        ,'|',cast(FORMAT_TIMESTAMP("%Y%m%d", entry_date_time) AS STRING)
+                        ,'|',cast(transaction_no AS string)) 
+                    order by if_entry_no desc)           as rn
+        ,h.if_entry_no
+		,h.transaction_remark
+    from edl_stage.pre_aw_transaction_header h
+        where store_no not in (611,612,613,616,617)
+        -- and EXTRACT(DATE FROM entry_date_time) > '2019-05-04'
+        and PARSE_DATE('%Y%m%d',cast(h.batch_id as string)) > PARSE_DATE('%Y-%m-%d','2019-05-01') 
+		--and PARSE_DATE('%Y%m%d',cast(h.batch_id as string))>date_sub(current_date,interval @days day)
+        and 
+            CONCAT(cast(store_no AS string),'|'
+            ,cast (register_no AS string),'|'
+            ,cast(FORMAT_TIMESTAMP("%Y%m%d", entry_date_time) AS STRING),'|'
+            ,cast(transaction_no AS string))
+                NOT IN 
+                    (select CONCAT(cast(tmp.store_no AS string),'|'
+								  ,cast (tmp.register_no AS string),'|'
+								  ,cast(FORMAT_TIMESTAMP("%Y%m%d",tmp.entry_date_time) AS STRING),'|'
+                                  ,cast(tmp.transaction_no AS string)) 
+					from edl_stage.pre_aw_transaction_header tmp  
+                    where tmp.interface_control_flag  = 20
+						)
+			) as h 
+    left join 
+            (
+                select 
+                    l.if_entry_no 
+                    ,round(sum(CASE
+                                   WHEN l.line_Action = 1 and  l.line_object_type = 1  AND line_void_flag = '0' and gross_line_amount >= 0 
+										THEN gross_line_amount-pos_discount_amount      
+                                   WHEN l.line_Action = 1 and  l.line_object_type = 1  AND line_void_flag = '0' and gross_line_amount < 0  
+										THEN (-1)*(gross_line_amount-pos_discount_amount)      
+											ELSE 0
+                        END),2)  																	    as aw_item_net_amt
+                    ,round(sum(CASE
+                                  WHEN l.line_Action = 11 and  l.line_object_type = 5  AND line_void_flag = '0'
+										THEN gross_line_amount              
+											ELSE 0                                        
+                        END),2)                                                             			as aw_item_tax_amt
+                    ,round(sum(CASE        
+								  WHEN l.line_Action = 1 AND l.line_object_type = 1 AND line_void_flag = '0' and gross_line_amount < 0  
+										THEN (gross_line_amount-pos_discount_amount) 
+								  WHEN l.line_Action = 2 AND l.line_object_type = 1 AND line_void_flag = '0' and gross_line_amount >= 0 
+										THEN (gross_line_amount-pos_discount_amount)
+											ELSE 0
+                        END),2)                                                             			as aw_item_ret_amt
+                from  edl_stage.pre_aw_transaction_line l             
+                group by 1
+				)ln_amt
+            on ln_amt.if_entry_no  =  h.if_entry_no
+    left join (select * from
+                                (select 
+                                    fcurr_curr
+                                    ,ukurs_curr 
+                                    ,gdatu_inv
+                                    ,row_number() OVER (PARTITION BY fcurr_curr,gdatu_inv order by batch_id desc) rn_curr
+                                from edl_stage.pre_sap_exchrate exc          
+                                )exc 
+                        where rn_curr = 1)
+                on  fcurr_curr = h.transaction_remark
+                and gdatu_inv = cast(FORMAT_TIMESTAMP("%Y%m%d", h.entry_date_time) AS STRING) 
+    LEFT OUTER JOIN edl_stage.pre_ann_calendar cal
+                ON cast(cal.day_dt AS DATE) = EXTRACT(DATE FROM h.entry_date_time)
+where rn=1
+!
+#rc_check $? "Load incremental POS(aw) header data from edl_stage table into temp table"
+
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart_dev.pre_transaction_header_new --use_legacy_sql=false <<!
+select FARM_FINGERPRINT(ord.orderid)                                            as transaction_key
+        ,ord.orderid                                                            as transaction_num
+        ,'ATG'                                                                  as transaction_source_cd
+        ,CASE when ord.priceinfoamount = 0 then 'EXC' 
+             else 'PUR'     
+            END                                                                 as transaction_type_cd
+        ,CASE TRIM(UPPER(ord.orderstate)) 
+                        WHEN 'COMPLETE'                 THEN 'C'
+                        WHEN 'FAILED'                   THEN 'F'
+                        WHEN 'SUBMITTED'                THEN 'S'
+                        WHEN 'INCOMPLETE'               THEN 'I'
+                        WHEN 'HOLD'                     THEN 'H'
+                        WHEN 'PROCESSING'               THEN 'P'
+                        WHEN 'READY_FOR_PICKUP'         THEN 'READY_FOR_PICKUP'
+                        WHEN 'NO_PENDING_ACTION'        THEN 'NPA'
+                        WHEN 'REMOVED'                  THEN 'R'
+                        WHEN 'SHIPPED'                  THEN 'SH'
+                        WHEN 'PENDING_MERCHANT_ACTION'  THEN 'PMA'
+                        WHEN 'PENDING_CUSTOMER_RETURN'  THEN 'PMA'
+                        ELSE 'UNK' 
+         END                                                                 	as transaction_status_cd
+        ,FARM_FINGERPRINT(cast(ord.siteid as string))                           as store_key
+        ,cal.fiscal_week_id                                                     as week_id
+        ,cast(1 as numeric)                                                     as register_num
+        ,EXTRACT(DATE FROM (ord.submitteddate))                                 as transaction_dt
+        ,EXTRACT(TIME FROM ord.submitteddate)                                   as transaction_tms
+        ,'WEB'                                                                  as channel_cd
+     -- ,ord.priceinfoamount                                                    as transaction_net_amt
+        ,atg_item_net_amt                                                       as transaction_net_amt
+        ,ord.orderpriceinfotax                                                  as transaction_tax_amt
+        ,0.0                                                                    as transaction_net_ret_amt  
+        ,ord.batch_id                                                           as batch_id
+from edl_stage.pre_atg_order_header_curr ord
+	LEFT JOIN edl_stage.pre_ann_calendar as cal
+        ON cast(day_dt AS date) = EXTRACT(DATE FROM ord.submitteddate)
+left join 
+            (
+                select 
+                    ci.orderid 
+                    ,round(sum(commerceitempriceinfoamount-detaileditempriceinfoorderdiscountshare),2)  																	    as atg_item_net_amt
+from  edl_stage.pre_atg_order_commerceItem_curr ci            
+                group by 1
+				)ln_amt
+            on ord.orderid   =  ln_amt.orderid
+  --WHERE EXTRACT(DATE FROM (submitteddate)) > '2019-05-04'
+WHERE 
+PARSE_DATE('%Y%m%d',cast(ord.batch_id as string)) > PARSE_DATE('%Y-%m-%d','2019-05-03')
+--PARSE_DATE('%Y%m%d',cast(ord.batch_id as string))>date_sub(current_date,interval @days day)  
+!
+#rc_check $? "append incremental ecom(atg) order header data from edl_stage table into temp table"
+
+  
+#-------------------Loading ATG Returns-----------
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart_dev.pre_transaction_header_new --use_legacy_sql=false <<!
+select FARM_FINGERPRINT(upper(ret.returnid))                                    as transaction_key
+        ,UPPER(ret.returnid)                                                    as transaction_num
+        ,'ATG'                                                                  as transaction_source_cd
+        ,'RTN'                                                                  as transaction_type_cd
+        ,CASE TRIM(UPPER(orderstate)) 
+                        WHEN 'COMPLETE' THEN 'C'
+                        WHEN 'FAILED' THEN 'F'
+                        WHEN 'SUBMITTED' THEN 'S'
+                        WHEN 'INCOMPLETE' THEN 'I'
+                        WHEN 'HOLD' THEN 'H'
+                        WHEN 'PROCESSING' THEN 'P'
+                        WHEN 'READY_FOR_PICKUP' THEN 'READY_FOR_PICKUP'
+                        WHEN 'NO_PENDING_ACTION' THEN 'NPA'
+                        WHEN 'REMOVED' THEN 'R'
+                        WHEN 'SHIPPED' THEN 'SH'
+                        WHEN 'PENDING_MERCHANT_ACTION' THEN 'PMA'
+                        WHEN 'PENDING_CUSTOMER_RETURN' THEN 'PMA'
+                        ELSE 'UNK' END                                          as transaction_status_cd
+        ,FARM_FINGERPRINT(cast(siteid as string))                               as store_key
+        ,fiscal_week_id                                                         as week_id
+        ,cast(1 as numeric)                                                     as register_num
+        ,EXTRACT(DATE FROM (ret.createddate))                                   as transaction_dt
+        ,EXTRACT(TIME FROM ret.createddate)                                     as transaction_tms
+        ,'WEB'                                                                  as channel_cd
+        , 0.0                                                                   as transaction_net_amt  
+        ,ret.transaction_tax_amt                                                as transaction_tax_amt
+    ,ret.transaction_net_amt                                                    as transaction_net_ret_amt
+        ,ret.batch_id                                                           as batch_id
+		from   (select
+					retord.orderid,
+					retord.returnid,
+					retord.createddate,
+					ord.orderstate,
+					ord.siteid,
+					cal.fiscal_week_id,
+					sum(ret.refundamount) as transaction_net_amt,
+					retord.actualtaxrefund as transaction_tax_amt,
+					retord.batch_id  
+				from  edl_stage.pre_atg_order_return_curr retord
+					LEFT JOIN  edl_stage.pre_atg_order_return_commerceitem_curr ret
+					on ret.returnid = retord.returnid
+					LEFT JOIN   edl_stage.pre_atg_order_header_curr ord
+					on ret.orderid = ord.orderid
+					LEFT JOIN edl_stage.pre_ann_calendar as cal
+					ON cast(day_dt AS date) = EXTRACT(DATE FROM ord.submitteddate)
+				--  LEFT JOIN edl_stage.pre_atg_order_commerceItem_curr ci
+				--  on ret.orderid = ci.orderid
+				--  and ret.commerceitemid = ci.commerceitemid
+				group by 1,2,3,4,5,6,8,9
+					) as ret
+--WHERE EXTRACT(DATE FROM ret.createddate) > '2019-05-04'
+WHERE 
+PARSE_DATE('%Y%m%d',cast(ret.batch_id as string)) > PARSE_DATE('%Y-%m-%d','2019-05-03')
+--PARSE_DATE('%Y%m%d',cast(ret.batch_id as string))>date_sub(current_date,interval @days day)   --Execute dynamically by passing for how many days of incremental data
+!
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart_dev.pre_transaction_header_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart_dev.pre_transaction_header c
+left join analytic_mart_dev.pre_transaction_header_new w
+    on  w.transaction_key = c.transaction_key
+    where w.transaction_key is null
+!
+#rc_check $? "append legacy records into the temp table"
+
+bq cp --force analytic_mart_dev.pre_transaction_header edl_archive.pre_transaction_header
+#rc_check $? "archive copy"
+bq cp --force analytic_mart_dev.pre_transaction_header_new analytic_mart_dev.pre_transaction_header
+#rc_check $? "replace the temp table as the mart table"
+bq rm --force analytic_mart_dev.pre_transaction_header_new
+#rc_check $? "drop the temp table"

@@ -1,0 +1,22 @@
+used to construct and maintain the Customer Relationship Management (CRM) solution being implemented by Epsilon
+
+The System Design Document outlines the system architecture, data models, and the source to target mappings as part of the Build Phase 1 development efforts to be undertaken by Epsilon on behalf of ANN, INC for the CRM Solution.
+
+The System Design Document is based on the business requirements detailed in the Requirements Definition Document (see Supporting Documents) agreed to between ANN INC and Epsilon. The RDD is used to define all objects and rules into the System Design Document from which the database build originates.
+
+--Data Receipt and Staging Design
+
+The data receipt and staging design section describes how the solution addresses requirements related to inbound and outbound feeds. This phase of the solution begins with the external data providers in terms of how data is fed into the system and what the processes are that get the data into a state in which it is ready to be loaded into the Data Warehouse.
+
+--Process Flow Annotations
+
+Inbound feeds from Vendor sources include ADS (non-PCI feeds), BazaarVoice, CheetahMail, Experian, KBM, Omniture, RightNow, and SDL.
+
+
+Inbound feeds from ANN include SAP, ADS (PCI feeds), ATG, AuditWorks, and Marketworks.These are posted by 1am EST to the a dedicated feed landing zone within the dedicated ANN production environment.
+
+
+This applies to AuditWorks, SDL Event feed, and ADS. Additionally, ADS provides data control mechanisms within the feed that are parsed out and leveraged as control files within our load process.
+
+
+

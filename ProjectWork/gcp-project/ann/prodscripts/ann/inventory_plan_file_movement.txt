@@ -1,0 +1,228 @@
+copy to bucket 
+
+gsutil cp /data/pre/sap/ANN_ACC_EDL_STORE_INVENTORY_*.txt gs://p-asna-datasink-003/pre/sap
+
+
+
+
+
+
+
+
+bq load --replace=true --source_format=CSV --autodetect --field_delimiter='|' edl_landing.ann_acc_edl_dc_inventory  'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_DC_INVENTORY_20190822122137.txt'
+
+
+bq load --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/script/dcinventoryschema.json edl_landing.ann_sku_dc_inventory \
+        'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_DC_INVENTORY_*.txt'
+        
+        
+        
+bq load --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/script/dcinventoryschema.json edl_landing.ann_sku_dc_inventory \
+        'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_DC_INVENTORY_*.txt'
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sku_dc_inventory --use_legacy_sql=false <<!
+select
+chain_id
+,dc_id
+,selling_loc_id
+,cast(week_id as INT64) as week_id
+,style_id
+,color_id
+,size_id
+,sku_id
+,cast(bop_dc_inv_u as  int64)    as    bop_dc_inv_unit_cnt
+,cast(bop_dc_inv_r as numeric)    as    bop_dc_inv_retail_amt
+,cast(bop_dc_inv_c_actual as numeric)    as    bop_dc_inv_actual_cost_amt
+,cast(bop_dc_inv_c_valued as numeric)    as    bop_dc_inv_valued_cost_amt
+,cast(bop_dc_to_dc_it_u as  int64)    as    bop_dc_to_dc_it_unit_cnt
+,cast(bop_dc_to_dc_it_r as  numeric)    as    bop_dc_to_dc_it_retail_amt
+,cast(bop_dc_to_dc_it_c_actual as  numeric)    as    bop_dc_to_dc_it_actual_cost_amt
+,cast(bop_dc_to_dc_it_c_valued as  numeric)    as    bop_dc_to_dc_it_valued_cost_amt
+,cast(dc_receipt_u as  int64)    as    dc_receipt_unit_cnt
+,cast(dc_receipt_d as  numeric)    as    dc_receipt_d_valued_cost_amt
+,cast(dc_receipt_c_actual as  numeric)    as    dc_receipt_actual_cost_amt
+,cast(dc_receipt_c_valued as  numeric)    as    dc_receipt_valued_cost_amt
+,cast(bop_mkd_dc_inv_u as  int64)    as    bop_mkd_dc_inv_unit_cnt
+,cast(bop_mkd_dc_inv_r as  numeric)    as    bop_mkd_dc_inv_retail_amt
+,cast(bop_mkd_dc_inv_u_actual as  numeric)    as    bop_mkd_dc_inv_actual_unit_amt
+,cast(bop_mkd_dc_inv_c_value as  numeric)    as    bop_mkd_dc_inv_value_cost_amt
+,cast(dc_dmos_u as  int64)    as    dc_dmos_unit_cnt
+,cast(dc_dmos_r as  numeric)    as    dc_dmos_retail_amt
+,cast(dc_dmos_c_actual as  numeric)    as    dc_dmos_actual_cost_amt
+,cast(dc_dmos_c_valued as  numeric)    as    dc_dmos_valued_cost_amt
+,cast(dc_mkd_u as  int64)    as    dc_mkd_unit_cnt
+,cast(dc_mkd_r as  numeric)    as    dc_mkd_retail_amt
+,cast(dc_mkd_c as  numeric)    as    dc_mkd_cost_amt
+,cast(rtv_inv_u as  int64)    as    rtv_inv_unit_cnt
+,cast(rtv_inv_r as  numeric)    as    rtv_inv_retail_amt
+,cast(rtv_inv_c_actual as  numeric)    as    rtv_inv_actual_cost_amt
+,cast(rtv_inv_c_valued as  numeric)    as    rtv_inv_valued_cost_amt
+from edl_landing.ann_sku_dc_inventory
+!
+
+
+
+subclass_id
+class_id
+department_id
+group_id
+division_id
+chain_id
+channel_id
+country_id
+week_id
+month_id
+sales_type
+op_net_sls_r
+op_net_sls_u
+op_net_sls_aur
+op_ttl_store_count
+op_comp_store_count
+op_bop_store_inv_r
+op_bop_store_inv_u
+op_eop_store_inv_r
+op_eop_store_inv_u
+cp_net_sls_r
+cp_net_sls_u
+cp_net_sls_aur
+cp_ttl_store_count
+cp_comp_store_count
+cp_bop_store_inv_r
+cp_bop_store_inv_u
+cp_eop_store_inv_r
+cp_eop_store_inv_u
+
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sku_dc_inventory --use_legacy_sql=false <<!
+select  
+        CHAIN_ID    as    chain_id
+        ,DC_ID    as    dc_id
+        ,SELLING_LOC_ID    as    selling_loc_id
+        ,WEEK_ID    as    week_id
+        ,STYLE_ID    as    style_id
+        ,COLOR_ID    as    color_id
+        ,SIZE_ID    as    size_id
+        ,SKU_ID    as    sku_id
+        ,BOP_DC_INV_U    as    bop_dc_inv_unit_cnt
+        ,BOP_DC_INV_R    as    bop_dc_inv_retail_amt
+        ,BOP_DC_INV_C_ACTUAL    as    bop_dc_inv_actual_cost_amt
+        ,BOP_DC_INV_C_VALUED    as    bop_dc_inv_valued_cost_amt
+        ,BOP_DC_TO_DC_IT_U    as    bop_dc_to_dc_it_unit_cnt
+        ,BOP_DC_TO_DC_IT_R    as    bop_dc_to_dc_it_retail_amt
+        ,BOP_DC_TO_DC_IT_C_ACTUAL    as    bop_dc_to_dc_it_actual_cost_amt
+        ,BOP_DC_TO_DC_IT_C_VALUED    as    bop_dc_to_dc_it_valued_cost_amt
+        ,DC_RECEIPT_U    as    dc_receipt_unit_cnt
+        ,DC_RECEIPT_D    as    dc_receipt_d_valued_cost_amt
+        ,DC_RECEIPT_C_ACTUAL    as    dc_receipt_actual_cost_amt
+        ,DC_RECEIPT_C_VALUED    as    dc_receipt_valued_cost_amt
+        ,BOP_MKD_DC_INV_U    as    bop_mkd_dc_inv_unit_cnt
+        ,BOP_MKD_DC_INV_R    as    bop_mkd_dc_inv_retail_amt
+        ,BOP_MKD_DC_INV_U_ACTUAL    as    bop_mkd_dc_inv_actual_unit_amt
+        ,BOP_MKD_DC_INV_C_VALUE    as    bop_mkd_dc_inv_value_cost_amt
+        ,DC_DMOS_U    as    dc_dmos_unit_cnt
+        ,DC_DMOS_R    as    dc_dmos_retail_amt
+        ,DC_DMOS_C_ACTUAL    as    dc_dmos_actual_cost_amt
+        ,DC_DMOS_C_VALUED    as    dc_dmos_valued_cost_amt
+        ,DC_MKD_U    as    dc_mkd_unit_cnt
+        ,DC_MKD_R    as    dc_mkd_retail_amt
+        ,DC_MKD_C    as    dc_mkd_cost_amt
+        ,RTV_INV_U    as    rtv_inv_unit_cnt
+        ,RTV_INV_R    as    rtv_inv_retail_amt
+        ,RTV_INV_C_ACTUAL    as    rtv_inv_actual_cost_amt
+        ,RTV_INV_C_VALUED    as    rtv_inv_valued_cost_amt
+from edl_landing.ann_sku_dc_inventory
+!
+
+
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sku_dc_inventory --use_legacy_sql=false <<!
+select  
+cast(chain_id as  int64)    as    chain_id
+,cast(dc_id as  int64)    as    dc_id
+,cast(selling_loc_id as  int64)    as    selling_loc_id
+,cast(week_id as  int64)    as    week_id
+,cast(style_id as  int64)    as    style_id
+,cast(color_id as  int64)    as    color_id
+,cast(size_id as  int64)    as    size_id
+,cast(sku_id as  int64)    as    sku_id
+,cast(bop_dc_inv_u as  int64)    as    bop_dc_inv_unit_cnt
+,cast(bop_dc_inv_r as numeric)    as    bop_dc_inv_retail_amt
+,cast(bop_dc_inv_c_actual as numeric)    as    bop_dc_inv_actual_cost_amt
+,cast(bop_dc_inv_c_valued as numeric)    as    bop_dc_inv_valued_cost_amt
+,cast(bop_dc_to_dc_it_u as  int64)    as    bop_dc_to_dc_it_unit_cnt
+,cast(bop_dc_to_dc_it_r as  numeric)    as    bop_dc_to_dc_it_retail_amt
+,cast(bop_dc_to_dc_it_c_actual as  numeric)    as    bop_dc_to_dc_it_actual_cost_amt
+,cast(bop_dc_to_dc_it_c_valued as  numeric)    as    bop_dc_to_dc_it_valued_cost_amt
+,cast(dc_receipt_u as  int64)    as    dc_receipt_unit_cnt
+,cast(dc_receipt_d as  numeric)    as    dc_receipt_d_valued_cost_amt
+,cast(dc_receipt_c_actual as  numeric)    as    dc_receipt_actual_cost_amt
+,cast(dc_receipt_c_valued as  numeric)    as    dc_receipt_valued_cost_amt
+,cast(bop_mkd_dc_inv_u as  int64)    as    bop_mkd_dc_inv_unit_cnt
+,cast(bop_mkd_dc_inv_r as  numeric)    as    bop_mkd_dc_inv_retail_amt
+,cast(bop_mkd_dc_inv_u_actual as  numeric)    as    bop_mkd_dc_inv_actual_unit_amt
+,cast(bop_mkd_dc_inv_c_value as  numeric)    as    bop_mkd_dc_inv_value_cost_amt
+,cast(dc_dmos_u as  int64)    as    dc_dmos_unit_cnt
+,cast(dc_dmos_r as  numeric)    as    dc_dmos_retail_amt
+,cast(dc_dmos_c_actual as  numeric)    as    dc_dmos_actual_cost_amt
+,cast(dc_dmos_c_valued as  numeric)    as    dc_dmos_valued_cost_amt
+,cast(dc_mkd_u as  int64)    as    dc_mkd_unit_cnt
+,cast(dc_mkd_r as  numeric)    as    dc_mkd_retail_amt
+,cast(dc_mkd_c as  numeric)    as    dc_mkd_cost_amt
+,cast(rtv_inv_u as  int64)    as    rtv_inv_unit_cnt
+,cast(rtv_inv_r as  numeric)    as    rtv_inv_retail_amt
+,cast(rtv_inv_c_actual as  numeric)    as    rtv_inv_actual_cost_amt
+,cast(rtv_inv_c_valued as  numeric)    as    rtv_inv_valued_cost_amt
+from edl_landing.ann_sku_dc_inventory
+!
+
+
+
+chain_id
+store_id
+week_id
+style_id
+color_id
+size_id
+sku_id
+bop_store_inv_u
+bop_store_inv_r
+bop_store_inv_c_actual
+bop_store_inv_c_valued
+bop_store_it_u
+bop_store_it_r
+bop_store_it_c_actual
+bop_store_it_c_valued
+store_receipt_u
+store_receipt_r
+store_receipt_c_actual
+store_receipt_c_valued
+bop_mkd_store_it_u
+bop_mkd_store_it_r
+bop_mkd_store_it_c_actual
+bop_mkd_store_it_c_valued
+dmos_u
+dmos_r
+dmos_c_actual
+dmos_c_valued
+store_trans_out_u
+store_trans_out_r
+store_trans_out_c_actual
+store_trans_out_c_valued
+store_trans_in_u
+store_trans_in_r
+store_trans_in_c_actual
+store_trans_in_c_valued
+bop_alloc_notship_inv_u
+bop_alloc_notship_inv_r
+bop_alloc_notship_c_actual
+bop_alloc_notship_c_valued
+mkd_issue_u
+mkd_issue_r
+mkd_issue_c
+bop_store_mkd_it_u
+bop_store_mkd_it_r
+bop_store_mkd_it_c_actual

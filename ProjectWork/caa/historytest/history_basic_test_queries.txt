@@ -1,0 +1,95 @@
+SELECT count(*) FROM "plus_landing"."sales_transaction_detail" ; --243113663
+
+SELECT count(*) FROM "plus_foundation"."plus_sales_transaction_detail" ; --243113663
+
+
+SELECT  year(transaction_dt) as year,count(*) as cnt FROM "plus_foundation"."plus_sales_transaction_detail"  group by year(transaction_dt);
+
+SELECT year(date_parse(trim(transaction_dt),'%Y-%m-%d')) as year,count(*) as cnt FROM "plus_landing"."sales_transaction_detail"  group by year(date_parse(trim(transaction_dt),'%Y-%m-%d'))
+
+year	landing_cnt		year	foundation_cnt
+2016	331773			2016	331773
+2017	73487693		2017	73487693
+2018	71764885		2018	71764885
+2019	70400713		2019	70400713
+2020	27128599		2020	27128599
+
+
+Number of duplicate rows
+
+SELECT count(*) AS cnt
+FROM 
+    (SELECT plus_sales_transaction_detail_key,
+        count(*)
+    FROM "plus_foundation"."plus_sales_transaction_detail"
+    GROUP BY  plus_sales_transaction_detail_key
+    HAVING count(*)>1
+    ORDER BY  plus_sales_transaction_detail_key DESC ) AS a
+	
+17975	
+
+
+Data for some sample duplicate rows
+
+SELECT *
+    FROM "plus_foundation"."plus_sales_transaction_detail"
+    where  plus_sales_transaction_detail_key in
+    ('fffce9debe308f6da05ce2aef0cefbcc',
+'fffbd2a265767ed26448060b7cd4b766',
+'ffec47e85b09d522bd2e63837164ce3c',
+'ffe453a4e2aff21c9ebbcc3645b9fef3',
+'ffe1eadf718b39f9e9824761597c42fb',
+'ffe01139c4f65f9c752ba067b56651f4',
+'ffdfe3f7b953ec26cf5ee10ec2aceb95',
+'ffdf8d3435737d5888581f4ed81eef72')
+order by plus_sales_transaction_detail_key
+
+
+
+SELECT count(*) FROM "plus_landing"."vmci025_mailing" limit 10; --17152
+
+SELECT count(*) FROM "plus_foundation"."plus_vmci025_mailing" limit 10; --11021
+
+SELECT trim(id_chain) as id_chain,count(*) as cnt FROM "plus_landing"."vmci025_mailing" group by trim(id_chain);
+
+
+id_chain	cnt
+7	10300
+4	6852
+
+SELECT id_chain as id_chain,count(*) as cnt FROM "plus_foundation"."plus_vmci025_mailing" group by id_chain
+
+
+id_chain	cnt
+7	6624
+4	4397
+
+SELECT cast(trim(id_mailing) as integer) FROM plus_landing.vmci025_mailing 
+EXCEPT
+SELECT id_mailing FROM plus_foundation.plus_vmci025_mailing
+
+
+SELECT * FROM plus_landing.vmci025_mailing  where cast(trim(id_mailing) as integer) IN(17172
+,19986,
+12273,
+20326,
+15676,
+10698,
+18505,
+15567,
+42605)
+
+
+SELECT * FROM plus_foundation.plus_vmci025_mailing  where id_mailing IN(17172
+,19986,
+12273,
+20326,
+15676,
+10698,
+18505,
+15567,
+42605)
+
+
+
+

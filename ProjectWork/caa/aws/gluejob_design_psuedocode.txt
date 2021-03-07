@@ -1,0 +1,76 @@
+Created by : Pradosh Kumar Jena
+Dated : 26/06/2020
+Document : Glue Job Design
+updated date : 10/07/2020
+
+#During creation of glue job:
+  Pass the path of python file in which additional pyspark and python libraries are imported  and utility functions are defined .
+
+#Glue pre generated code
+  Import libraries
+  Initializing spark and glue context
+  Use section of the  code which reads the glue Data Catalog and creates the source glue data frame
+  Use section of the code which applies mapping on glue data frame
+  Removing these pre generated code segments - ResolveChoice , DropNullFields, DataSink
+
+
+#Custom code begins
+#####First job type : writing partitioned data into sink#####
+
+create_base_frame
+                  (
+                    applymapping_gdf :  glue data frame
+                    ,map_keyval      :  A dictionary where key is name of the key column names and value is list of source columns it's composed of
+                    ,glueContext     :  glue context
+                    ,spark           :  spark session variable
+                    ,job_name        :  glue job name
+                    ,source_tbl      :  source table name
+                    ,audit_cols      :  list of audit columns
+  )
+what it does:
+    convert dynamic frame to spark data frame
+    cast the source column dynamically to respective target datatype as per the json schema file  - build_querystring function
+    create hashed key for primary key and secondary key                                           - hash_key
+    add audit columns                                                                             - add_auditcol
+    order the columns
+    convert back to dynamic frame
+what it returns:
+    ordered glue data frame
+
+
+#Call this module only if we are creating yearmonth partition column
+create_ym_partitoned_frame
+                        (
+                         base_gdf       :  ordered glue data frame
+                        ,partition_col  :  partition column name
+                        ,glueContext    :  glue context)
+what it does:
+      convert dynamic frame to spark data frame
+      add YYYYMM partition column to data frame                                                 - add_ym_partition
+      convert back to dynamic frame
+what it returns:
+      Glue data frame
+
+
+write_to_sink
+            (target_gdf     :  target glue data frame
+            ,target_tbl     :  target table name
+            ,partitionKeys  :  list of partition key column names
+            ,glueContext    :  glue context
+            ,source_prefix  :  subfolders under bucket)
+what it does:
+      create a s3 type sink with enableupdatecatalog true
+      set the format of the sink to parquet
+      create the target catalog table
+what it returns:
+      nothing
+
+
+
+#Pointers
+
+Improvements : No need to run separate crawler for target
+               creation of target table on the fly
+               dynamic query string creation to achieve casting of source datatype to target datatype
+               Partition logic is decoupled from the base frame building block
+               If no partition is there , we need to only the base frame function and sink function

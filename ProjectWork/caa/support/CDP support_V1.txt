@@ -1,0 +1,70 @@
+step 1: 
+By 11:30 AM IST truncate table
+
+truncate table ascena_staging.lbca_incremental_batch_details;
+
+
+30 1 * * * /home/ascprocessprod/cron/CRON1.sh PROD > /home/ascprocessprod/cron/log/CRON1_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+45 1 * * * /home/ascprocessprod/cron/PushToRawLayer.sh PROD > /home/ascprocessprod/cron/log/PushToRawLayer_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+05 02 * * * /home/ascprocessprod/cron/TWS_DIP_Archive_Processing.sh PROD > /home/ascprocessprod/cron/log/TWS_DIP_Archive_Processing_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+Check above step is done or not ?
+
+step 2: 
+Once we receive these 20 transaction files recieved run below commands
+
+/home/ascprocessprod/cron/Transaction_Incremental_Conform_Layer.sh PROD > /home/ascprocessprod/cron/log/Transaction_Incremental_Conform_Layer_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+/home/ascprocessprod/cron/Transaction_Incremental_Campaign_Mart.sh PROD > /home/ascprocessprod/cron/log/Transaction_Incremental_Campaign_Mart_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+
+
+Check in ascsftp that , the decrypt job is done or not .
+
+step 3 : 
+Once CRM click open job completes ??
+
+How can We know that this in EDL?
+
+Run as ascsftp 
+/home/ascprocessprod/cron/decrypt_for_click_open_396.sh PROD > /home/ascsftp/log/click_open_396_file_decrypt_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+Run as ascprocessprod
+/home/ascprocessprod/cron/Push_to_rawlayer_click_open.sh PROD > /home/ascprocessprod/cron/log/Push_to_rawlayer_click_open_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+step 4: 
+CRM legacy and customer activity job completed
+
+/ascena_prod/data/secure/cem/cdp/lbca
+
+orpos_cust.txt.gpg
+plcc_cust.txt.gpg
+emp_cust.txt.gpg
+ecom_cust.txt.gpg
+
+/home/ascprocessprod/legacy_loading.sh
+
+/ascena_prod/data/secure/cem/cdp/lbca/history/lbca_hst_customer_activity
+
+lbca_hst_customer_activity_20200406.txt.gpg
+
+/home/ascprocessprod/cust_loading.sh
+
+step 5: 
+3rd TWS job completed in Hive
+
+Remove PushToConformedLayer_Merge.GO and PushToConformedLayer_email.GO in log path
+
+/home/ascprocessprod/cron/work
+
+rm  PushToConformedLayer_Merge.GO PushToConformedLayer_email.GO
+ 
+
+then run 
+
+/home/ascprocessprod/cron/PushToConformedLayer.sh PROD > /home/ascprocessprod/cron/log/PushToConformedLayer_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+/home/ascprocessprod/cron/PushToConformedLayer_Merge.sh PROD > /home/ascprocessprod/cron/log/PushToConformedLayer_Merge_`date +%y%m%d%H%M%S`.log 2>&1
+/home/ascprocessprod/cron/Persona_Transaction_Xref.sh PROD > /home/ascprocessprod/cron/log/Persona_Transaction_Xref_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+/home/ascprocessprod/cron/PushToConformLayer_Click_open_396.sh PROD > /home/ascprocessprod/cron/log/PushToConformLayer_Click_open_396_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+step 6:
+
+Run store and Item query in beeline

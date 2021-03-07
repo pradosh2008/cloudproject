@@ -1,0 +1,59 @@
+#creating the landing table
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.ann_ann_atg_returns  'gs://p-asna-datasink-003/ann_ann_atg_returns/*'
+
+#loading the temporary table in staging
+create or replace table edl_stage.pre_atg_order_return_new  as
+select 
+	returnid
+	,orderid
+	,replacementorderid
+	--,createddate
+	,PARSE_TIMESTAMP('%Y/%m/%d:%H:%M',createddate) as createddate
+	,cast(actualtaxrefund as FLOAT64) as actualtaxrefund
+	,cast(actualshiprefund  as FLOAT64) as actualshiprefund
+	,cast(otherrefund as FLOAT64) as otherrefund
+	,cast(processimmediately as INT64) as processimmediately
+	,cast(processed as INT64) as processed
+	,cast(originofreturns as INT64) as originofreturns
+	,cast(returnfee as FLOAT64) as returnfee
+	,commerceitemid
+	,shippinggroupid
+	,cast(quantitytoreturn as INT64) as quantitytoreturn
+	,cast(quantitytoreplace as INT64) as quantitytoreplace
+	,cast(isreturnshippingrequired as INT64) as isreturnshippingrequired
+	,cast(quantityreceived as INT64) as quantityreceived
+	,cast(refundamount as FLOAT64) as refundamount
+	,cast(actualtaxrefunditem as FLOAT64) as actualtaxrefunditem
+	,cast(actualshiprefunditem as FLOAT64) as actualshiprefunditem
+	,cast(bonusrefund as FLOAT64) as bonusrefund
+	,cast(sumoftotalrefundamount as FLOAT64) as sumoftotalrefundamount
+	,method
+	,cast(shipping_label_fee as FLOAT64) as shipping_label_fee
+	,batch_id
+from 
+    (select *
+            ,dense_rank() over (PARTITION BY returnid,commerceitemid,method order by ret.batch_id desc) rn --- Get latest Batch_id,lastmodifieddate
+     from edl_landing.ann_ann_atg_returns ret
+    -- where (returnid) IN ('oret3805995') and commerceitemid = 'ici2726004516' and method = 1
+    )
+where rn = 1
+!
+
+
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.pre_atg_order_return_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_atg_order_return c
+left join edl_stage.pre_atg_order_return_new w
+    on  w.orderid = c.orderid
+	and w.commerceitemid=c.commerceitemid
+	and coalesce(w.method,'')=coalesce(c.method,'')
+    where w.orderid is null
+!
+
+
+#cleansing and archival
+bq cp --force edl_stage.pre_atg_order_return edl_archive.pre_atg_order_return
+bq cp --force edl_stage.pre_atg_order_return_new edl_stage.pre_atg_order_return
+bq rm --force edl_stage.pre_atg_order_return_new

@@ -1,0 +1,161 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#one time load
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --replace=true --allow_large_results --destination_table analytic_mart.pre_item --use_legacy_sql=false <<!
+#select
+#FARM_FINGERPRINT(lp.sku) as item_key
+#, FARM_FINGERPRINT(CAST(lp.style_nbr AS STRING)) as style_key
+#, h.brand_cd 
+#, h.div_id as division_id
+#, lp.sku as sku_id
+#, COALESCE(lp.product_id, 0) AS product_id
+#, lp.style_nbr as style_id
+#, lp.style_desc as style_des
+#, lp.dept_cd as department_cd
+#, lp.dept_desc as department_des
+#, lp.dept_category_cd as department_category_cd
+#, CONCAT(CAST(lp.dept_cd as STRING), SUBSTR(CAST(lp.class_cd AS STRING), -3))  as class_cd
+#, lp.class_desc as class_des
+#, lp.merch_category_cd as merch_category_cd
+#, lp.merch_category_desc as merch_category_des
+#, lp.color_cd as color_cd
+#, lp.color_desc as color_des
+#, lp.size_cd as size_cd
+#, lp.size_desc as size_des
+#, lp.vendor_cd as vendor_cd
+#, lp.vendor_nm as vendor_nam
+#, lp.retail_price as retail_amt
+#, lp.landed_cost as landed_cost_amt
+#, lp.intern_excl_ind as intern_excl_ind
+#, lp.intern_tallstyle_ind as intern_tallstyle_ind
+#, CAST(lp.markdown_week as STRING) as markdown_week_num
+#, CAST(lp.exit_week as STRING) exit_week_num
+#, lp.gift_wrap_ind as gift_wrap_ind
+#, lp.season_cd as season_cd
+#, lp.season_desc as season_des
+#, CAST(NULL as STRING) AS storeset_cd
+#, CAST(NULL as STRING) AS storeset_des
+#, lp.purch_org_cd as purch_org_cd
+#, lp.ean_upc as ean_upc_des
+#, lp.missy_style_nbr as missy_style_num
+#, lp.petite_style_nbr as petite_style_num
+#, lp.tall_style_nbr as tall_style_num
+#, lp.fabric_profile_cd as fabric_profile_cd
+#, lp.fabric_profile_desc as fabric_profile_des
+#, lp.silhouette_profile_cd as silhouette_profile_cd
+#, lp.silhouette_profile_desc as silhouette_profile_des
+#, lp.top_silhouette as top_silhouette_des
+#, lp.neckline as neckline_des
+#, lp.sleeve_len as sleeve_len_des
+#, lp.novelty as novelty_des
+#, lp.end_use as end_use_des
+#, lp.pyramid as pyramid_des
+#, CAST(NULL as STRING) AS currency_des
+#, lp.original_retail as original_retail_amt
+#, COALESCE(lp.md_retail_price, 0.0) AS markdown_retail_amt
+#, lp.reason_code as reason_cd
+#, lp.plus_style_nbr as plus_style_num
+#, 20160101 as batch_id
+#FROM edl_stage.pre_lu_product_vw as lp
+#left join edl_stage.pre_acc_df_prod_hier_curr h 
+#on CAST(lp.style_nbr AS STRING) = h.style_id
+#and cast(lp.color_cd as string)  = h.color_id
+#!
+
+#rc_check $? "One time history load to mart"
+
+#loading the temporary table in staging (it has new records)
+#added dedup logic on edl_stage.pre_sap_product before the join
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_item --use_legacy_sql=false <<!
+SELECT
+FARM_FINGERPRINT(sp.sku) as item_key
+, FARM_FINGERPRINT(substr(sp.article, 10, 6)) as style_key
+, h.brand_cd 
+, h.div_id as division_id
+, sp.sku as sku_id
+, 0 as product_id
+, CAST(substr(sp.article, 10, 6) AS INT64) as style_id
+, h.style_desc as style_des
+, CAST(sp.dept AS INT64) as department_cd
+, sp.dept_desc as department_des
+, CAST(NULL as STRING) AS department_category_cd
+, CONCAT(sp.dept, sp.class) as class_cd
+, sp.class_desc as class_des
+, CAST(NULL as STRING) AS merch_category_cd
+, CAST(NULL as STRING) AS merch_category_des
+, CAST(sp.color AS INT64) as color_cd
+, sp.color_desc as color_des
+, CAST(sp.size AS INT64) as size_cd
+, sp.size_desc as size_des
+, CAST(ss.vendor_number AS INT64) as vendor_cd
+, CAST(NULL as STRING) AS vendor_nam
+, sp.retail_price as retail_amt
+, sp.landed_cost as landed_cost_amt
+, CASE WHEN ss.intern_excl = 'Y' THEN 1 ELSE 0 END as intern_excl_ind
+, CASE WHEN ss.intern_tallstyle = 'Y' THEN 1 ELSE 0 END as intern_tallstyle_ind
+, CAST(ss.markdwn_week AS STRING) as markdown_week_num
+, CAST(ss.exit_week AS STRING) as exit_week_num
+, CASE WHEN ss.gift_wrap = 'Y' THEN 1 ELSE 0 END as gift_wrap_ind
+, CAST(ss.season AS INT64) as season_cd
+, ss.season_desc as season_des
+, ss.storeset as storeset_cd
+, ss.storeset_desc as storeset_des
+, CAST(ss.purch_org AS INT64) as purch_org_cd
+, ss.ean_upc as ean_upc_des
+, CAST(ss.missy_style AS INT64) as missy_style_num
+, CAST(ss.petite_style AS INT64) as petite_style_num
+, CASE WHEN LENGTH(ss.tall_style) < 3 THEN 0 ELSE CAST(ss.tall_style AS INT64) END as tall_style_num
+, CAST(ss.fabric_profile_value AS INT64) as fabric_profile_cd
+, ss.fabric_profile_desc as fabric_profile_des
+, CAST(ss.silhouette_profile_value AS INT64) as silhouette_profile_cd
+, ss.silhouette_profile_desc as silhouette_profile_des
+, ss.top_silhouette as top_silhouette_des
+, ss.neckline as neckline_des
+, ss.sleeve_len as sleeve_len_des
+, ss.novelty as novelty_des
+, ss.end_use as end_use_des
+, ss.pyramid as pyramid_des
+, sp.currency as currency_des
+, sp.original_retail as original_retail_amt
+, 0.0 as markdown_retail_amt
+, CAST(NULL as STRING) AS reason_cd
+, CAST(ss.plus_style AS INT64) as plus_style_num
+, sp.batch_id as batch_id
+FROM (SELECT * 
+                ,row_number() over(partition by sku order by datetime desc) as rn 
+        FROM edl_stage.pre_sap_product) as sp
+LEFT OUTER JOIN edl_stage.pre_sap_style ss ON (substr(sp.article, 10, 6) = CAST(ss.style_number AS STRING))
+left join edl_stage.pre_acc_df_prod_hier_curr h 
+on substr(sp.article, 10, 6) = h.style_id
+and substr(sp.color,3,4)  = h.color_id
+!
+rc_check $? "Load incremental pre_sap_product data from edl_stage table into temp table"
+
+#load edl_stage.pre_item to temporary table for incremental load
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table analytic_mart.pre_item_new --use_legacy_sql=false <<!
+SELECT * FROM edl_stage.pre_item
+!
+rc_check $? "Load new data into analytic_mart pre_item_new table"
+
+#append the old records into the temporary table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.pre_item_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.pre_item c
+left join edl_stage.pre_item w
+    on  w.sku_id = c.sku_id
+        where w.sku_id is null
+!
+rc_check $? "append old data to temp table which has incremental data"
+
+#cleansing and archival
+bq cp --force analytic_mart.pre_item edl_archive.pre_item
+rc_check $? "archive copy"
+bq cp --force analytic_mart.pre_item_new analytic_mart.pre_item
+rc_check $? "replace the temp table as the actual table"
+bq rm --force analytic_mart.pre_item_new
+rc_check $? "drop the temp table in analytic_mart"
+bq rm --force edl_stage.pre_item
+rc_check $? "drop the temp table in stage"

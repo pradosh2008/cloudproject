@@ -1,0 +1,218 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.lb_sales_transaction_detail  \
+        "gs://${default_bucket}/plus/edw/lb_sales_transaction_detail*.txt.gz"
+rc_check $? "Load edl_landing LB Complted"
+
+#creating the landing table
+bq load --replace=true --source_format=CSV --skip_leading_rows=1 --field_delimiter="|" \
+        --schema=${schema_path}/edl_landing/lbca_sales_transaction_detail.json \
+        edl_landing.ca_sales_transaction_detail  \
+        "gs://${default_bucket}/plus/edw/ca_sales_transaction_detail*.txt.gz"
+rc_check $? "Load edl_landing CA Completed"
+
+#loading the temporary table in staging ( it has both new and updated records)
+bq query --max_rows 1 --allow_large_results --destination_table edl_stage.lbca_sales_transaction_detail_new --use_legacy_sql=false <<!
+SELECT 
+c.detail_seq_nbr, 
+c.line_action_cd, 
+c.line_object_type_cd, 
+c.line_object_cd,  
+c.line_void_ind,  
+c.sku_nbr, 
+c.transaction_line_cst,  
+c.transaction_line_qty,  
+c.transaction_line_rtl,  
+c.permanent_markdown_type_cd,  
+c.discount_markdown_rtl,  
+c.customer_paid_tax_amt,  
+c.company_owed_tax_amt,  
+c.return_reason_cd, 
+c.commission_amt, 
+c.current_rtl, 
+c.original_unit_rtl, 
+c.scanned_ind, 
+c.gift_card_ind, 
+c.taxable_ind, 
+c.style_locator_ind, 
+c.primary_salesperson_nbr, 
+c.secondary_salesperson_nbr, 
+c.sales_return_ind, 
+c.original_store_nbr, 
+c.original_register_nbr,
+PARSE_DATE("%Y-%m-%d",c.original_transaction_dt) original_transaction_dt,
+c.original_transaction_nbr,
+c.ret_primary_sales_person_nbr,
+c.ret_secondary_sales_person_nbr,
+c.return_disposition_cd,
+c.sales_layaway_ind,
+c.upc_nbr,
+c.selection_store_nbr,
+c.overseas_item_ind,
+c.selling_chain_nbr,
+c.selling_store_nbr,
+c.chain_nbr,
+c.store_nbr,
+c.transaction_nbr,
+PARSE_DATE("%Y-%m-%d",c.transaction_dt) transaction_dt,
+c.register_nbr,
+c.record_seq_nbr,
+c.merchandise_salesperson_nbr,
+c.selection_chain_nbr,
+c.ship_from_store_nbr,
+c.return_qty,
+c.return_cst,
+c.return_rtl,
+c.sales_qty,
+c.sales_cst,
+c.sales_rtl,
+c.sales_discount_markdown_rtl,
+c.sales_promo_markdown_rtl,
+c.return_discount_markdown_rtl,
+c.return_promo_markdown_rtl,
+c.productive_sales_qty,
+c.productive_sales_cst,
+c.productive_sales_rtl,
+c.productive_sales_original_rtl,
+c.productive_sales_current_rtl,
+c.productive_sales_register_rtl,
+c.gross_sales_qty,
+c.gross_sales_cst,
+c.gross_sales_rtl,
+c.net_sales_qty,
+c.net_sales_cst,
+c.net_sales_rtl,
+c.style_locator_qty,
+c.style_locator_cst,
+c.style_locator_rtl,
+c.net_sales_original_rtl,
+c.net_sales_current_rtl,
+c.return_original_rtl,
+c.return_current_rtl,
+c.gross_profit_prodtv_sls_rtl,
+c.gross_profit_return_rtl,
+c.gross_profit_net_sales_rtl,
+c.tax_amt,
+c.perm_markdown_type_cd,
+PARSE_DATE("%d/%m/%y",c.create_dt) ,
+cast(c.last_update_ts as timestamp) last_update_ts,
+c.original_chain_nbr,
+cast(c.extract_ts as timestamp) extract_ts
+ from edl_landing.lb_sales_transaction_detail c
+ UNION ALL
+SELECT 
+d.detail_seq_nbr, 
+d.line_action_cd, 
+d.line_object_type_cd, 
+d.line_object_cd,  
+d.line_void_ind,  
+d.sku_nbr, 
+d.transaction_line_cst,  
+d.transaction_line_qty,  
+d.transaction_line_rtl,  
+d.permanent_markdown_type_cd,  
+d.discount_markdown_rtl,  
+d.customer_paid_tax_amt,  
+d.company_owed_tax_amt,  
+d.return_reason_cd, 
+d.commission_amt, 
+d.current_rtl, 
+d.original_unit_rtl, 
+d.scanned_ind, 
+d.gift_card_ind, 
+d.taxable_ind, 
+d.style_locator_ind, 
+d.primary_salesperson_nbr, 
+d.secondary_salesperson_nbr, 
+d.sales_return_ind, 
+d.original_store_nbr, 
+d.original_register_nbr,
+PARSE_DATE("%Y-%m-%d",d.original_transaction_dt) original_transaction_dt,
+d.original_transaction_nbr,
+d.ret_primary_sales_person_nbr,
+d.ret_secondary_sales_person_nbr,
+d.return_disposition_cd,
+d.sales_layaway_ind,
+d.upc_nbr,
+d.selection_store_nbr,
+d.overseas_item_ind,
+d.selling_chain_nbr,
+d.selling_store_nbr,
+d.chain_nbr,
+d.store_nbr,
+d.transaction_nbr,
+PARSE_DATE("%Y-%m-%d",d.transaction_dt) transaction_dt,
+d.register_nbr,
+d.record_seq_nbr,
+d.merchandise_salesperson_nbr,
+d.selection_chain_nbr,
+d.ship_from_store_nbr,
+d.return_qty,
+d.return_cst,
+d.return_rtl,
+d.sales_qty,
+d.sales_cst,
+d.sales_rtl,
+d.sales_discount_markdown_rtl,
+d.sales_promo_markdown_rtl,
+d.return_discount_markdown_rtl,
+d.return_promo_markdown_rtl,
+d.productive_sales_qty,
+d.productive_sales_cst,
+d.productive_sales_rtl,
+d.productive_sales_original_rtl,
+d.productive_sales_current_rtl,
+d.productive_sales_register_rtl,
+d.gross_sales_qty,
+d.gross_sales_cst,
+d.gross_sales_rtl,
+d.net_sales_qty,
+d.net_sales_cst,
+d.net_sales_rtl,
+d.style_locator_qty,
+d.style_locator_cst,
+d.style_locator_rtl,
+d.net_sales_original_rtl,
+d.net_sales_current_rtl,
+d.return_original_rtl,
+d.return_current_rtl,
+d.gross_profit_prodtv_sls_rtl,
+d.gross_profit_return_rtl,
+d.gross_profit_net_sales_rtl,
+d.tax_amt,
+d.perm_markdown_type_cd,
+PARSE_DATE("%d/%m/%y",d.create_dt) ,
+cast(d.last_update_ts as timestamp) last_update_ts,
+d.original_chain_nbr,
+cast(d.extract_ts as timestamp) extract_ts
+ from edl_landing.ca_sales_transaction_detail d
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+#append the old records into the temporary table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.lbca_sales_transaction_detail_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_lbca_sales_transaction_detail c
+left join edl_stage.lbca_sales_transaction_detail_new w
+    on  w.detail_seq_nbr = c.detail_seq_nbr
+    AND w.line_action_cd = c.line_action_cd
+    where w.detail_seq_nbr is null
+!
+rc_check $? "append legacy records into the temp table"
+
+#cleansing and archival
+bq cp --force edl_stage.pre_lbca_sales_transaction_detail edl_archive.pre_lbca_sales_transaction_detail
+rc_check $? "archive copy"
+bq cp --force edl_stage.lbca_sales_transaction_detail_new edl_stage.pre_lbca_sales_transaction_detail
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.lbca_sales_transaction_detail_new
+rc_check $? "drop the temp table"
+
+#archive_bucket_files "gs://${default_bucket}/plus/edw/lb_sales_transaction_detail*.txt.gz*"
+#archive_bucket_files "gs://${default_bucket}/plus/edw/ca_sales_transaction_detail*.txt.gz*"

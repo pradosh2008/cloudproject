@@ -1,0 +1,22 @@
+#LOAD DATA FROM BUCKET TO EDL LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.brand_customer_phone  'gs://p-asna-datasink-003/brand_customer_phone/*'
+
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.brand_customer_phone_new --use_legacy_sql=false <<!
+SELECT l.* from edl_landing.brand_customer_phone l
+!
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.brand_customer_phone_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.brand_customer_phone c
+left join edl_landing.brand_customer_phone l
+    on  l.brand_customer_key = c.brand_customer_key and l.phone_key = c.phone_key
+    where l.brand_customer_key is null
+!
+
+
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.brand_customer_phone edl_archive.brand_customer_phone
+bq cp --force edl_conform.brand_customer_phone_new edl_conform.brand_customer_phone
+bq rm --force edl_conform.brand_customer_phone_new

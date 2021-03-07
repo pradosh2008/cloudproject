@@ -1,0 +1,106 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+#loading the temporary table in analytic_mart to perform incremental operations
+bq query  --max_rows 1 --allow_large_results --destination_table analytic_mart.plus_brand_customer_opt_in_out_new --use_legacy_sql=false <<!
+select o.brand_customer_key
+,o.opt_in_out_key
+,o.brand_customer_id
+,o.customer_original_id       
+,o.customer_phone_id         
+,o.email_id      
+,o.opt_in_out_cd       
+,o.opt_in_out_desc     
+,o.customer_source_cd         
+,o.customer_source_2nd_cd         
+,o.customer_extension_type_cd       
+,o.opt_in_cd         
+,o.opt_in_out_tms           
+,o.opt_in_out_dt            
+,o.store_key    
+,o.tmc1396_created_tms
+,o.extract_tms
+,o.edl_create_tms
+,o.edl_create_job_nam
+,o.edl_last_update_tms
+,o.edl_last_update_job_nam
+,o.brand_cd
+from
+(
+SELECT oio.*  
+      ,row_number() over (partition by brand_customer_key, opt_in_out_key order by brand_customer_key, opt_in_out_key,extract_tms desc) as duprecord
+FROM (
+SELECT
+  TO_HEX( MD5( CONCAT(CASE
+          WHEN c.id_chain = 4 THEN 'CA'
+          WHEN c.id_chain = 7 THEN 'LB' END ,"|"
+        ,c.id_cust))) AS brand_customer_key 
+, (CASE
+     WHEN c.cd_opt_in_out in ('CE','OE','DS','EM','DO','HC') then to_hex(md5(concat(c.id_email,"|",c.cd_opt_in_out)))
+     WHEN c.cd_opt_in_out in ('DS','PH','TD','TM','PA') then to_hex(md5(concat(c.te_cust, "|",c.cd_opt_in_out)))
+     ELSE to_hex(md5(concat(c.id_cust,"|",c.cd_opt_in_out)))
+ End) as opt_in_out_key
+,c.ID_CUST            AS brand_customer_id
+,c.ID_CUST_ORIG       AS customer_original_id       
+,c.TE_CUST            AS customer_phone_id         
+,c.id_email           AS email_id      
+,c.CD_OPT_IN_OUT      AS opt_in_out_cd       
+,d.tx_opt_in_out      as opt_in_out_desc     
+,c.IN_CUST_SOURCE     AS customer_source_cd         
+,c.IN_CUST_SOURCE_2ND AS customer_source_2nd_cd         
+,c.CD_CUST_EXT_TYPE   AS customer_extension_type_cd       
+,c.FL_OPT_IN          AS opt_in_cd         
+,c.TS_OPT_IN_OUT      AS opt_in_out_tms           
+,c.DA_OPT_IN_OUT      AS opt_in_out_dt            
+,TO_HEX(MD5(CONCAT(CASE
+        WHEN c.id_chain = 4 THEN 'CA'
+        WHEN c.id_chain = 7 THEN 'LB' END, "|"
+     ,cast(c.id_store as string)))) as store_key
+,c.TS_TMCI396_CREATED AS tmc1396_created_tms
+,c.extract_ts         AS extract_tms
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'CRMCUST' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'CRMCUST' AS edl_last_update_job_nam
+, CASE
+    WHEN c.id_chain = 4 THEN 'CA'
+    WHEN c.id_chain = 7 THEN 'LB'
+END
+  AS brand_cd
+FROM
+  edl_stage.plus_vmci396_curr_opt_in_out_full c
+inner join edl_stage.plus_vmci198_opt_in_out_type d
+on c.cd_opt_in_out = d.cd_opt_in_out
+where c.id_chain in (4,7)
+) as oio
+) as o
+where duprecord = 1
+!
+rc_check $? "Load incremental data from edl_landing into temp table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.plus_brand_customer_opt_in_out_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart.plus_brand_customer_opt_in_out c
+left join analytic_mart.plus_brand_customer_opt_in_out_new w
+    on w.brand_customer_key =c.brand_customer_key
+    and w.opt_in_out_key = c.opt_in_out_key
+    where w.brand_customer_key is null 
+    and w.opt_in_out_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force analytic_mart.plus_brand_customer_opt_in_out edl_archive.plus_brand_customer_opt_in_out
+rc_check $? "archive copy"
+bq cp --force analytic_mart.plus_brand_customer_opt_in_out_new analytic_mart.plus_brand_customer_opt_in_out
+rc_check $? "replace the temp table as the stage table"
+bq rm --force analytic_mart.plus_brand_customer_opt_in_out_new
+rc_check $? "drop the temp table"
+
+

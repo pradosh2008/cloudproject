@@ -1,0 +1,75 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq cp --force analytic_mart.pre_store_inventory edl_archive.pre_store_inventory
+rc_check $? "archive the previous inventory mart table"
+
+bq query --use_legacy_sql=false <<!
+create or replace table analytic_mart.pre_store_inventory
+as select si.week_id as week_id
+    ,b.brand_cd as brand_cd
+    ,FARM_FINGERPRINT(cast(cast(store_id as int64) as string)) as store_key
+    ,FARM_FINGERPRINT(CAST(ph.class_id AS STRING)) as class_key
+    ,FARM_FINGERPRINT(cast(cast(si.style_id as int64) as string)) as style_key
+    ,FARM_FINGERPRINT(cast(cast(si.sku_id as int64) as string)) as item_key
+--,day_dt as  fiscal_week_dt
+--cast(chain_id as int64) as chain_id,
+    ,sum(bop_store_inv_unit_cnt)             as  bop_store_inv_unit_cnt
+    ,sum(bop_store_inv_retail_amt)           as  bop_store_inv_retail_amt
+    ,sum(bop_store_inv_actual_cost_amt)      as  bop_store_inv_actual_cost_amt
+    ,sum(bop_store_inv_valued_cost_amt)      as  bop_store_inv_valued_cost_amt
+    ,sum(bop_store_it_unit_cnt)              as  bop_store_it_unit_cnt
+    ,sum(bop_store_it_retail_amt)            as  bop_store_it_retail_amt
+    ,sum(bop_store_it_actual_cost_amt)       as  bop_store_it_actual_cost_amt
+    ,sum(bop_store_it_valued_cost_amt)       as  bop_store_it_valued_cost_amt
+    ,sum(store_receipt_unit_cnt)             as  store_receipt_unit_cnt
+    ,sum(store_receipt_retail_amt)           as  store_receipt_retail_amt
+    ,sum(store_receipt_actual_cost_amt)      as  store_receipt_actual_cost_amt
+    ,sum(store_receipt_valued_cost_amt)      as  store_receipt_valued_cost_amt
+    ,sum(bop_mkd_store_it_unit_cnt)          as  bop_mkd_store_it_unit_cnt
+    ,sum(bop_mkd_store_it_retail_amt)        as  bop_mkd_store_it_retail_amt
+    ,sum(bop_mkd_store_it_actual_cost_amt)   as  bop_mkd_store_it_actual_cost_amt
+    ,sum(bop_mkd_store_it_valued_cost_amt)   as  bop_mkd_store_it_valued_cost_amt
+    ,sum(dmos_unit_cnt)                      as  dmos_unit_cnt
+    ,sum(dmos_retail_amt)                    as  dmos_retail_amt
+    ,sum(dmos_actual_cost_amt)               as  dmos_actual_cost_amt
+    ,sum(dmos_valued_cost_amt)               as  dmos_valued_cost_amt
+    ,sum(store_trans_out_unit_cnt)           as  store_trans_out_unit_cnt
+    ,sum(store_trans_out_retail_amt)         as  store_trans_out_retail_amt
+    ,sum(store_trans_out_actual_cost_amt)    as  store_trans_out_actual_cost_amt
+    ,sum(store_trans_out_valued_cost_amt)    as  store_trans_out_valued_cost_amt
+    ,sum(store_trans_in_unit_cnt)            as  store_trans_in_unit_cnt
+    ,sum(store_trans_in_retail_amt)          as  store_trans_in_retail_amt
+    ,sum(store_trans_in_actual_cost_amt)     as  store_trans_in_actual_cost_amt
+    ,sum(store_trans_in_valued_cost_amt)     as  store_trans_in_valued_cost_amt
+    ,sum(bop_alloc_notship_inv_unit_cnt)     as  bop_alloc_notship_inv_unit_cnt
+    ,sum(bop_alloc_notship_inv_retail_amt)   as  bop_alloc_notship_inv_retail_amt
+    ,sum(bop_alloc_notship_actual_cost_amt)  as  bop_alloc_notship_actual_cost_amt
+    ,sum(bop_alloc_notship_valued_cost_amt)  as  bop_alloc_notship_valued_cost_amt
+    ,sum(mkd_issue_unit_cnt)                 as  mkd_issue_unit_cnt
+    ,sum(mkd_issue_retail_amt)               as  mkd_issue_retail_amt
+    ,sum(mkd_issue_cost_amt)                 as  mkd_issue_cost_amt
+    ,sum(bop_store_mkd_it_unit_cnt)          as  bop_store_mkd_it_unit_cnt
+    ,sum(bop_store_mkd_it_retail_amt)        as  bop_store_mkd_it_retail_amt
+    ,sum(bop_store_mkd_it_actual_cost_amt)   as  bop_store_mkd_it_actual_cost_amt
+from edl_stage.pre_sap_store_inventory   as  si
+--removed fiscal_week_dt
+-- left outer join
+-- (select fiscal_week_id
+        -- ,day_dt
+-- from edl_stage.pre_ann_calendar
+    -- where fiscal_day_of_week=1) as c
+-- on si.week_id=c.fiscal_week_id
+--adding class_key
+left join edl_stage.pre_acc_df_prod_hier_curr ph
+    on si.style_id = cast(ph.style_id as int64)
+--adding brand_cd
+left join analytic_mart.pre_brand as b
+    on cast(si.chain_id as int64) = b.chain_id
+group by 1,2,3,4,5,6
+!
+
+rc_check $? "created store inventory mart table"
+

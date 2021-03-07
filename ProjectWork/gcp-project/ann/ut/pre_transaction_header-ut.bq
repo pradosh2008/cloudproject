@@ -1,0 +1,16 @@
+#pk check
+bq query --use_legacy_sql=false <<!
+select a.transaction_key 
+    ,count(*)
+from analytic_mart.pre_transaction_header a
+group by a.transaction_key 
+having count(*) > 1
+limit 10
+!
+
+#null check
+bq query --use_legacy_sql=false <<!
+SELECT count(*) 
+FROM    analytic_mart.pre_transaction_header
+where   transaction_key is null
+!

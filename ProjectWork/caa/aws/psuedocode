@@ -1,0 +1,83 @@
+Created by : Pradosh Kumar Jena
+Dated : 26/06/2020
+Document : Glue Job Design
+
+#During creation of glue job:
+  Pass the path of python file in which additonal pyspark and python libraries are imported  and utility functions are defined .
+
+#Glue pre generated code
+  Import libraries
+  Initializing spark and glue context
+  Use section of the  code which reads the glue Data Catalog and creates the source glue data frame
+  Use section of the code which applies mapping on glue data frame
+  Removing these pre generated code segments - ResolveChoice , DropNullFields, DataSink
+
+
+#Custom code begins
+#####First job type : writing partitioned data into sink#####
+
+create_frame_with_partitions
+                            (
+                            gdf             :  glue data frame
+                            ,*key_list      :  list of key columns
+                            ,audit_cols     :  list of audit columns
+                            ,partition_col  :  partition column name
+                            ,job_name       :  glue job name
+                            ,source_tbl     :  source table name
+                            ,glueContext    :  glue context
+                            )
+what it does:
+    convert dynamic frame to spark data frame
+    create hashed primary key
+    add audit columns
+    add year partition columns
+    order columns
+what it returns:
+    ordered glue data frame
+
+
+write_partitioned_sink
+                      (
+                      ordered_gdf     :  ordered glue data frame
+                      ,target_tbl     :  target table name
+                      ,source_tbl     :  source table name
+                      ,glueContext    :  glue context)
+what it does:
+      write partioned data to sink
+what it returns:
+      nothing
+
+
+#####Second job type : writing non partitioned data into sink#####
+create_frame
+            (gdf            :  glue data frame
+            ,*key_list      :  list of key columns
+            ,audit_cols     :  list of audit columns
+            ,job_name       :  glue job name
+            ,source_tbl     :  source table name
+            ,glueContext    :  glue context
+            )
+what it does:
+      convert dynamic frame to spark data frame
+      create hashed primary key
+      add audit columns
+      order columns
+what it returns:
+      ordered glue data frame
+
+
+write_non_partitioned_sink
+                      (ordered_gdf    :  ordered glue data frame
+                      ,target_tbl     :  target table name
+                      ,glueContext    :  glue context)
+what it does:
+      write non-partioned data to sink
+what it returns:
+      nothing
+
+
+
+#Few things still to be finalized
+  Test reliability of crawler - If it can read the source datatype correctly , no explicit casting of daatype will be needed
+  Or else explicit casting of datatype needs to be performed
+  Currently a single partitioning function created to do partition on year

@@ -1,0 +1,93 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+#Loading into a new table in the mart schema from the stage table
+bq query --max_rows 1 --allow_large_results --destination_table work.fact_transaction_new --use_legacy_sql=false <<!
+SELECT
+TO_HEX(MD5(concat(CAST(case when trn.selling_chain_nbr = 7 then 'LB' else 'CA' end as string)
+    ,'|',CAST (trn.selling_store_nbr AS string)
+    ,'|',CAST (trn.register_nbr AS string)
+    ,'|',CAST(trn.transaction_dt as string)
+    ,'|',CAST(trn.transaction_nbr AS string)))) as transaction_key
+,case when trn.customer_nbr is NULL or trn.customer_nbr=0 then '0' 
+      else TO_HEX(MD5(CONCAT(CAST(case when trn.selling_chain_nbr = 7 then 'LB' 
+                                       else 'CA' 
+                             end as string)
+                  ,'|',cast(trn.customer_nbr as string)))) 
+end as brand_customer_key  --we need to bring the brand-customer_key from customer_transaction linkage table
+,TO_HEX(MD5(concat(CAST(case when trn.selling_chain_nbr = 7 then 'LB' else 'CA' end as string),'|',CAST(trn.selling_store_nbr AS string)))) as store_key
+,trn.transaction_dt as transaction_dt
+,case when trn.order_received_dt is null then trn.transaction_dt else trn.order_received_dt end as order_dt
+,trn.transaction_nbr as transaction_num
+,trn.register_nbr as register_num
+,trn.sales_channel_type_cd as channel_cd   -- it looks different
+,trn.transaction_type_cd as transaction_type_cd
+,trn.entry_type_cd as transaction_entry_type_cd
+,cast(trn.cashier_nbr as string) as cashier_id
+,cast(trn.manager_nbr as string) as store_manager_id
+,trn.layaway_nbr as layaway_num
+,case when trim(trn.multi_brand_transaction_ind)='Y' then 1
+      when trim(trn.multi_brand_transaction_ind)='N' then 0
+      else NULL end as multi_brand_transaction_ind
+,case when trim(trn.domestic_order_ind)='Y' then 1
+      when trim(trn.domestic_order_ind)='N' then 0
+      else NULL end as domestic_order_ind
+,case when trim(trn.address_capture_ind)='Y' then 1
+      when trim(trn.address_capture_ind)='N' then 0
+      else NULL end as address_capture_ind
+,case when trim(trn.email_capture_ind)='Y' then 1
+      when trim(trn.email_capture_ind)='N' then 0
+      else NULL end as email_capture_ind
+,case when trim(trn.return_receipt_ind)='Y' then 1
+      when trim(trn.return_receipt_ind)='N' then 0
+      else NULL end as return_receipt_ind
+,cast(trn.order_nbr as string) as order_num
+,cast(trn.transaction_void_ind as INT64) as transaction_void_ind
+,case when trn.ship_to_store_nbr is not null and trn.ship_to_store_nbr!=0 
+      then TO_HEX(MD5(concat(CAST(case when trn.selling_chain_nbr = 7 then 'LB' 
+                                       else 'CA' end as string)
+               ,'|',cast(trn.ship_to_store_nbr as string)))) 
+      else NULL 
+end as ship_to_store_key --This looks susceptible
+,case when trn.tender_reference_cd is not null and trn.tender_reference_cd != 0 then 1 else 0 end as membership_ind
+,cast(trp.payment_reference_nbr as INT64) as plcc_payment_reference_nbr -- Pulled this from EDW table called SALES_TRANSACTION_PAYMENT
+,cast(trp.line_object_cd as string) as plcc_payment_line_object_cd -- Pulled this from EDW table called SALES_TRANSACTION_PAYMENT
+,trn.transaction_tm as plcc_payment_tm
+,trp.payment_amt as plcc_payment_amt     -- Pulled this from EDW table called SALES_TRANSACTION_PAYMENT
+,cast(null as int64) as p2e_ind
+,CURRENT_TIMESTAMP AS edl_create_tms
+,'TRANS' AS edl_create_job_nam
+,CURRENT_TIMESTAMP AS edl_last_update_tms
+,'TRANS' AS edl_last_update_job_nam
+,CAST(case when trn.selling_chain_nbr = 7 then 'LB' else 'CA' end as string) as brand_cd
+from edl_stage.plus_sales_transaction_header as trn
+left outer join edl_stage.plus_sales_transaction_payment as trp 
+ON trp.SELLING_CHAIN_NBR = trn.SELLING_CHAIN_NBR
+AND trp.SELLING_STORE_NBR = trn.SELLING_STORE_NBR
+AND trp.TRANSACTION_NBR = trn.TRANSACTION_NBR
+AND trp.REGISTER_NBR = trn.REGISTER_NBR
+AND trp.TRANSACTION_DT = trn.TRANSACTION_DT
+!
+rc_check $? "Load stage data into the new mart table"
+
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table work.fact_transaction_new --use_legacy_sql=false <<!
+select c.*
+from work.fact_transaction c
+left join work.fact_transaction_new w
+    on w.transaction_key=c.transaction_key
+    where w.transaction_key is null
+!
+rc_check $? "Merge or UPSert old records into new stage table"
+
+
+#Cleansing and Archival
+bq cp --force work.fact_transaction edl_archive.fact_transaction
+rc_check $? "archive copy"
+bq cp --force work.fact_transaction_new work.fact_transaction
+rc_check $? "replace the temp table as the mart table"
+bq rm --force work.fact_transaction_new
+rc_check $? "drop the temp table"

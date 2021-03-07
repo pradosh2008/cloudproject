@@ -1,0 +1,19 @@
+create or replace view edl_stage.plus_vmci173_full_email_addr_status_curr as 
+select
+ stg.da_first_hard_bb
+,stg.da_first_soft_bb
+,stg.da_last_bb
+,stg.da_last_hard_bb
+,stg.da_last_soft_bb
+,stg.fl_email_bb_valid
+,stg.fl_hard_bb_valid
+,stg.fl_soft_bb_valid
+,stg.id_email
+,stg.nu_bb_hard
+,stg.nu_bb_soft
+,stg.extract_ts
+from
+(SELECT lbca.*
+,ROW_NUMBER() OVER (partition by lbca.id_email order by lbca.extract_ts desc) as row_num
+from p-ascn-da-aadp-001.edl_stage.plus_vmci173_full_email_addr_status as lbca
+)  as stg where row_num=1

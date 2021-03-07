@@ -1,0 +1,22 @@
+#LOAD DATA FROM BUCKET TO EDL LANDING
+bq load --replace=true --source_format=AVRO --use_avro_logical_types=true edl_landing.store  'gs://p-asna-datasink-003/store/*'
+
+#Load new and updated into new table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_conform.store_new --use_legacy_sql=false <<!
+SELECT l.* from edl_landing.store l
+!
+
+#Add legacy records from old table
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_conform.store_new --use_legacy_sql=false <<!
+select c.*
+from edl_conform.store c
+left join edl_landing.store l
+    on  l.store_key = c.store_key
+    where l.store_key is null
+!
+
+
+#COPY NEW DATA TO ACTUAL TABLE
+bq cp --force edl_conform.store edl_archive.store
+bq cp --force edl_conform.store_new edl_conform.store
+bq rm --force edl_conform.store_new

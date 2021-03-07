@@ -1,0 +1,88 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+
+bq query --max_rows 1 --allow_large_results --destination_table analytic_mart.fact_transaction_detail_new --use_legacy_sql=false <<!
+select * from analytic_mart.fact_transaction_detail
+where transaction_dt<='2019-03-28'
+!
+
+#Merge/UPSert old records into new stage table
+bq query  --max_rows 1 --allow_large_results --append_table --destination_table analytic_mart.fact_transaction_detail_new --use_legacy_sql=false <<!
+select c.*
+from analytic_mart_backup.fact_transaction_detail c
+where c.transaction_dt > '2019-03-28'
+!
+
+
+#This bq populates the correct cost amount in the mart table in range of '2019-03-29' and '2020-04-04'
+bq query --replace=true --max_rows 1 --allow_large_results --use_legacy_sql=false \
+         --destination_table analytic_mart.fact_transaction_detail <<!
+#create or replace table analytic_mart.fact_transaction_detail_edl as
+select
+ td.transaction_key
+,td.transaction_line_num
+,td.transaction_dt
+,td.order_dt
+,td.store_key
+,td.brand_customer_key
+,td.item_key
+,td.return_ind
+,td.original_transaction_header_key
+,td.original_transaction_store_key
+,td.original_transaction_dt
+,td.original_transaction_line_num
+,td.line_action_cd
+,td.line_object_type_cd
+,td.line_object_cd
+,td.line_void_ind
+,td.scanned_ind
+,td.gift_card_ind
+,td.taxable_ind
+,td.style_locator_ind
+,td.permanent_markdown_type_cd
+,td.return_reason_cd
+,td.return_disposition_cd
+,td.return_reason_desc
+,td.return_to_dc_ind
+,td.layaway_ind
+,td.order_ind
+,case when td.transaction_dt between '2019-03-29' and '2020-04-03'then ROUND(CAST(tdh.transaction_line_cst AS NUMERIC), 2) else td.sku_cost_amt end as sku_cost_amt
+,td.sku_quantity_num
+,td.sku_retail_amt
+,td.markdown_amt
+,td.customer_paid_tax_amt
+,td.company_owed_tax_amt
+,td.commision_amt
+,td.current_retail_amt
+,td.original_unit_retail_amt
+,td.primary_salesperson_id
+,td.secondary_salesperson_id
+,td.original_primary_salesperson_id
+,td.original_secondary_salesperson_id
+,td.upc_store_key
+,td.upc_num
+,td.size_cd
+,td.cross_brand_store_key
+,td.overseas_item_ind
+,td.edl_create_tms
+,td.edl_create_job_nam
+,td.edl_last_update_tms
+,td.edl_last_update_job_nam
+,td.brand_cd
+from analytic_mart.fact_transaction_detail_new td
+left outer join edl_stage.plus_sales_transaction_detail_hist tdh
+on td.transaction_key=TO_HEX(MD5( CONCAT(case when tdh.selling_chain_nbr = 4
+                                              THEN 'CA|'
+                                              when tdh.selling_chain_nbr = 7
+                                              THEN 'LB|'
+                                         end
+                            ,cast(tdh.selling_store_nbr as string)
+                            ,"|",cast(tdh.register_nbr as string)
+                            ,"|",cast(tdh.transaction_dt as string)
+                            ,"|",cast(tdh.transaction_nbr as string)
+                   )))
+and td.transaction_line_num = tdh.detail_seq_nbr
+!

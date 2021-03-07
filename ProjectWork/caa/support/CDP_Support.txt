@@ -1,0 +1,97 @@
+step 1: 
+By 11:30 AM IST truncate table
+
+truncate table ascena_staging.lbca_incremental_batch_details;
+
+
+step 2: 
+20 transaction files have u received run below commands for the latest date 
+
+check the file in this location 
+cd /ascena_prod/data/archive/cem/lbca
+ls -lrt
+
+/home/ascprocessprod/cron/Transaction_Incremental_Conform_Layer.sh PROD > /home/ascprocessprod/cron/log/Transaction_Incremental_Conform_Layer_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+
+/home/ascprocessprod/cron/Transaction_Incremental_Campaign_Mart.sh PROD > /home/ascprocessprod/cron/log/Transaction_Incremental_Campaign_Mart_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1  --This job not needed
+
+
+step 3 :  independent
+Once CRM click open job completes
+
+check the file in this location 
+cd /ascena_prod/data/secure/cem/cdp/lbca/click_open_396/lbca_email_last_click_open
+ls -lrt
+
+Run as ascsftp 
+/home/ascprocessprod/cron/decrypt_for_click_open_396.sh PROD > /home/ascsftp/log/click_open_396_file_decrypt_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+Run as ascprocessprod
+/home/ascprocessprod/cron/Push_to_rawlayer_click_open.sh PROD > /home/ascprocessprod/cron/log/Push_to_rawlayer_click_open_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+
+step 4: independent 
+CRM legacy and customer activity job completed
+
+check the file in this location 
+cd /ascena_prod/data/secure/cem/cdp/lbca
+ls -lrt
+
+orpos_cust.txt.gpg
+plcc_cust.txt.gpg
+emp_cust.txt.gpg
+ecom_cust.txt.gpg
+
+/home/ascprocessprod/legacy_loading.sh
+
+
+check the file in this location 
+cd /ascena_prod/data/secure/cem/cdp/lbca/history/lbca_hst_customer_activity
+ls -lrt
+
+lbca_hst_customer_activity_20200406.txt.gpg
+
+
+/home/ascprocessprod/cust_loading.sh
+
+
+step 5:  This is the thing you run after all your above steps done 
+3rd TWS job completed in Hive
+
+We have to check the status of these job execution status in the log folders , has it failed or not. It has to be successful to proceed further on this. 
+
+check the latest log of these below job  by doing tail <log file name >
+
+CRON1.sh                           under /home/ascprocessprod/cron/log/
+file_decrypt.sh                    (in ascsftp )   under this folder /home/ascsftp/log/
+PushToRawLayer.sh                  under /home/ascprocessprod/cron/log/
+TWS_DIP_Archive_Processing.sh      under /home/ascprocessprod/cron/log/
+
+
+Check the GO file here , if the corresponding GO file is there for the script , then remove that .
+
+
+for example : 
+ 
+CHECK IN THIS FOLDER  /home/ascprocessprod/cron/work
+ 
+ls -ltr PushToConformedLayer.GO PushToConformedLayer_Merge.GO PushToConformedLayer_email.GO Persona_Transaction_Xref.GO PushToConformLayer_Click_open_396.GO 
+
+rm the coresponding GO file before running the script 
+
+for example  
+rm  PushToConformedLayer_Merge.GO 
+
+then run 
+
+/home/ascprocessprod/cron/PushToConformedLayer.sh PROD > /home/ascprocessprod/cron/log/PushToConformedLayer_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+/home/ascprocessprod/cron/PushToConformedLayer_Merge.sh PROD > /home/ascprocessprod/cron/log/PushToConformedLayer_Merge_`date +%y%m%d%H%M%S`.log 2>&1
+/home/ascprocessprod/cron/Persona_Transaction_Xref.sh PROD > /home/ascprocessprod/cron/log/Persona_Transaction_Xref_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+/home/ascprocessprod/cron/PushToConformLayer_Click_open_396.sh PROD > /home/ascprocessprod/cron/log/PushToConformLayer_Click_open_396_`date +\%y\%m\%d\%H\%M\%S`.log 2>&1
+
+step 6:
+
+Run store and Item query in beeline
+
+!run /ascena_prod/scripts/store/LB_CA_Item_v3.q
+!run /ascena_prod/scripts/store/LB_CA_Store_inc_v3.q

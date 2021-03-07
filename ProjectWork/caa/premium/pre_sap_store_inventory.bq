@@ -1,0 +1,133 @@
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/schema/edl_stage/storeinventoryschema.json edl_landing.ann_sku_store_inventory \
+        # 'gs://p-asna-datasink-003/pre/archive/ANN_ACC_EDL_STORE_INVENTORY_20200202134042.txt'
+        'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_STORE_INVENTORY_*.txt'
+
+rc_check $? "creating landing table"
+
+bq cp --force edl_stage.pre_sap_store_inventory edl_archive.pre_sap_store_inventory
+rc_check $? "archive copy"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.pre_sap_store_inventory --append_table --use_legacy_sql=false <<!
+select l.chain_id
+    ,l.store_id
+    ,l.week_id
+    ,l.style_id
+    ,l.color_id
+    ,l.size_id
+    ,l.sku_id
+    ,l.bop_store_inv_unit_cnt
+    ,l.bop_store_inv_retail_amt
+    ,l.bop_store_inv_actual_cost_amt
+    ,l.bop_store_inv_valued_cost_amt
+    ,l.bop_store_it_unit_cnt
+    ,l.bop_store_it_retail_amt
+    ,l.bop_store_it_actual_cost_amt
+    ,l.bop_store_it_valued_cost_amt
+    ,l.store_receipt_unit_cnt
+    ,l.store_receipt_retail_amt
+    ,l.store_receipt_actual_cost_amt
+    ,l.store_receipt_valued_cost_amt
+    ,l.bop_mkd_store_it_unit_cnt
+    ,l.bop_mkd_store_it_retail_amt
+    ,l.bop_mkd_store_it_actual_cost_amt
+    ,l.bop_mkd_store_it_valued_cost_amt
+    ,l.dmos_unit_cnt
+    ,l.dmos_retail_amt
+    ,l.dmos_actual_cost_amt
+    ,l.dmos_valued_cost_amt
+    ,l.store_trans_out_unit_cnt
+    ,l.store_trans_out_retail_amt
+    ,l.store_trans_out_actual_cost_amt
+    ,l.store_trans_out_valued_cost_amt
+    ,l.store_trans_in_unit_cnt
+    ,l.store_trans_in_retail_amt
+    ,l.store_trans_in_actual_cost_amt
+    ,l.store_trans_in_valued_cost_amt
+    ,l.bop_alloc_notship_inv_unit_cnt
+    ,l.bop_alloc_notship_inv_retail_amt
+    ,l.bop_alloc_notship_actual_cost_amt
+    ,l.bop_alloc_notship_valued_cost_amt
+    ,l.mkd_issue_unit_cnt
+    ,l.mkd_issue_retail_amt
+    ,l.mkd_issue_cost_amt
+    ,l.bop_store_mkd_it_unit_cnt
+    ,l.bop_store_mkd_it_retail_amt
+    ,l.bop_store_mkd_it_actual_cost_amt
+from (SELECT row_number() over (partition by week_id
+                                            ,chain_id
+                                            ,store_id
+                                            ,sku_id
+                                order by abs(cast(bop_store_inv_u as int64)) desc
+                           )                                     as dedup_rank
+            ,cast(chain_id as int64) as chain_id
+            ,cast(store_id as int64) as store_id
+            ,cast(week_id as int64) as week_id
+            ,cast(style_id as int64) as style_id
+            ,cast(color_id as int64) as color_id
+            ,cast(size_id as int64) as size_id
+            ,cast(sku_id as int64) as sku_id
+            ,cast(bop_store_inv_u as int64) as bop_store_inv_unit_cnt
+            ,cast(bop_store_inv_r as numeric) as bop_store_inv_retail_amt
+            ,cast(bop_store_inv_c_actual as numeric) as bop_store_inv_actual_cost_amt
+            ,cast(bop_store_inv_c_valued as numeric) as bop_store_inv_valued_cost_amt
+            ,cast(bop_store_it_u as int64) as bop_store_it_unit_cnt
+            ,cast(bop_store_it_r as numeric) as bop_store_it_retail_amt
+            ,cast(bop_store_it_c_actual as numeric) as bop_store_it_actual_cost_amt
+            ,cast(bop_store_it_c_valued as numeric) as bop_store_it_valued_cost_amt
+            ,cast(store_receipt_u as int64) as store_receipt_unit_cnt
+            ,cast(store_receipt_r as numeric) as store_receipt_retail_amt
+            ,cast(store_receipt_c_actual as numeric) as store_receipt_actual_cost_amt
+            ,cast(store_receipt_c_valued as numeric) as store_receipt_valued_cost_amt
+            ,cast(bop_mkd_store_it_u as int64) as bop_mkd_store_it_unit_cnt
+            ,cast(bop_mkd_store_it_r as numeric) as bop_mkd_store_it_retail_amt
+            ,cast(bop_mkd_store_it_c_actual as numeric) as bop_mkd_store_it_actual_cost_amt
+            ,cast(bop_mkd_store_it_c_valued as numeric) as bop_mkd_store_it_valued_cost_amt
+            ,cast(dmos_u as int64) as dmos_unit_cnt
+            ,cast(dmos_r as numeric) as dmos_retail_amt
+            ,cast(dmos_c_actual as numeric) as dmos_actual_cost_amt
+            ,cast(dmos_c_valued as numeric) as dmos_valued_cost_amt
+            ,cast(store_trans_out_u as int64) as store_trans_out_unit_cnt
+            ,cast(store_trans_out_r as numeric) as store_trans_out_retail_amt
+            ,cast(store_trans_out_c_actual as numeric) as store_trans_out_actual_cost_amt
+            ,cast(store_trans_out_c_valued as numeric) as store_trans_out_valued_cost_amt
+            ,cast(store_trans_in_u as int64) as store_trans_in_unit_cnt
+            ,cast(store_trans_in_r as numeric) as store_trans_in_retail_amt
+            ,cast(store_trans_in_c_actual as numeric) as store_trans_in_actual_cost_amt
+            ,cast(store_trans_in_c_valued as numeric) as store_trans_in_valued_cost_amt
+            ,cast(bop_alloc_notship_inv_u as int64) as bop_alloc_notship_inv_unit_cnt
+            ,cast(bop_alloc_notship_inv_r as numeric) as bop_alloc_notship_inv_retail_amt
+            ,cast(bop_alloc_notship_c_actual as numeric) as bop_alloc_notship_actual_cost_amt
+            ,cast(bop_alloc_notship_c_valued as numeric) as bop_alloc_notship_valued_cost_amt
+            ,cast(mkd_issue_u as int64) as mkd_issue_unit_cnt
+            ,cast(mkd_issue_r as numeric) as mkd_issue_retail_amt
+            ,cast(mkd_issue_c as numeric) as mkd_issue_cost_amt
+            ,cast(bop_store_mkd_it_u as int64) as bop_store_mkd_it_unit_cnt
+            ,cast(bop_store_mkd_it_r as numeric) as bop_store_mkd_it_retail_amt
+            ,cast(bop_store_mkd_it_c_actual as numeric) as bop_store_mkd_it_actual_cost_amt
+    from edl_landing.ann_sku_store_inventory i
+) l
+left join edl_stage.pre_sap_store_inventory c
+     on c.week_id = l.week_id
+    and c.chain_id = l.chain_id
+    and c.store_id = l.store_id
+    and c.sku_id = l.sku_id
+where dedup_rank = 1
+and c.week_id is null
+!
+
+rc_check $? "Appending stage table"
+
+
+#move the files to pre/archive folder
+gsutil mv gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_STORE_INVENTORY_*.txt  gs://p-asna-datasink-003/pre/archive
+rc_check $? "move the processed file to archive folder"
+
+echo "pre_store_inventory.bq" >/data/ctl/pre_store_inventory.ctl
+echo "pre_sap_store_sku_cogs.bq" >/data/ctl/pre_sap_store_sku_cogs.ctl
+

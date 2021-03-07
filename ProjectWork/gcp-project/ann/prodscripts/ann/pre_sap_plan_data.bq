@@ -1,0 +1,86 @@
+
+#!/usr/bin/bash
+
+. ${HOME}/lib/set_env.sh
+. ${HOME}/lib/common.sh
+
+bq load --replace=true --source_format=CSV --field_delimiter="|" --skip_leading_rows=1 \
+        --schema=/home/gcpinteg/schema/edl_stage/planschema.json edl_landing.ann_plan_data \
+        'gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_PLAN_20191201141739.txt'
+
+rc_check $? "creating landing table"
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --destination_table edl_stage.ann_plan_data_new --use_legacy_sql=false <<!
+select
+cast(subclass_id as string) 		                  as   subclass_id
+,cast(class_id as string)                             as   class_id
+,cast(department_id as int64)		                  as   department_id	
+,cast(group_id as int64)			                  as   group_id
+,cast(division_id as string) 		                  as   division_id
+,cast(chain_id as int64) 			                  as   chain_id
+,cast(channel_id as int64)	 		                  as   channel_id
+,cast(country_id as string)			                  as   country_id
+,cast(week_id as int64)                               as   week_id
+,cast(month_id as int64)                              as   month_id
+,sales_type                                           as   sales_type_cd
+,cast(op_net_sls_r as numeric)                        as   op_net_sls_retail_amt
+,cast(op_net_sls_u as int64)                          as   op_net_sls_unit_cnt
+,cast(op_net_sls_aur as numeric)                        as   op_net_sls_aur_amt
+,cast(op_ttl_store_count as int64)                    as   op_ttl_store_cnt
+,cast(op_comp_store_count as int64)                   as   op_comp_store_cnt
+,cast(op_bop_store_inv_r as numeric)                  as   op_bop_store_inv_retail_amt
+,cast(op_bop_store_inv_u as int64)                    as   op_bop_store_inv_unit_cnt
+,cast(op_eop_store_inv_r as numeric)                  as   op_eop_store_inv_retail_amt
+,cast(op_eop_store_inv_u as int64)                    as   op_eop_store_inv_unit_cnt
+,cast(cp_net_sls_r as numeric)                        as   cp_net_sls_retail_amt
+,cast(cp_net_sls_u as int64)                          as   cp_net_sls_unit_cnt
+,cast(cp_net_sls_aur as numeric)                        as   cp_net_sls_aur_amt
+,cast(cp_ttl_store_count as int64)                    as   cp_ttl_store_cnt
+,cast(cp_comp_store_count as int64)                   as   cp_comp_store_cnt
+,cast(cp_bop_store_inv_r as numeric)                  as   cp_bop_store_inv_retail_amt
+,cast(cp_bop_store_inv_u as int64)                    as   cp_bop_store_inv_unit_cnt
+,cast(cp_eop_store_inv_r as numeric)                  as   cp_eop_store_inv_retail_amt
+,cast(cp_eop_store_inv_u as int64)                    as   cp_eop_store_inv_unit_cnt
+--,cast(FORMAT_Date('%Y%m%d',current_date)as int64)	  as   batch_id
+,20191201 as   batch_id
+from edl_landing.ann_plan_data
+!
+
+rc_check $? "creating temp table"
+
+#bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_plan_data_new --use_legacy_sql=false <<!
+#select c.*
+#from edl_stage.pre_plan_data c
+#left join edl_stage.ann_plan_data_new w
+#    on  w.class_id = c.class_id
+#	and w.department_id = c.department_id
+#	and w.division_id = c.division_id
+#	and w.chain_id = c.chain_id
+#	and w.channel_id = c.channel_id
+#	and w.country_id = c.country_id
+#	and w.week_id = c.week_id
+#	and w.sales_type_cd = c.sales_type_cd
+#	and w.batch_id = c.batch_id
+#    where w.class_id is null
+#!
+
+bq query --project_id='p-asna-analytics-002' --max_rows 1 --allow_large_results --append_table --destination_table edl_stage.ann_plan_data_new --use_legacy_sql=false <<!
+select c.*
+from edl_stage.pre_sap_plan_data c
+!
+rc_check $? "append legacy records into temp table"
+
+
+#cleansing and archival
+bq cp --force edl_stage.pre_sap_plan_data edl_archive.pre_sap_plan_data
+rc_check $? "archive copy"
+bq cp --force edl_stage.ann_plan_data_new edl_stage.pre_sap_plan_data
+rc_check $? "replace the temp table as the stage table"
+bq rm --force edl_stage.ann_plan_data_new
+rc_check $? "drop the temp table"
+
+#move the files to pre/archive folder
+gsutil mv gs://p-asna-datasink-003/pre/sap/ANN_ACC_EDL_PLAN_20191201141739.txt  gs://p-asna-datasink-003/pre/archive
+rc_check $? "move the processed file to archive folder"
+
+
